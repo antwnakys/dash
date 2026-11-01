@@ -13,7 +13,7 @@
   --color-accent: #7aa2ff;
   --color-accent-ink: #0b1430;
 
-  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);

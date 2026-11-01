@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
-import { searchPlace } from '@/data/weather'
+import { currentPosition, searchPlace } from '@/data/weather'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
 import { Field, TextInput } from './fields'
@@ -56,9 +56,26 @@ export function SettingsForm({ onDone }: { onDone: () => void }) {
         <Field label="Your name" hint="Used in the greeting.">
           <TextInput value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
         </Field>
-        <Field label="Weather location" hint="Leave empty to use this device’s location.">
+        <Field label="Weather location">
           <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" autoComplete="address-level2" />
         </Field>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const here = await currentPosition()
+              const place = { ...here, name: 'Current location' }
+              setProfile({ place })
+              setCity(place.name)
+              setMessage('Weather now follows your current location.')
+            } catch {
+              setMessage('Location access is off. Allow it for dash in iPhone Settings, or type a city instead.')
+            }
+          }}
+          className="-mt-2 self-start text-sm text-accent hover:underline"
+        >
+          Use my current location
+        </button>
         <Button type="submit" variant="primary" disabled={busy} className="self-end">
           {busy ? 'Saving…' : 'Save'}
         </Button>

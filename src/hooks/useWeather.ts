@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { currentPosition, fetchWeather } from '@/data/weather'
+import { fetchWeather } from '@/data/weather'
 import type { Place, Weather } from '@/types'
 
 export type WeatherState =
@@ -16,7 +16,7 @@ interface Cached {
   data: Weather
 }
 
-const placeKey = (p?: Place) => (p ? `${p.latitude.toFixed(2)},${p.longitude.toFixed(2)}` : 'device')
+const placeKey = (p?: Place) => (p ? `${p.latitude.toFixed(2)},${p.longitude.toFixed(2)}` : '')
 
 function readCache(key: string): Weather | undefined {
   try {
@@ -27,21 +27,25 @@ function readCache(key: string): Weather | undefined {
   }
 }
 
-/** Weather for the chosen place, or the device location when none is set. */
+/** Weather for the chosen place. Location is never requested here; Settings asks for it when the user chooses. */
 export function useWeather(place?: Place): WeatherState {
   const key = placeKey(place)
   const [state, setState] = useState<WeatherState>(() => {
-    const cached = readCache(key)
-    return cached ? { status: 'ready', data: cached } : { status: 'loading' }
+    const cached = key ? readCache(key) : undefined
+    return cached ? { status: 'ready', data: cached } : key ? { status: 'loading' } : { status: 'unavailable', reason: 'No location set' }
   })
 
   useEffect(() => {
+    if (!place) {
+      setState({ status: 'unavailable', reason: 'No location set' })
+      return
+    }
     let cancelled = false
     const load = async () => {
       const cached = readCache(key)
       if (cached) return setState({ status: 'ready', data: cached })
       try {
-        const data = await fetchWeather(place ?? (await currentPosition()))
+        const data = await fetchWeather(place)
         if (cancelled) return
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), key, data } satisfies Cached))

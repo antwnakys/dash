@@ -2,11 +2,13 @@ import { useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
 import { searchPlace } from '@/data/weather'
+import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
 import { Field, TextInput } from './fields'
 
 export function SettingsForm({ onDone }: { onDone: () => void }) {
-  const { profile, setProfile, events, courses, loadSample, clearAll } = useDashboard()
+  const { profile, setProfile, events, courses, calendar, loadSample, clearAll } = useDashboard()
+  const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
   const [message, setMessage] = useState<string | null>(null)
@@ -69,7 +71,51 @@ export function SettingsForm({ onDone }: { onDone: () => void }) {
       )}
 
       <section className="flex flex-col gap-3 border-t border-line pt-5">
-        <h3 className="text-sm font-medium text-ink">Calendar import</h3>
+        <h3 className="text-sm font-medium text-ink">Google Calendar</h3>
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-muted">
+          <li>Open Google Calendar on a computer and go to Settings.</li>
+          <li>Under “Settings for my calendars”, pick a calendar, then “Integrate calendar”.</li>
+          <li>Copy “Secret address in iCal format” and paste it below. Add one line per calendar.</li>
+        </ol>
+        <textarea
+          value={calendarText}
+          onChange={(e) => setCalendarText(e.target.value)}
+          rows={3}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
+          placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+          aria-label="Calendar addresses"
+          className="w-full resize-none rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 font-sans text-base break-all text-ink placeholder:text-faint focus:border-accent/60 focus:outline-none sm:text-sm"
+        />
+        <p className="text-xs text-faint">The secret address stays on this device. Events sync every 15 minutes and are read-only in dash.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => {
+              const urls = calendarText.split(/\s+/).map((u) => u.trim()).filter((u) => /^(https?|webcal):\/\//i.test(u))
+              setProfile({ calendarUrls: urls })
+              setCalendarText(urls.join('\n'))
+            }}
+          >
+            {profile.calendarUrls?.length ? 'Update calendars' : 'Connect'}
+          </Button>
+          {calendar.status !== 'off' && (
+            <Button onClick={calendar.sync} disabled={calendar.status === 'syncing'}>
+              {calendar.status === 'syncing' ? 'Syncing…' : 'Sync now'}
+            </Button>
+          )}
+        </div>
+        {calendar.status === 'error' && <p className="text-sm text-red-300/90">{calendar.error}</p>}
+        {calendar.status === 'ok' && calendar.syncedAt && (
+          <p className="text-sm text-muted">
+            {calendar.events.length} upcoming events, synced {countdown(new Date(calendar.syncedAt)).replace('today', 'just now')}.
+          </p>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3 border-t border-line pt-5">
+        <h3 className="text-sm font-medium text-ink">Calendar file import</h3>
         <p className="text-sm text-muted">
           Import an .ics file from Google Calendar, Apple Calendar or your school portal. Importing the same file
           again updates those events instead of duplicating them.

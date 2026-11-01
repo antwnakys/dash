@@ -1,5 +1,6 @@
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { sampleData } from '@/data/sample'
+import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
@@ -14,6 +15,7 @@ interface DashboardValue {
   assignments: Collection<Assignment>
   events: Collection<CalendarEvent>
   tasks: TasksApi
+  calendar: CalendarSync
   weather: WeatherState
   /** Open assignments and events in one chronological list. */
   agenda: AgendaItem[]
@@ -28,7 +30,15 @@ interface DashboardValue {
 
 const DashboardContext = createContext<DashboardValue | null>(null)
 
-function buildAgenda(courses: Course[], assignments: Assignment[], events: CalendarEvent[]): AgendaItem[] {
+// Synced calendar entries that look like exams get the exam highlight.
+const EXAM = /\b(exams?|midterms?|finals?)\b|εξέταση|εξετάσεις/i
+
+function buildAgenda(
+  courses: Course[],
+  assignments: Assignment[],
+  events: CalendarEvent[],
+  synced: CalendarEvent[],
+): AgendaItem[] {
   const courseCode = new Map(courses.map((c) => [c.id, c.code]))
   return [
     ...assignments
@@ -50,6 +60,15 @@ function buildAgenda(courses: Course[], assignments: Assignment[], events: Calen
       context: e.location,
       allDay: e.allDay,
     })),
+    ...synced.map<AgendaItem>((e) => ({
+      id: e.id,
+      source: 'calendar',
+      title: e.title,
+      date: new Date(e.start),
+      kind: EXAM.test(e.title) ? 'exam' : 'event',
+      context: e.location,
+      allDay: e.allDay,
+    })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
 }
 
@@ -61,6 +80,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const events = useCollection<CalendarEvent>('dash.events.v1')
   const tasks = useTasks()
   const weather = useWeather(profile.place)
+  const calendar = useCalendarSync(profile.calendarUrls)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [editor, setEditor] = useState<EditorTarget | null>(null)
 
@@ -70,8 +90,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   )
 
   const agenda = useMemo(
-    () => buildAgenda(courses.items, assignments.items, events.items),
-    [courses.items, assignments.items, events.items],
+    () => buildAgenda(courses.items, assignments.items, events.items, calendar.events),
+    [courses.items, assignments.items, events.items, calendar.events],
   )
 
   const loadSample = useCallback(() => {
@@ -96,6 +116,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     assignments,
     events,
     tasks,
+    calendar,
     weather,
     agenda,
     selectedDate,

@@ -50,7 +50,7 @@ export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder'
 /** Assignments and events merged into one chronological stream. */
 export interface AgendaItem {
   id: string
-  source: 'assignment' | 'event'
+  source: 'assignment' | 'event' | 'calendar'
   title: string
   date: Date
   kind: AgendaKind
@@ -77,6 +77,8 @@ export interface Profile {
   name: string
   /** Weather location; when unset the device location is used. */
   place?: Place
+  /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
+  calendarUrls?: string[]
 }
 
 /** What the editor sheet is showing. A missing id means "create new". */

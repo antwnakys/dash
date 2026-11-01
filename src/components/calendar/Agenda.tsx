@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import { useMemo } from 'react'
 import { AgendaIcon } from '@/components/ui/AgendaIcon'
 import { CountdownBadge } from '@/components/ui/CountdownBadge'
@@ -20,7 +20,7 @@ function dayHeading(d: Date, now: Date): string {
 }
 
 export function Agenda({ limit }: { limit?: number }) {
-  const { agenda, selectedDate, openEditor } = useDashboard()
+  const { agenda, selectedDate, openEditor, calendar } = useDashboard()
   const now = useNow(60_000)
 
   const groups = useMemo(() => {
@@ -42,7 +42,22 @@ export function Agenda({ limit }: { limit?: number }) {
     <Panel
       title="Agenda"
       meta={viewingToday ? 'Upcoming' : `From ${fmt.shortDate.format(selectedDate)}`}
-      action={<IconButton icon={Plus} label="Add deadline or event" onClick={() => openEditor({ type: 'deadline' })} />}
+      action={
+        <div className="flex">
+          {calendar.status !== 'off' && (
+            <IconButton
+              icon={RefreshCw}
+              label={calendar.status === 'error' ? `Sync failed: ${calendar.error}` : 'Sync calendar'}
+              onClick={calendar.sync}
+              className={cn(
+                calendar.status === 'syncing' && '[&>svg]:animate-spin',
+                calendar.status === 'error' && 'text-red-300/80',
+              )}
+            />
+          )}
+          <IconButton icon={Plus} label="Add deadline or event" onClick={() => openEditor({ type: 'deadline' })} />
+        </div>
+      }
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -70,11 +85,13 @@ export function Agenda({ limit }: { limit?: number }) {
                   return (
                     <li key={item.id}>
                       <button
+                        // Synced calendar entries are read-only; edit them in Google Calendar.
+                        disabled={item.source === 'calendar'}
                         onClick={() =>
                           openEditor(item.source === 'assignment' ? { type: 'deadline', id: item.id } : { type: 'event', id: item.id })
                         }
                         className={cn(
-                          'relative flex w-full items-center gap-3 rounded-xl py-2 pr-1 pl-3 text-left transition-colors hover:bg-white/[0.03]',
+                          'relative flex w-full items-center gap-3 rounded-xl py-2 pr-1 pl-3 text-left transition-colors enabled:hover:bg-white/[0.03]',
                           exam && 'bg-accent/[0.06] hover:bg-accent/[0.09]',
                         )}
                       >

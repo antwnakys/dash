@@ -11,6 +11,8 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
   },
   plugins: {
+    // Route fetch through native HTTP so calendar feeds without CORS headers can be read.
+    CapacitorHttp: { enabled: true },
     // The web intro animation takes over straight from the native splash.
     SplashScreen: { launchShowDuration: 300, launchAutoHide: true, backgroundColor: '#0b0d12', showSpinner: false },
     StatusBar: { style: 'DARK', overlaysWebView: true },

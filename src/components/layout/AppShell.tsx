@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
 import { useDashboard } from '@/context/DashboardContext'
+import { isNative } from '@/lib/native'
 import { views } from '@/views'
 import { AmbientBackground } from './AmbientBackground'
 import { Intro } from './Intro'
@@ -62,9 +63,17 @@ export function AppShell() {
 
   return (
     <div className="relative min-h-dvh">
-      {/* Keeps the iOS status bar legible as content scrolls under it. */}
       <AmbientBackground />
-      <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/70 backdrop-blur-xl" />
+      {isNative ? (
+        // iPhone app: the status bar sits on a soft fade (blur and tint both taper off), with no hard edge.
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[calc(env(safe-area-inset-top)+1.75rem)] bg-[linear-gradient(to_bottom,var(--bg)_35%,transparent)] backdrop-blur-md [mask-image:linear-gradient(to_bottom,black_50%,transparent)]"
+        />
+      ) : (
+        // Keeps a browser's status bar legible as content scrolls under it.
+        <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/70 backdrop-blur-xl" />
+      )}
       <PullToRefresh onRefresh={refresh} />
       <Sidebar />
       {/* On phones an open sheet pushes the page back, like iOS. */}

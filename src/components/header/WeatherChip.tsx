@@ -1,6 +1,7 @@
 import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSun, Snowflake, Sun, type LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useDashboard } from '@/context/DashboardContext'
+import { isNative } from '@/lib/native'
 import type { Weather } from '@/types'
 
 const icons: Record<Weather['condition'], LucideIcon> = {
@@ -29,11 +30,13 @@ export function WeatherChip() {
   return (
     <span
       className="flex items-center gap-1.5 px-1 text-subhead text-muted"
-      title={`${data.summary}. High ${data.highC}°, low ${data.lowC}°`}
+      title={`${data.location}: ${data.summary}. High ${data.highC}°, low ${data.lowC}°`}
+      aria-label={`${data.tempC}°, ${data.summary.toLowerCase()} in ${data.location}`}
     >
       <Icon aria-hidden className="size-4" strokeWidth={2} />
       <span className="font-semibold text-ink tabular-nums">{data.tempC}°</span>
-      <span className="max-w-28 truncate">{data.location}</span>
+      {/* The iPhone app keeps just the icon and degrees so the date has room. */}
+      {!isNative && <span className="max-w-28 truncate">{data.location}</span>}
     </span>
   )
 }

@@ -74,7 +74,7 @@ export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: n
     return [...byDay.values()]
   }, [agenda, selectedDate, now, limit])
 
-  const loading = calendar.status === 'syncing' && calendar.events.length === 0
+  const loading = calendar.status === 'syncing' && !calendar.syncedAt
 
   const connectGoogle = async () => {
     if (!calendar.google.available) return openEditor({ type: 'settings', section: 'calendar' })

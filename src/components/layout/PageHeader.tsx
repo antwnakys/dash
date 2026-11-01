@@ -26,6 +26,7 @@ export function PageHeader({ title, shortTitle, eyebrow, accessory, aside, summa
   const { scrollY } = useScroll()
   // iOS-style large title: as it scrolls away, a compact bar fades in on phones.
   const barOpacity = useTransform(scrollY, [56, 96], [0, 1])
+  const barVisibility = useTransform(barOpacity, (o) => (o < 0.01 ? 'hidden' : 'visible'))
   const titleScale = useTransform(scrollY, [-120, 0], [1.08, 1])
 
   return (
@@ -33,7 +34,7 @@ export function PageHeader({ title, shortTitle, eyebrow, accessory, aside, summa
       {createPortal(
       <motion.div
         aria-hidden
-        style={{ opacity: barOpacity }}
+        style={{ opacity: barOpacity, visibility: barVisibility }}
         className="material pointer-events-none fixed inset-x-0 top-0 z-20 flex h-[calc(env(safe-area-inset-top)+2.75rem)] items-end justify-center rounded-none pb-2.5 shadow-none lg:hidden"
       >
         <span className="text-headline text-ink">{shortTitle}</span>

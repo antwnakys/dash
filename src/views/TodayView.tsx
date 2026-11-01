@@ -46,7 +46,7 @@ export function TodayView() {
   const summary = useSummary(now)
 
   return (
-    <Reveal>
+    <Reveal id="today">
       <PageHeader
         shortTitle="Today"
         eyebrow={fmt.longDate.format(now)}

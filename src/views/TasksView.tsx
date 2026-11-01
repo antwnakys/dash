@@ -7,7 +7,7 @@ export function TasksView() {
   const { tasks } = useDashboard()
   const open = tasks.tasks.filter((t) => !t.done).length
   return (
-    <Reveal className="mx-auto max-w-[44rem]">
+    <Reveal id="tasks" className="mx-auto max-w-[44rem]">
       <PageHeader
         shortTitle="Tasks"
         eyebrow="To do"

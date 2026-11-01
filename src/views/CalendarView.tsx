@@ -9,7 +9,7 @@ import { useDashboard } from '@/context/DashboardContext'
 export function CalendarView() {
   const { openEditor, calendar } = useDashboard()
   return (
-    <Reveal>
+    <Reveal id="calendar">
       <PageHeader
         shortTitle="Calendar"
         eyebrow={calendar.google.account ? `Synced with ${calendar.google.account.email}` : calendar.status === 'off' ? 'Not connected to Google Calendar' : 'Synced from iCal links'}

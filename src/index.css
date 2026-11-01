@@ -278,3 +278,10 @@
     animation: none;
   }
 }
+
+/* Phones: keep the ambient light still, so glass surfaces aren't re-blurred every frame. */
+@media (hover: none) {
+  .ambient-orb {
+    animation: none;
+  }
+}

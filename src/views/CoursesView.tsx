@@ -17,7 +17,7 @@ export function CoursesView() {
   const avg = courses.items.length ? Math.round((courses.items.reduce((s, c) => s + c.progress, 0) / courses.items.length) * 100) : 0
 
   return (
-    <Reveal>
+    <Reveal id="courses">
       <PageHeader
         shortTitle="Courses"
         eyebrow="This semester"

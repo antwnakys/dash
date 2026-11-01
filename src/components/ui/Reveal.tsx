@@ -1,5 +1,12 @@
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+
+// Each screen's entrance plays once per app session; later visits appear instantly, so switching
+// tabs never feels like the page reloaded.
+const played = new Set<string>()
+
+// Blur is costly to animate on phones; they get a plain rise and fade.
+const touch = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
 
 const container: Variants = {
   hidden: {},
@@ -7,15 +14,25 @@ const container: Variants = {
 }
 
 const item: Variants = {
-  hidden: { opacity: 0, y: 14, filter: 'blur(6px)' },
-  shown: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { type: 'spring', bounce: 0, duration: 0.6 } },
+  hidden: touch ? { opacity: 0, y: 12 } : { opacity: 0, y: 14, filter: 'blur(6px)' },
+  shown: {
+    opacity: 1,
+    y: 0,
+    ...(touch ? {} : { filter: 'blur(0px)' }),
+    transition: { type: 'spring', bounce: 0, duration: 0.55 },
+  },
 }
 
 /** One orchestrated entrance for a screen: children rise in, a beat apart. */
-export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
+export function Reveal({ id, children, className }: { id: string; children: ReactNode; className?: string }) {
   const reduce = useReducedMotion()
+  const [animate] = useState(() => {
+    const first = !played.has(id)
+    played.add(id)
+    return first && !reduce
+  })
   return (
-    <motion.div variants={container} initial={reduce ? false : 'hidden'} animate="shown" className={className}>
+    <motion.div variants={container} initial={animate ? 'hidden' : false} animate="shown" className={className}>
       {children}
     </motion.div>
   )

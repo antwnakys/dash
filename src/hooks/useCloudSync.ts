@@ -59,7 +59,6 @@ export function useCloudSync(enabled: boolean): CloudSync {
       return
     }
     running.current = true
-    setStatus('syncing')
     try {
       const token = await googleAccessToken()
       const meta = readMeta()
@@ -72,6 +71,7 @@ export function useCloudSync(enabled: boolean): CloudSync {
         return
       }
 
+      setStatus('syncing')
       const local = readLocalDoc()
       const remote = file ? await download(token, file.id) : null
       const merged = remote ? mergeDocs(local, remote) : local

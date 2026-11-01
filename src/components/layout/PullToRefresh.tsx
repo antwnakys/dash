@@ -30,7 +30,12 @@ export function PullToRefresh({ onRefresh }: { onRefresh: () => Promise<unknown>
     }
     const onMove = (e: TouchEvent) => {
       if (start.current === null) return
-      const d = e.touches[0].clientY - start.current
+      // Ignore ordinary scrolling: the page must still be at the top, and the pull must be deliberate.
+      if (window.scrollY > 0) {
+        start.current = null
+        return pull.set(0)
+      }
+      const d = e.touches[0].clientY - start.current - 10
       if (d <= 0) return pull.set(0)
       const v = rubberband(d)
       pull.set(v)

@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/cn'
 
+// Fill-in animation only right after launch; afterwards bars and rings appear at their value.
+let launching = true
+if (typeof window !== 'undefined') window.setTimeout(() => (launching = false), 2500)
+
 export function ProgressBar({ value, label, className }: { value: number; label: string; className?: string }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100)
   return (
@@ -14,7 +18,7 @@ export function ProgressBar({ value, label, className }: { value: number; label:
     >
       <motion.div
         className="h-full rounded-full bg-accent-fill"
-        initial={{ width: 0 }}
+        initial={launching ? { width: 0 } : false}
         animate={{ width: `${pct}%` }}
         transition={{ type: 'spring', bounce: 0, duration: 0.9, delay: 0.15 }}
       />
@@ -46,7 +50,7 @@ export function ProgressRing({ value, label, size = 28 }: { value: number; label
         strokeWidth={3}
         strokeLinecap="round"
         strokeDasharray={c}
-        initial={{ strokeDashoffset: c }}
+        initial={launching ? { strokeDashoffset: c } : false}
         animate={{ strokeDashoffset: c * (1 - pct) }}
         transition={{ type: 'spring', bounce: 0, duration: 1, delay: 0.2 }}
       />

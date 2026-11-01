@@ -33,7 +33,7 @@ export function Nav({ active, onChange }: NavProps) {
     <nav
       aria-label="Sections"
       className={cn(
-        'glass fixed z-20 flex',
+        'fixed z-20 flex border border-line bg-raised/85 backdrop-blur-xl backdrop-saturate-150',
         'inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] justify-around rounded-2xl p-1.5',
         'lg:inset-x-auto lg:top-1/2 lg:bottom-auto lg:left-5 lg:-translate-y-1/2 lg:flex-col lg:gap-1',
       )}

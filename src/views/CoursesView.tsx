@@ -4,6 +4,7 @@ import { usePendingByCourse } from '@/components/courses/usePendingByCourse'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Reveal, RevealItem } from '@/components/ui/Reveal'
 import { Card } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
@@ -16,8 +17,9 @@ export function CoursesView() {
   const avg = courses.items.length ? Math.round((courses.items.reduce((s, c) => s + c.progress, 0) / courses.items.length) * 100) : 0
 
   return (
-    <>
+    <Reveal>
       <PageHeader
+        shortTitle="Courses"
         eyebrow="This semester"
         title="Courses"
         summary={
@@ -32,6 +34,7 @@ export function CoursesView() {
         }
       />
       {courses.items.length === 0 ? (
+        <RevealItem>
         <Card>
           <EmptyState message="Add your courses to follow syllabus progress, deadlines and exams in one place.">
             <Button variant="primary" size="sm" onClick={() => openEditor({ type: 'course' })}>
@@ -42,13 +45,16 @@ export function CoursesView() {
             </Button>
           </EmptyState>
         </Card>
+        </RevealItem>
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
           {courses.items.map((c) => (
-            <CourseCard key={c.id} course={c} pending={pending.get(c.id) ?? []} now={now} />
+            <RevealItem key={c.id} className="flex">
+              <CourseCard course={c} pending={pending.get(c.id) ?? []} now={now} />
+            </RevealItem>
           ))}
         </div>
       )}
-    </>
+    </Reveal>
   )
 }

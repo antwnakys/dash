@@ -102,7 +102,16 @@ export function MiniCalendar({ large = false }: { large?: boolean }) {
               animate="center"
               exit="exit"
               transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-              className="grid grid-cols-7 gap-y-0.5"
+              // Swipe sideways to change month or week; the grid follows the finger and rubber-bands back.
+              drag="x"
+              dragDirectionLock
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.3}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -48 || info.velocity.x < -450) step(1)
+                else if (info.offset.x > 48 || info.velocity.x > 450) step(-1)
+              }}
+              className="grid touch-pan-y grid-cols-7 gap-y-0.5"
             >
               {days.map((d) => {
                 const mark = marks.get(dayKey(d))

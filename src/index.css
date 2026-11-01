@@ -117,15 +117,16 @@
 @layer base {
   html {
     background: var(--bg);
+    transition: background-color 0.3s ease;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-bg font-sans text-ink antialiased;
+    /* Transparent so the ambient light (z -10) shows between html's background and the content. */
+    @apply font-sans text-ink antialiased;
     font-size: 0.9375rem;
     line-height: 1.45;
     min-height: 100dvh;
-    transition: background-color 0.3s ease;
   }
   ::selection {
     background: color-mix(in srgb, var(--accent) 25%, transparent);
@@ -227,5 +228,53 @@
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* Ambient light colours per theme. */
+:root {
+  --orb-a: rgb(120 170 255 / 0.28);
+  --orb-b: rgb(255 196 160 / 0.22);
+  --orb-c: rgb(140 220 210 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --orb-a: rgb(40 100 230 / 0.22);
+    --orb-b: rgb(20 120 140 / 0.14);
+    --orb-c: rgb(80 70 200 / 0.1);
+  }
+}
+:root[data-theme='dark'] {
+  --orb-a: rgb(40 100 230 / 0.22);
+  --orb-b: rgb(20 120 140 / 0.14);
+  --orb-c: rgb(80 70 200 / 0.1);
+}
+
+@keyframes ambient-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6vmax, 4vmax, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-4vmax, 6vmax, 0) scale(0.95);
+  }
+}
+.ambient-orb {
+  animation: ambient-drift 40s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb {
+    animation: none;
   }
 }

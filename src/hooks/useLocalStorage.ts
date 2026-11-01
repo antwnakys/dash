@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type SetStateAction } from 'react'
+import { announceLocalChange, REMOTE_EVENT } from '@/sync/store'
 
 function read<T>(key: string): T | undefined {
   try {
@@ -9,7 +10,10 @@ function read<T>(key: string): T | undefined {
   }
 }
 
-/** State mirrored to localStorage; `undefined` means nothing was stored yet. */
+/**
+ * State mirrored to localStorage; `undefined` means nothing was stored yet.
+ * Picks up writes made by sync (and by other tabs), and announces the user's own changes.
+ */
 export function useLocalStorage<T>(key: string) {
   const [value, setValue] = useState<T | undefined>(() => read<T>(key))
 
@@ -22,5 +26,26 @@ export function useLocalStorage<T>(key: string) {
     }
   }, [key, value])
 
-  return [value, setValue] as const
+  useEffect(() => {
+    const reload = () => setValue(read<T>(key))
+    const onRemote = (e: Event) => (e as CustomEvent<string[]>).detail.includes(key) && reload()
+    const onOtherTab = (e: StorageEvent) => e.key === key && reload()
+    window.addEventListener(REMOTE_EVENT, onRemote)
+    window.addEventListener('storage', onOtherTab)
+    return () => {
+      window.removeEventListener(REMOTE_EVENT, onRemote)
+      window.removeEventListener('storage', onOtherTab)
+    }
+  }, [key])
+
+  const set = useCallback(
+    (next: SetStateAction<T | undefined>) => {
+      setValue(next)
+      // After React commits and the effect above persists it.
+      queueMicrotask(() => setTimeout(() => announceLocalChange(key), 0))
+    },
+    [key],
+  )
+
+  return [value, set] as const
 }

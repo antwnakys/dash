@@ -17,7 +17,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' }) {
-  const { profile, setProfile, events, courses, calendar, loadSample, clearAll, theme, notify } = useDashboard()
+  const { profile, setProfile, events, courses, calendar, cloud, loadSample, clearAll, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
@@ -124,8 +124,8 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
 
       <div ref={calendarSection} className="scroll-mt-4">
         <FormGroup
-          title="Google Calendar"
-          footer="dash only reads your calendar. Events sync every 15 minutes and on opening the app."
+          title="Google account"
+          footer="Signing in on every device keeps your courses, deadlines, events and tasks the same everywhere. dash stores them in a private folder in your Google Drive that only dash can see, and only reads your calendar."
         >
           {calendar.google.account ? (
             <div className="surface flex items-center gap-3 px-4 py-3">
@@ -165,6 +165,31 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
             </Button>
           ) : (
             <p className="px-1 text-subhead text-muted">Google sign-in isn’t set up in this build yet. Use an iCal link below.</p>
+          )}
+          {calendar.google.account && (
+            <div className="surface flex items-center justify-between gap-3 px-4 py-3">
+              <span className="min-w-0">
+                <span className="block text-body font-medium text-ink">Sync across devices</span>
+                <span className={`block text-subhead ${cloud.status === 'error' || cloud.status === 'paused' ? 'text-danger' : 'text-muted'}`}>
+                  {cloud.status === 'syncing'
+                    ? 'Syncing…'
+                    : cloud.status === 'paused' || cloud.status === 'error'
+                      ? cloud.error
+                      : cloud.lastSyncedAt
+                        ? `Up to date, synced ${countdown(new Date(cloud.lastSyncedAt)).replace('today', 'just now')}`
+                        : 'Waiting for the first sync'}
+                </span>
+              </span>
+              {cloud.status === 'paused' ? (
+                <Button size="sm" variant="primary" onClick={() => calendar.google.connect().then(cloud.syncNow).catch(() => {})}>
+                  Reconnect
+                </Button>
+              ) : (
+                <Button size="sm" onClick={cloud.syncNow} disabled={cloud.status === 'syncing'}>
+                  Sync now
+                </Button>
+              )}
+            </div>
           )}
           {calendar.status === 'reconnect' && calendar.google.account && (
             <Button size="sm" variant="primary" onClick={() => calendar.google.connect().catch(() => {})} className="self-start">

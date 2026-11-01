@@ -8,7 +8,8 @@ import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/config'
 import { isNative } from '@/lib/native'
 import type { CalendarEvent } from '@/types'
 
-const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly'
+// Read-only calendar, plus dash's own hidden folder in Drive for syncing between devices.
+const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/drive.appdata']
 const API = 'https://www.googleapis.com/calendar/v3'
 const DAY_MS = 86_400_000
 
@@ -39,7 +40,7 @@ export interface GoogleAccount {
 
 export async function connectGoogle(): Promise<GoogleAccount> {
   await initGoogle()
-  const res = await SocialLogin.login({ provider: 'google', options: { scopes: [SCOPE] } })
+  const res = await SocialLogin.login({ provider: 'google', options: { scopes: SCOPES } })
   const r = res.result as { responseType?: string; profile?: { email?: string | null; name?: string | null } }
   if (r.responseType === 'offline' || !r.profile?.email) throw new Error('Google didn’t return an account.')
   return { email: r.profile.email, name: r.profile.name ?? undefined }
@@ -50,7 +51,7 @@ export async function disconnectGoogle(): Promise<void> {
   await SocialLogin.logout({ provider: 'google' }).catch(() => {})
 }
 
-async function accessToken(): Promise<string> {
+export async function googleAccessToken(): Promise<string> {
   await initGoogle()
   try {
     const { accessToken } = await SocialLogin.getAuthorizationCode({ provider: 'google' })
@@ -88,7 +89,7 @@ interface GoogleEvent {
 
 /** Upcoming events from every calendar the user shows in Google Calendar. */
 export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
-  const token = await accessToken()
+  const token = await googleAccessToken()
   const { items: calendars = [] } = await api<{ items?: CalendarListEntry[] }>(token, '/users/me/calendarList', {
     minAccessRole: 'reader',
   })

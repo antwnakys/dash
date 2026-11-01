@@ -1,23 +1,49 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useCallback, useEffect, useState } from 'react'
 import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
 import { useDashboard } from '@/context/DashboardContext'
 import { views } from '@/views'
+import { AmbientBackground } from './AmbientBackground'
 import { Intro } from './Intro'
+import { PullToRefresh } from './PullToRefresh'
 import { Sidebar } from './Sidebar'
 import { TabBar } from './TabBar'
 
 const typing = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))
 
+function usePhone() {
+  const query = '(max-width: 639px)'
+  const [phone, setPhone] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const m = window.matchMedia(query)
+    const onChange = () => setPhone(m.matches)
+    m.addEventListener('change', onChange)
+    return () => m.removeEventListener('change', onChange)
+  }, [])
+  return phone
+}
+
 export function AppShell() {
-  const { view, setView, editor, openEditor, dismissToast } = useDashboard()
+  const { view, setView, editor, openEditor, dismissToast, calendar, cloud } = useDashboard()
+  const reduce = useReducedMotion()
+  const phone = usePhone()
+  // Scale around the middle of what's on screen, not the top of the page.
+  const [originY, setOriginY] = useState(0)
+  if (editor && phone && originY === 0) setOriginY(window.scrollY + window.innerHeight / 2)
+  if (!editor && originY !== 0) setOriginY(0)
   const View = views.find((v) => v.id === view)!.component
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [view])
+
+  const refresh = useCallback(async () => {
+    cloud.syncNow()
+    calendar.sync()
+    await new Promise((r) => setTimeout(r, 900))
+  }, [cloud, calendar])
 
   // Keyboard: N opens New, 1–4 switch sections.
   useEffect(() => {
@@ -37,9 +63,17 @@ export function AppShell() {
   return (
     <div className="relative min-h-dvh">
       {/* Keeps the iOS status bar legible as content scrolls under it. */}
-      <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/80 backdrop-blur-xl" />
+      <AmbientBackground />
+      <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/70 backdrop-blur-xl" />
+      <PullToRefresh onRefresh={refresh} />
       <Sidebar />
-      <main className="lg:pl-[15.5rem]">
+      {/* On phones an open sheet pushes the page back, like iOS. */}
+      <motion.main
+        animate={phone && editor && !reduce ? { scale: 0.93, borderRadius: 28, y: 8 } : { scale: 1, borderRadius: 0, y: 0 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.42 }}
+        style={{ transformOrigin: `50% ${originY || window.scrollY + window.innerHeight / 2}px` }}
+        className="overflow-clip lg:pl-[15.5rem]"
+      >
         <div className="mx-auto w-full max-w-[70rem] px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-36 sm:px-6 lg:px-10 lg:pt-11 lg:pb-16">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -53,7 +87,7 @@ export function AppShell() {
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
+      </motion.main>
       <TabBar />
       <EditorSheet />
       <ToastHost onDismiss={dismissToast} />

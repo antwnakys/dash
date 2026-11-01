@@ -14,9 +14,9 @@ export function ProgressBar({ value, label, className }: { value: number; label:
     >
       <motion.div
         className="h-full rounded-full bg-accent-fill"
-        initial={false}
+        initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
-        transition={{ type: 'spring', bounce: 0, duration: 0.5 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.9, delay: 0.15 }}
       />
     </div>
   )
@@ -46,9 +46,9 @@ export function ProgressRing({ value, label, size = 28 }: { value: number; label
         strokeWidth={3}
         strokeLinecap="round"
         strokeDasharray={c}
-        initial={false}
+        initial={{ strokeDashoffset: c }}
         animate={{ strokeDashoffset: c * (1 - pct) }}
-        transition={{ type: 'spring', bounce: 0, duration: 0.6 }}
+        transition={{ type: 'spring', bounce: 0, duration: 1, delay: 0.2 }}
       />
     </svg>
   )

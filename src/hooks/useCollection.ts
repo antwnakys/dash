@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { uid } from '@/lib/id'
+import { stampChange } from '@/sync/store'
 import { useLocalStorage } from './useLocalStorage'
 
 export interface Collection<T extends { id: string }> {
@@ -10,11 +11,14 @@ export interface Collection<T extends { id: string }> {
   set: (fn: (items: T[]) => T[]) => void
 }
 
-/** A list of records kept on this device. */
+/** A list of records kept on this device; every change is stamped so it can sync. */
 export function useCollection<T extends { id: string }>(key: string): Collection<T> {
   const [stored, setStored] = useLocalStorage<T[]>(key)
 
-  const set = useCallback((fn: (items: T[]) => T[]) => setStored((prev) => fn(prev ?? [])), [setStored])
+  const set = useCallback(
+    (fn: (items: T[]) => T[]) => setStored((prev) => stampChange(key, prev ?? [], fn(prev ?? []))),
+    [key, setStored],
+  )
 
   const add = useCallback(
     (item: Omit<T, 'id'>) => {

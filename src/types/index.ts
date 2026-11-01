@@ -79,6 +79,8 @@ export interface Profile {
   place?: Place
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
+  /** When the profile last changed, for sync. */
+  updatedAt?: number
 }
 
 /** What the editor sheet is showing. A missing id means "create new". */

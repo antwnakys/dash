@@ -19,7 +19,7 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
   const when = [course.schedule, course.instructor && `with ${course.instructor}`].filter(Boolean).join(' ')
 
   return (
-    <article className="surface flex flex-col">
+    <article className="surface flex w-full flex-col transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-soft)] [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:shadow-[var(--shadow-float)]">
       <button
         onClick={() => openEditor({ type: 'course', id: course.id })}
         aria-label={`Edit ${course.name}`}

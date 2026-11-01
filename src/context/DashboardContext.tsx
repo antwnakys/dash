@@ -1,6 +1,7 @@
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { sampleData } from '@/data/sample'
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
+import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
@@ -24,6 +25,8 @@ interface DashboardValue {
   events: Collection<CalendarEvent>
   tasks: TasksApi
   calendar: CalendarSync
+  /** Syncs this device's data with every other device signed in to the same Google account. */
+  cloud: CloudSync
   weather: WeatherState
   /** Open assignments and events in one chronological list. */
   agenda: AgendaItem[]
@@ -96,6 +99,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const tasks = useTasks()
   const weather = useWeather(profile.place)
   const calendar = useCalendarSync(profile.calendarUrls)
+  const cloud = useCloudSync(Boolean(calendar.google.account))
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [editor, setEditor] = useState<EditorTarget | null>(null)
   const theme = useTheme()
@@ -105,7 +109,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const notify = useCallback((message: string, tone: Toast['tone'] = 'default') => setToast({ id: Date.now(), message, tone }), [])
 
   const setProfile = useCallback(
-    (patch: Partial<Profile>) => setStoredProfile((p) => ({ name: '', ...p, ...patch })),
+    (patch: Partial<Profile>) => setStoredProfile((p) => ({ name: '', ...p, ...patch, updatedAt: Date.now() })),
     [setStoredProfile],
   )
 
@@ -137,6 +141,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     events,
     tasks,
     calendar,
+    cloud,
     weather,
     agenda,
     selectedDate,

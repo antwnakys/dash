@@ -4,6 +4,8 @@ import { CourseList } from '@/components/courses/CourseList'
 import { WeatherChip } from '@/components/header/WeatherChip'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TaskList } from '@/components/tasks/TaskList'
+import { Reveal, RevealItem } from '@/components/ui/Reveal'
+import { RollingTime } from '@/components/ui/RollingTime'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { countdown, fmt, greeting, isSameDay } from '@/lib/date'
@@ -32,8 +34,8 @@ function useSummary(now: Date) {
 
 function Clock({ now }: { now: Date }) {
   return (
-    <time dateTime={now.toISOString()} className="block text-[2.625rem] leading-none font-light tracking-[-0.03em] text-muted tabular-nums">
-      {fmt.time.format(now)}
+    <time dateTime={now.toISOString()} className="block text-[2.75rem] leading-none font-extralight tracking-[-0.03em] text-muted tabular-nums">
+      <RollingTime text={fmt.time.format(now)} />
     </time>
   )
 }
@@ -44,8 +46,9 @@ export function TodayView() {
   const summary = useSummary(now)
 
   return (
-    <>
+    <Reveal>
       <PageHeader
+        shortTitle="Today"
         eyebrow={fmt.longDate.format(now)}
         accessory={<WeatherChip />}
         title={
@@ -61,22 +64,22 @@ export function TodayView() {
       {/* One column in priority order until 1280px, then two. */}
       <div className="flex flex-col gap-8 xl:grid xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:items-start xl:gap-x-8 xl:gap-y-0">
         <div className="contents xl:flex xl:flex-col xl:gap-8">
-          <div className="order-1">
+          <RevealItem className="order-1">
             <Agenda limit={6} />
-          </div>
-          <div className="order-2">
+          </RevealItem>
+          <RevealItem className="order-2">
             <TaskList />
-          </div>
+          </RevealItem>
         </div>
         <div className="contents xl:flex xl:flex-col xl:gap-8">
-          <div className="order-4 xl:order-none">
+          <RevealItem className="order-4 xl:order-none">
             <MiniCalendar />
-          </div>
-          <div className="order-3 xl:order-none">
+          </RevealItem>
+          <RevealItem className="order-3 xl:order-none">
             <CourseList />
-          </div>
+          </RevealItem>
         </div>
       </div>
-    </>
+    </Reveal>
   )
 }

@@ -4,9 +4,17 @@ import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
+import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
 import { startOfDay } from '@/lib/date'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Profile } from '@/types'
+import type { ViewId } from '@/views'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Profile, ThemePreference } from '@/types'
+
+export interface Toast {
+  id: number
+  message: string
+  tone?: 'default' | 'error'
+}
 
 interface DashboardValue {
   profile: Profile
@@ -26,6 +34,13 @@ interface DashboardValue {
   closeEditor: () => void
   loadSample: () => void
   clearAll: () => void
+  theme: { preference: ThemePreference; resolved: 'light' | 'dark'; setPreference: (p: ThemePreference) => void }
+  toast: Toast | null
+  /** Brief confirmation or error shown above the navigation. */
+  notify: (message: string, tone?: Toast['tone']) => void
+  dismissToast: () => void
+  view: ViewId
+  setView: (v: ViewId) => void
 }
 
 const DashboardContext = createContext<DashboardValue | null>(null)
@@ -83,6 +98,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const calendar = useCalendarSync(profile.calendarUrls)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [editor, setEditor] = useState<EditorTarget | null>(null)
+  const theme = useTheme()
+  const [view, setView] = useState<ViewId>('today')
+  const [toast, setToast] = useState<Toast | null>(null)
+  const dismissToast = useCallback(() => setToast(null), [])
+  const notify = useCallback((message: string, tone: Toast['tone'] = 'default') => setToast({ id: Date.now(), message, tone }), [])
 
   const setProfile = useCallback(
     (patch: Partial<Profile>) => setStoredProfile((p) => ({ name: '', ...p, ...patch })),
@@ -126,6 +146,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     closeEditor: () => setEditor(null),
     loadSample,
     clearAll,
+    theme,
+    toast,
+    notify,
+    dismissToast,
+    view,
+    setView,
   }
 
   return <DashboardContext value={value}>{children}</DashboardContext>

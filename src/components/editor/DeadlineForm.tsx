@@ -21,7 +21,7 @@ function defaultDue(selected: Date): string {
 }
 
 export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?: string; onDone: () => void }) {
-  const { assignments, courses, selectedDate } = useDashboard()
+  const { assignments, courses, selectedDate, notify } = useDashboard()
   const existing = assignments.items.find((a) => a.id === id)
 
   const [title, setTitle] = useState(existing?.title ?? '')
@@ -31,7 +31,7 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
   const [submitted, setSubmitted] = useState(existing?.submitted ?? false)
 
   if (courses.items.length === 0) {
-    return <p className="pb-4 text-sm text-muted">Add a course first, then you can add its deadlines.</p>
+    return <p className="px-1 pb-4 text-body text-muted">Add a course first, then you can add its deadlines.</p>
   }
 
   const submit = (e: FormEvent) => {
@@ -39,18 +39,20 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
     const data = { title: title.trim(), courseId: course, kind, due: localInput.toIso(due), submitted }
     if (existing) assignments.update(existing.id, data)
     else assignments.add(data)
+    notify(existing ? 'Deadline saved' : 'Deadline added')
     onDone()
   }
 
   const remove = () => {
     if (!existing) return
     assignments.remove(existing.id)
+    notify('Deadline deleted')
     onDone()
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
-      <Segmented label="Type" options={kinds} value={kind} onChange={setKind} className="self-start" />
+    <form onSubmit={submit} className="flex flex-col gap-5">
+      <Segmented label="Type" options={kinds} value={kind} onChange={setKind} block />
       <Field label="Title">
         <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Problem set 8" required autoFocus={!existing} />
       </Field>
@@ -58,7 +60,7 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
         <Field label="Course">
           <Select value={course} onChange={(e) => setCourse(e.target.value)}>
             {courses.items.map((c) => (
-              <option key={c.id} value={c.id} className="bg-raised">
+              <option key={c.id} value={c.id}>
                 {c.code || c.name}
               </option>
             ))}
@@ -69,13 +71,13 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
         </Field>
       </div>
       {existing && <Toggle label="Submitted" checked={submitted} onChange={setSubmitted} />}
-      <div className="mt-2 flex gap-2">
+      <div className="mt-1 flex items-center gap-2">
         {existing && (
           <Button variant="danger" onClick={remove}>
             Delete
           </Button>
         )}
-        <Button type="submit" variant="primary" className="ml-auto">
+        <Button type="submit" variant="primary" className="ml-auto min-w-28">
           {existing ? 'Save' : `Add ${kind}`}
         </Button>
       </div>

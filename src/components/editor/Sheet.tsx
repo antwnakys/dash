@@ -1,6 +1,6 @@
-import { AnimatePresence, motion, useDragControls } from 'framer-motion'
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 
 interface SheetProps {
@@ -10,19 +10,28 @@ interface SheetProps {
   children: ReactNode
 }
 
-/** Bottom sheet on phones (drag down to close), centred dialog on larger screens. */
+/** Bottom sheet on phones (drag the grabber down to close), centred dialog from 640px up. */
 export function Sheet({ open, title, onClose, children }: SheetProps) {
   const drag = useDragControls()
+  const reduce = useReducedMotion()
+  const panel = useRef<HTMLDivElement>(null)
+  const returnFocus = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!open) return
+    returnFocus.current = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
+    // Move focus into the dialog unless a field already autofocused.
+    requestAnimationFrame(() => {
+      if (!panel.current?.contains(document.activeElement)) panel.current?.focus()
+    })
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = overflow
+      returnFocus.current?.focus?.()
     }
   }, [open, onClose])
 
@@ -31,13 +40,16 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
           <motion.div
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-[var(--scrim)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
             onClick={onClose}
           />
           <motion.div
+            ref={panel}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label={title}
@@ -45,23 +57,23 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
             dragListener={false}
             dragControls={drag}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
-            onDragEnd={(_, info) => (info.offset.y > 120 || info.velocity.y > 600) && onClose()}
-            initial={{ y: '100%', opacity: 0.6 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0.6 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-            className="relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl border-t border-line-strong bg-raised/95 backdrop-blur-xl sm:max-w-md sm:rounded-3xl sm:border"
+            dragElastic={{ top: 0.05, bottom: 0.7 }}
+            onDragEnd={(_, info) => (info.offset.y > 110 || info.velocity.y > 550) && onClose()}
+            initial={reduce ? { opacity: 0 } : { y: '100%' }}
+            animate={reduce ? { opacity: 1 } : { y: 0 }}
+            exit={reduce ? { opacity: 0 } : { y: '100%' }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.42 }}
+            className="material relative flex max-h-[92dvh] w-full flex-col rounded-t-[1.75rem] outline-none sm:max-w-[30rem] sm:rounded-[1.75rem]"
           >
             <div
               onPointerDown={(e) => drag.start(e)}
-              className="flex shrink-0 cursor-grab touch-none items-center justify-between px-5 pt-3 pb-2 active:cursor-grabbing"
+              className="relative flex shrink-0 touch-none items-center justify-between gap-3 px-5 pt-5 pb-3 sm:cursor-default"
             >
-              <span aria-hidden className="absolute top-2 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-white/15 sm:hidden" />
-              <h2 className="pt-3 font-serif text-2xl text-ink">{title}</h2>
-              <IconButton icon={X} label="Close" onClick={onClose} className="mt-2" />
+              <span aria-hidden className="absolute top-2 left-1/2 h-[5px] w-9 -translate-x-1/2 rounded-full bg-fill-strong sm:hidden" />
+              <h2 className="text-title text-ink">{title}</h2>
+              <IconButton icon={X} label="Close" variant="filled" onClick={onClose} className="size-8" />
             </div>
-            <div className="overflow-y-auto overscroll-contain px-5 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <div className="overflow-y-auto overscroll-contain px-5 pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
               {children}
             </div>
           </motion.div>

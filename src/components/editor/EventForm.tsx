@@ -21,7 +21,7 @@ function defaultStart(selected: Date): string {
 }
 
 export function EventForm({ id, onDone }: { id?: string; onDone: () => void }) {
-  const { events, selectedDate } = useDashboard()
+  const { events, selectedDate, notify } = useDashboard()
   const existing = events.items.find((e) => e.id === id)
 
   const [title, setTitle] = useState(existing?.title ?? '')
@@ -36,18 +36,20 @@ export function EventForm({ id, onDone }: { id?: string; onDone: () => void }) {
     const data = { title: title.trim(), kind, allDay: allDay || undefined, start: startIso, location: location.trim() || undefined }
     if (existing) events.update(existing.id, data)
     else events.add(data)
+    notify(existing ? 'Event saved' : 'Event added')
     onDone()
   }
 
   const remove = () => {
     if (!existing) return
     events.remove(existing.id)
+    notify('Event deleted')
     onDone()
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
-      <Segmented label="Type" options={kinds} value={kind} onChange={setKind} className="self-start" />
+    <form onSubmit={submit} className="flex flex-col gap-5">
+      <Segmented label="Type" options={kinds} value={kind} onChange={setKind} block />
       <Field label="Title">
         <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Study group" required autoFocus={!existing} />
       </Field>
@@ -63,13 +65,13 @@ export function EventForm({ id, onDone }: { id?: string; onDone: () => void }) {
       <Field label="Where">
         <TextInput value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" />
       </Field>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-1 flex items-center gap-2">
         {existing && (
           <Button variant="danger" onClick={remove}>
             Delete
           </Button>
         )}
-        <Button type="submit" variant="primary" className="ml-auto">
+        <Button type="submit" variant="primary" className="ml-auto min-w-28">
           {existing ? 'Save' : `Add ${kind}`}
         </Button>
       </div>

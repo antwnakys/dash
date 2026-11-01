@@ -10,14 +10,46 @@ export function ProgressBar({ value, label, className }: { value: number; label:
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn('h-1 overflow-hidden rounded-full bg-line', className)}
+      className={cn('h-1.5 overflow-hidden rounded-full bg-fill', className)}
     >
       <motion.div
-        className="h-full rounded-full bg-accent"
+        className="h-full rounded-full bg-accent-fill"
         initial={false}
         animate={{ width: `${pct}%` }}
-        transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.5 }}
       />
     </div>
+  )
+}
+
+/** Compact circular progress for list rows. */
+export function ProgressRing({ value, label, size = 28 }: { value: number; label: string; size?: number }) {
+  const pct = Math.min(1, Math.max(0, value))
+  const r = (size - 4) / 2
+  const c = 2 * Math.PI * r
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label={`${label}: ${Math.round(pct * 100)}%`}
+      className="shrink-0 -rotate-90"
+    >
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--fill-strong)" strokeWidth={3} />
+      <motion.circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="var(--accent-fill)"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        initial={false}
+        animate={{ strokeDashoffset: c * (1 - pct) }}
+        transition={{ type: 'spring', bounce: 0, duration: 0.6 }}
+      />
+    </svg>
   )
 }

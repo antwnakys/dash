@@ -5,8 +5,10 @@ import type { EditorTarget } from '@/types'
 import { CourseForm } from './CourseForm'
 import { DeadlineForm } from './DeadlineForm'
 import { EventForm } from './EventForm'
+import { NewChooser } from './NewChooser'
 import { SettingsForm } from './SettingsForm'
 import { Sheet } from './Sheet'
+import { TaskForm } from './TaskForm'
 
 const titles = {
   course: ['New course', 'Edit course'],
@@ -18,6 +20,8 @@ const newKinds = [
   { value: 'deadline' as const, label: 'Deadline' },
   { value: 'event' as const, label: 'Event' },
 ]
+
+const idOf = (t: EditorTarget) => ('id' in t ? t.id : undefined)
 
 /** The one sheet that hosts every editor; keeps showing the last target while it animates out. */
 export function EditorSheet() {
@@ -33,29 +37,39 @@ export function EditorSheet() {
   }
 
   const target = shown
-  const isNew = target && target.type !== 'settings' && !target.id
-  const type = target && isNew && target.type !== 'course' ? newKind : target?.type
+  const switchable = target && (target.type === 'deadline' || target.type === 'event') && !target.id
+  const type = switchable ? newKind : target?.type
 
   const title =
-    type === 'settings' ? 'Settings' : type ? titles[type][isNew ? 0 : 1] : ''
+    type === 'settings'
+      ? 'Settings'
+      : type === 'new'
+        ? 'New'
+        : type === 'task'
+          ? 'New task'
+          : type
+            ? titles[type][target && idOf(target) ? 1 : 0]
+            : ''
 
   return (
     <Sheet open={editor !== null} title={title} onClose={closeEditor}>
       {target && (
-        <div key={JSON.stringify(target)} className="flex flex-col gap-4">
-          {isNew && target.type !== 'course' && !('courseId' in target && target.courseId) && (
-            <Segmented label="What to add" options={newKinds} value={newKind} onChange={setNewKind} className="self-start" />
+        <div key={JSON.stringify(target)} className="flex flex-col gap-5">
+          {switchable && !('courseId' in target && target.courseId) && (
+            <Segmented label="What to add" options={newKinds} value={newKind} onChange={setNewKind} block />
           )}
-          {type === 'course' && <CourseForm id={'id' in target ? target.id : undefined} onDone={closeEditor} />}
+          {type === 'new' && <NewChooser />}
+          {type === 'task' && <TaskForm onDone={closeEditor} />}
+          {type === 'course' && <CourseForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'deadline' && (
             <DeadlineForm
               key={newKind}
-              id={'id' in target ? target.id : undefined}
+              id={idOf(target)}
               courseId={'courseId' in target ? target.courseId : undefined}
               onDone={closeEditor}
             />
           )}
-          {type === 'event' && <EventForm key={newKind} id={'id' in target ? target.id : undefined} onDone={closeEditor} />}
+          {type === 'event' && <EventForm key={newKind} id={idOf(target)} onDone={closeEditor} />}
           {type === 'settings' && (
             <SettingsForm onDone={closeEditor} section={target.type === 'settings' ? target.section : undefined} />
           )}

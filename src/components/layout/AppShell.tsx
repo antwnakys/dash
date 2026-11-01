@@ -1,44 +1,62 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { EditorSheet } from '@/components/editor/EditorSheet'
-import { Header } from '@/components/header/Header'
-import { views, type ViewId } from '@/views'
+import { ToastHost } from '@/components/ui/Toast'
+import { useDashboard } from '@/context/DashboardContext'
+import { views } from '@/views'
 import { Intro } from './Intro'
-import { Nav } from './Nav'
+import { Sidebar } from './Sidebar'
+import { TabBar } from './TabBar'
+
+const typing = (el: EventTarget | null) =>
+  el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))
 
 export function AppShell() {
-  const [active, setActive] = useState<ViewId>('overview')
-  const View = views.find((v) => v.id === active)!.component
+  const { view, setView, editor, openEditor, dismissToast } = useDashboard()
+  const View = views.find((v) => v.id === view)!.component
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [view])
+
+  // Keyboard: N opens New, 1–4 switch sections.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (editor || e.metaKey || e.ctrlKey || e.altKey || typing(e.target)) return
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        openEditor({ type: 'new' })
+      }
+      const index = Number(e.key) - 1
+      if (views[index]) setView(views[index].id)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [editor, openEditor, setView])
 
   return (
-    <div className="relative isolate min-h-dvh">
-      {/* A faint accent glow gives the frosted panels something to blur. */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60rem_40rem_at_15%_-10%,rgb(122_162_255/0.09),transparent_70%),radial-gradient(40rem_30rem_at_100%_100%,rgb(122_162_255/0.04),transparent_70%)]"
-      />
-      <Nav
-        active={active}
-        onChange={(id) => {
-          setActive(id)
-          window.scrollTo({ top: 0 })
-        }}
-      />
-      <main className="mx-auto flex min-w-0 max-w-[1360px] flex-col gap-8 px-4 pt-[max(2rem,calc(env(safe-area-inset-top)+1rem))] pb-28 sm:px-6 sm:pt-12 lg:pr-10 lg:pb-12 lg:pl-28">
-        <Header />
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={active}
-            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -6, filter: 'blur(4px)' }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <View />
-          </motion.div>
-        </AnimatePresence>
+    <div className="relative min-h-dvh">
+      {/* Keeps the iOS status bar legible as content scrolls under it. */}
+      <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/80 backdrop-blur-xl" />
+      <Sidebar />
+      <main className="lg:pl-[15.5rem]">
+        <div className="mx-auto w-full max-w-[70rem] px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-36 sm:px-6 lg:px-10 lg:pt-11 lg:pb-16">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <View />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
+      <TabBar />
       <EditorSheet />
+      <ToastHost onDismiss={dismissToast} />
       <Intro />
     </div>
   )

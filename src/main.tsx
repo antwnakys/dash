@@ -1,8 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// Fonts ship with the app so the first screen never waits on the network.
-import '@fontsource-variable/instrument-sans/wght.css'
-import '@fontsource/instrument-serif/400.css'
+// Inter ships as the fallback for non-Apple devices; Apple devices use SF Pro and never download it.
+import '@fontsource-variable/inter/wght.css'
 import './index.css'
 import App from './App.tsx'
 

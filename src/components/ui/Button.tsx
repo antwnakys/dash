@@ -1,20 +1,39 @@
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/cn'
 
-type Variant = 'primary' | 'quiet' | 'danger'
+type Variant = 'primary' | 'secondary' | 'plain' | 'danger'
+type Size = 'sm' | 'md'
 
-const styles: Record<Variant, string> = {
-  primary: 'bg-accent text-accent-ink font-semibold hover:brightness-110',
-  quiet: 'bg-white/[0.05] text-ink hover:bg-white/[0.08]',
-  danger: 'text-red-300/90 hover:bg-red-400/10',
+const variants: Record<Variant, string> = {
+  primary: 'bg-accent-fill text-accent-ink font-semibold hover:brightness-110',
+  secondary: 'bg-fill text-ink font-medium hover:bg-fill-strong',
+  plain: 'text-accent font-medium hover:bg-fill',
+  danger: 'text-danger font-medium hover:bg-danger/10',
 }
 
-export function Button({ variant = 'quiet', className, ...rest }: { variant?: Variant } & HTMLMotionProps<'button'>) {
+const sizes: Record<Size, string> = {
+  sm: 'h-8 px-3 text-subhead',
+  md: 'h-10 px-4 text-body',
+}
+
+/** Capsule button. Press feedback starts on pointer-down. */
+export function Button({
+  variant = 'secondary',
+  size = 'md',
+  className,
+  ...rest
+}: { variant?: Variant; size?: Size } & HTMLMotionProps<'button'>) {
   return (
     <motion.button
       type="button"
       whileTap={{ scale: 0.97 }}
-      className={cn('rounded-xl px-4 py-2.5 text-sm transition-[background,filter] disabled:opacity-50', styles[variant], className)}
+      transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-[background-color,filter] disabled:pointer-events-none disabled:opacity-40',
+        variants[variant],
+        sizes[size],
+        className,
+      )}
       {...rest}
     />
   )

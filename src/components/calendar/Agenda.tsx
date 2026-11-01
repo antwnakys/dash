@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus, RefreshCw } from 'lucide-react'
+import { ChevronRight, RefreshCw } from 'lucide-react'
 import { useMemo } from 'react'
-import { AgendaIcon } from '@/components/ui/AgendaIcon'
-import { CountdownBadge } from '@/components/ui/CountdownBadge'
+import { Button } from '@/components/ui/Button'
+import { Countdown } from '@/components/ui/Countdown'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton } from '@/components/ui/IconButton'
-import { Panel } from '@/components/ui/Panel'
+import { Card, Section } from '@/components/ui/Section'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { kindLabel } from '@/lib/agenda'
@@ -19,9 +21,45 @@ function dayHeading(d: Date, now: Date): string {
   return fmt.shortDate.format(d)
 }
 
-export function Agenda({ limit }: { limit?: number }) {
-  const { agenda, selectedDate, openEditor, calendar } = useDashboard()
+function Row({ item, now }: { item: AgendaItem; now: Date }) {
+  const { openEditor } = useDashboard()
+  const flagged = item.kind === 'exam' || item.kind === 'quiz'
+  const editable = item.source !== 'calendar'
+  return (
+    <li>
+      <button
+        // Synced calendar entries are read-only; they are edited in Google Calendar.
+        disabled={!editable}
+        onClick={() => openEditor(item.source === 'assignment' ? { type: 'deadline', id: item.id } : { type: 'event', id: item.id })}
+        className="flex min-h-[3.25rem] w-full items-center gap-3 px-4 py-2.5 text-left transition-colors enabled:hover:bg-fill enabled:active:bg-fill-strong"
+      >
+        <span className={cn('w-12 shrink-0 text-subhead tabular-nums', flagged ? 'font-semibold text-accent' : 'text-muted')}>
+          {item.allDay ? 'All day' : fmt.time.format(item.date)}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-body text-ink">
+              <span className="sr-only">{kindLabel[item.kind]}: </span>
+              {item.title}
+            </span>
+            {flagged && (
+              <span aria-hidden className="shrink-0 rounded-[0.35rem] bg-accent/12 px-1.5 py-px text-caption font-semibold text-accent">
+                {kindLabel[item.kind]}
+              </span>
+            )}
+          </span>
+          {item.context && <span className="block truncate text-subhead text-muted">{item.context}</span>}
+        </span>
+        <Countdown date={item.date} now={now} />
+      </button>
+    </li>
+  )
+}
+
+export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: number }) {
+  const { agenda, selectedDate, setSelectedDate, openEditor, calendar } = useDashboard()
   const now = useNow(60_000)
+  const viewingToday = isSameDay(selectedDate, now)
 
   const groups = useMemo(() => {
     const from = startOfDay(selectedDate)
@@ -36,102 +74,92 @@ export function Agenda({ limit }: { limit?: number }) {
     return [...byDay.values()]
   }, [agenda, selectedDate, now, limit])
 
-  const viewingToday = isSameDay(selectedDate, now)
+  const loading = calendar.status === 'syncing' && calendar.events.length === 0
 
   return (
-    <Panel
-      title="Agenda"
-      meta={viewingToday ? 'Upcoming' : `From ${fmt.shortDate.format(selectedDate)}`}
+    <Section
+      title={title}
+      meta={!viewingToday && `From ${fmt.shortDate.format(selectedDate)}`}
       action={
-        <div className="flex">
+        <>
+          {!viewingToday && (
+            <Button variant="plain" size="sm" onClick={() => setSelectedDate(startOfDay(new Date()))}>
+              Back to today
+            </Button>
+          )}
           {calendar.status !== 'off' && (
             <IconButton
               icon={RefreshCw}
               label={calendar.status === 'error' ? `Sync failed: ${calendar.error}` : 'Sync calendar'}
               onClick={calendar.sync}
-              className={cn(
-                calendar.status === 'syncing' && '[&>svg]:animate-spin',
-                calendar.status === 'error' && 'text-red-300/80',
-              )}
+              className={cn(calendar.status === 'syncing' && '[&>svg]:animate-spin', calendar.status === 'error' && 'text-danger')}
             />
           )}
-          <IconButton icon={Plus} label="Add deadline or event" onClick={() => openEditor({ type: 'deadline' })} />
-        </div>
+        </>
       }
     >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={selectedDate.toDateString()}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.18 }}
-          className="flex flex-col gap-5"
-        >
-          {calendar.status === 'off' && (
-            <button
-              onClick={() => openEditor({ type: 'settings', section: 'calendar' })}
-              className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-accent/40 bg-accent/[0.05] px-4 py-3 text-left transition-colors hover:bg-accent/[0.09]"
-            >
-              <span className="text-sm text-ink">
-                Connect Google Calendar
-                <span className="block text-xs text-muted">Your events appear here and stay in sync.</span>
-              </span>
-              <RefreshCw aria-hidden className="size-4 shrink-0 text-accent" strokeWidth={1.75} />
-            </button>
-          )}
-          {groups.length === 0 && (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <p className="text-sm text-muted">Nothing scheduled from this day on.</p>
-              <button onClick={() => openEditor({ type: 'event' })} className="text-sm text-accent hover:underline">
-                Add an event
-              </button>
-            </div>
-          )}
-          {groups.map(({ date, items }) => (
-            <div key={date.toDateString()}>
-              <h3 className="mb-1.5 text-xs text-faint">{dayHeading(date, now)}</h3>
-              <ol className="flex flex-col">
-                {items.map((item) => {
-                  const exam = item.kind === 'exam'
-                  return (
-                    <li key={item.id}>
-                      <button
-                        // Synced calendar entries are read-only; edit them in Google Calendar.
-                        disabled={item.source === 'calendar'}
-                        onClick={() =>
-                          openEditor(item.source === 'assignment' ? { type: 'deadline', id: item.id } : { type: 'event', id: item.id })
-                        }
-                        className={cn(
-                          'relative flex w-full items-center gap-3 rounded-xl py-2 pr-1 pl-3 text-left transition-colors enabled:hover:bg-white/[0.03]',
-                          exam && 'bg-accent/[0.06] hover:bg-accent/[0.09]',
-                        )}
-                      >
-                      {exam && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-accent" />}
-                      <span className="w-11 shrink-0 text-xs text-muted tabular-nums">
-                        {item.allDay ? 'All day' : fmt.time.format(item.date)}
-                      </span>
-                      <AgendaIcon
-                        kind={item.kind}
-                        className={cn('size-4 shrink-0', exam ? 'text-accent' : 'text-faint')}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-ink">
-                          <span className="sr-only">{kindLabel[item.kind]}: </span>
-                          {item.title}
-                        </p>
-                        {item.context && <p className="truncate text-xs text-faint">{item.context}</p>}
-                      </div>
-                      <CountdownBadge date={item.date} now={now} />
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
-            </div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
-    </Panel>
+      <Card>
+        {calendar.status === 'off' && (
+          <button
+            onClick={() => openEditor({ type: 'settings', section: 'calendar' })}
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-fill"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
+              <RefreshCw aria-hidden className="size-4" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-medium text-ink">Connect Google Calendar</span>
+              <span className="block text-subhead text-muted">Your events appear here and stay in sync.</span>
+            </span>
+            <ChevronRight aria-hidden className="size-4 shrink-0 text-faint" />
+          </button>
+        )}
+        {calendar.status === 'error' && (
+          <p role="alert" className="border-b border-line px-4 py-2.5 text-subhead text-danger">
+            Calendar sync failed. {calendar.error}
+          </p>
+        )}
+
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={selectedDate.toDateString()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {loading && (
+              <div className="flex flex-col gap-3 p-4" aria-label="Loading events">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 flex-1" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {!loading && groups.length === 0 && (
+              <div className={cn(calendar.status === 'off' && 'border-t border-line')}>
+                <EmptyState message={viewingToday ? 'Nothing coming up. Enjoy the free time.' : 'Nothing scheduled from this day on.'}>
+                  <Button variant="plain" size="sm" onClick={() => openEditor({ type: 'event' })}>
+                    Add an event
+                  </Button>
+                </EmptyState>
+              </div>
+            )}
+            {groups.map(({ date, items }, i) => (
+              <div key={date.toDateString()} className={cn((i > 0 || calendar.status === 'off') && 'border-t border-line')}>
+                <h3 className="px-4 pt-3 pb-0.5 text-subhead font-semibold text-ink">{dayHeading(date, now)}</h3>
+                <ol className="separated">
+                  {items.map((item) => (
+                    <Row key={item.id} item={item} now={now} />
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </Card>
+    </Section>
   )
 }

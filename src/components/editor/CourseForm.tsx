@@ -7,7 +7,7 @@ import { Field, TextInput } from './fields'
 const linkUrl = (c: Course | undefined, kind: CourseLink['kind']) => c?.links.find((l) => l.kind === kind)?.url ?? ''
 
 export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) {
-  const { courses, assignments } = useDashboard()
+  const { courses, assignments, notify } = useDashboard()
   const existing = courses.items.find((c) => c.id === id)
 
   const [code, setCode] = useState(existing?.code ?? '')
@@ -33,6 +33,7 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
     }
     if (existing) courses.update(existing.id, data)
     else courses.add(data)
+    notify(existing ? 'Course saved' : 'Course added')
     onDone()
   }
 
@@ -40,11 +41,12 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
     if (!existing || !confirm(`Delete ${existing.name} and its deadlines?`)) return
     assignments.set((list) => list.filter((a) => a.courseId !== existing.id))
     courses.remove(existing.id)
+    notify('Course deleted')
     onDone()
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
+    <form onSubmit={submit} className="flex flex-col gap-5">
       <div className="grid grid-cols-[7rem_1fr] gap-3">
         <Field label="Code">
           <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="CS 310" />
@@ -69,7 +71,7 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
           step={5}
           value={progress}
           onChange={(e) => setProgress(+e.target.value)}
-          className="w-full accent-[var(--color-accent)]"
+          className="h-6 w-full accent-[var(--accent-fill)]"
         />
       </Field>
       <Field label="Course portal link">
@@ -78,13 +80,13 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       <Field label="Materials link">
         <TextInput type="url" inputMode="url" value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder="https://" />
       </Field>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-1 flex items-center gap-2">
         {existing && (
           <Button variant="danger" onClick={remove}>
             Delete
           </Button>
         )}
-        <Button type="submit" variant="primary" className="ml-auto">
+        <Button type="submit" variant="primary" className="ml-auto min-w-28">
           {existing ? 'Save course' : 'Add course'}
         </Button>
       </div>

@@ -2,7 +2,7 @@
  * dash's synced data as one JSON file in the user's Google Drive app-data folder:
  * hidden from Drive's file list and readable only by dash.
  */
-import { GoogleReconnectError } from '@/data/google'
+import { GoogleReconnectError, invalidateGoogleToken } from '@/data/google'
 import type { SyncDoc } from './merge'
 
 const FILE_NAME = 'dash-data.json'
@@ -16,7 +16,10 @@ export interface RemoteFile {
 
 async function call(token: string, url: string, init: RequestInit = {}): Promise<Response> {
   const res = await fetch(url, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) } })
-  if (res.status === 401) throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  if (res.status === 401) {
+    invalidateGoogleToken()
+    throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  }
   if (res.status === 403) throw new GoogleReconnectError('Reconnect Google once to turn on sync between your devices.')
   if (!res.ok) throw new Error(`Google Drive returned ${res.status}.`)
   return res

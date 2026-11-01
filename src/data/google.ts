@@ -40,6 +40,7 @@ export interface GoogleAccount {
 
 export async function connectGoogle(): Promise<GoogleAccount> {
   await initGoogle()
+  invalidateGoogleToken()
   const res = await SocialLogin.login({ provider: 'google', options: { scopes: SCOPES } })
   const r = res.result as { responseType?: string; profile?: { email?: string | null; name?: string | null } }
   if (r.responseType === 'offline' || !r.profile?.email) throw new Error('Google didn’t return an account.')
@@ -48,25 +49,62 @@ export async function connectGoogle(): Promise<GoogleAccount> {
 
 export async function disconnectGoogle(): Promise<void> {
   await initGoogle()
+  invalidateGoogleToken()
   await SocialLogin.logout({ provider: 'google' }).catch(() => {})
 }
 
-export async function googleAccessToken(): Promise<string> {
-  await initGoogle()
-  try {
-    const { accessToken } = await SocialLogin.getAuthorizationCode({ provider: 'google' })
-    if (!accessToken) throw new Error('no token')
-    return accessToken
-  } catch {
-    throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
-  }
+const TOKEN_TIMEOUT = 15_000
+const TOKEN_REUSE = 4 * 60_000
+
+let cachedToken: { value: string; at: number } | null = null
+let pendingToken: Promise<string> | null = null
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('Google didn’t respond in time.')), ms)
+    promise.then(
+      (v) => (clearTimeout(t), resolve(v)),
+      (e) => (clearTimeout(t), reject(e)),
+    )
+  })
+}
+
+/** Forget the current token, e.g. after Google rejected it or the user signed in again. */
+export function invalidateGoogleToken() {
+  cachedToken = null
+}
+
+/**
+ * A valid access token. Calendar and data sync share one request: on iOS the sign-in plugin answers
+ * only one of two simultaneous requests, which once left calendar sync waiting forever.
+ */
+export function googleAccessToken(): Promise<string> {
+  if (cachedToken && Date.now() - cachedToken.at < TOKEN_REUSE) return Promise.resolve(cachedToken.value)
+  pendingToken ??= (async () => {
+    await initGoogle()
+    try {
+      const { accessToken } = await withTimeout(SocialLogin.getAuthorizationCode({ provider: 'google' }), TOKEN_TIMEOUT)
+      if (!accessToken) throw new Error('no token')
+      cachedToken = { value: accessToken, at: Date.now() }
+      return accessToken
+    } catch (e) {
+      if (e instanceof Error && /in time/.test(e.message)) throw e
+      throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+    }
+  })().finally(() => {
+    pendingToken = null
+  })
+  return pendingToken
 }
 
 async function api<T>(token: string, path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(API + path)
   url.search = new URLSearchParams(params).toString()
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-  if (res.status === 401) throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  if (res.status === 401) {
+    invalidateGoogleToken()
+    throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  }
   if (res.status === 403) throw new Error('Google Calendar access was denied. Reconnect and allow calendar access.')
   if (!res.ok) throw new Error(`Google Calendar returned ${res.status}.`)
   return res.json() as Promise<T>

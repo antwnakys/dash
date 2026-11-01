@@ -125,43 +125,98 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
       <div ref={calendarSection} className="scroll-mt-4">
         <FormGroup
           title="Google Calendar"
-          footer="The secret address stays on this device. Events sync every 15 minutes and are read-only in dash."
+          footer="dash only reads your calendar. Events sync every 15 minutes and on opening the app."
         >
-          <ol className="list-decimal space-y-1 pl-6 text-subhead text-muted">
-            <li>On a computer, open Google Calendar → Settings.</li>
-            <li>Pick your calendar, then “Integrate calendar”.</li>
-            <li>Copy “Secret address in iCal format”, then tap below.</li>
-          </ol>
-          <Button variant="primary" onClick={pasteAndConnect} className="w-full">
-            Paste link and connect
-          </Button>
-          <TextArea
-            value={calendarText}
-            onChange={(e) => setCalendarText(e.target.value)}
-            rows={3}
-            spellCheck={false}
-            autoCapitalize="off"
-            autoCorrect="off"
-            placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
-            aria-label="Calendar addresses, one per line"
-            className="break-all"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => connect(calendarText)}>
-              {profile.calendarUrls?.length ? 'Save addresses' : 'Connect typed address'}
-            </Button>
-            {calendar.status !== 'off' && (
-              <Button size="sm" onClick={calendar.sync} disabled={calendar.status === 'syncing'}>
-                {calendar.status === 'syncing' ? 'Syncing…' : 'Sync now'}
+          {calendar.google.account ? (
+            <div className="surface flex items-center gap-3 px-4 py-3">
+              <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/12 text-headline text-accent">
+                {(calendar.google.account.name ?? calendar.google.account.email).slice(0, 1).toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body font-medium text-ink">{calendar.google.account.name ?? 'Google account'}</span>
+                <span className="block truncate text-subhead text-muted">{calendar.google.account.email}</span>
+              </span>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={async () => {
+                  await calendar.google.disconnect()
+                  notify('Google Calendar disconnected')
+                }}
+              >
+                Disconnect
               </Button>
-            )}
-          </div>
-          {calendar.status === 'error' && <p className="px-1 text-subhead text-danger">{calendar.error}</p>}
-          {calendar.status === 'ok' && calendar.syncedAt && (
-            <p className="px-1 text-subhead text-muted">
-              {calendar.events.length} upcoming events, synced {countdown(new Date(calendar.syncedAt)).replace('today', 'just now')}.
-            </p>
+            </div>
+          ) : calendar.google.available ? (
+            <Button
+              variant="primary"
+              className="w-full"
+              disabled={calendar.google.connecting}
+              onClick={async () => {
+                try {
+                  await calendar.google.connect()
+                  notify('Google Calendar connected')
+                } catch (e) {
+                  notify(e instanceof Error && /cancel|closed/i.test(e.message) ? 'Sign-in cancelled' : 'Couldn’t connect to Google. Try again.', 'error')
+                }
+              }}
+            >
+              {calendar.google.connecting ? 'Waiting for Google…' : 'Connect with Google'}
+            </Button>
+          ) : (
+            <p className="px-1 text-subhead text-muted">Google sign-in isn’t set up in this build yet. Use an iCal link below.</p>
           )}
+          {calendar.status === 'reconnect' && calendar.google.account && (
+            <Button size="sm" variant="primary" onClick={() => calendar.google.connect().catch(() => {})} className="self-start">
+              Reconnect
+            </Button>
+          )}
+          {calendar.status !== 'off' && (
+            <div className="flex items-center justify-between gap-2 px-1">
+              <p className="min-w-0 text-subhead text-muted">
+                {calendar.status === 'syncing'
+                  ? 'Syncing…'
+                  : calendar.syncedAt
+                    ? `${calendar.events.length} upcoming events, synced ${countdown(new Date(calendar.syncedAt)).replace('today', 'just now')}.`
+                    : 'Not synced yet.'}
+              </p>
+              <Button size="sm" onClick={calendar.sync} disabled={calendar.status === 'syncing'}>
+                Sync now
+              </Button>
+            </div>
+          )}
+          {calendar.status === 'error' && <p className="px-1 text-subhead text-danger">{calendar.error}</p>}
+
+          <details className="group">
+            <summary className="cursor-pointer list-none px-1 text-subhead font-medium text-accent [&::-webkit-details-marker]:hidden">
+              Use an iCal link instead
+            </summary>
+            <div className="mt-3 flex flex-col gap-3">
+              <ol className="list-decimal space-y-1 pl-6 text-subhead text-muted">
+                <li>On a computer, open Google Calendar → Settings.</li>
+                <li>Pick a calendar, then “Integrate calendar”.</li>
+                <li>Copy “Secret address in iCal format”, then tap below.</li>
+              </ol>
+              <p className="px-1 text-caption text-faint">iCal links sync in the iPhone app; browsers block them.</p>
+              <Button onClick={pasteAndConnect} className="w-full">
+                Paste link and connect
+              </Button>
+              <TextArea
+                value={calendarText}
+                onChange={(e) => setCalendarText(e.target.value)}
+                rows={3}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+                aria-label="Calendar addresses, one per line"
+                className="break-all"
+              />
+              <Button size="sm" onClick={() => connect(calendarText)} className="self-start">
+                {profile.calendarUrls?.length ? 'Save addresses' : 'Connect typed address'}
+              </Button>
+            </div>
+          </details>
         </FormGroup>
       </div>
 

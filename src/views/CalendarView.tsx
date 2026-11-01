@@ -10,7 +10,7 @@ export function CalendarView() {
   return (
     <>
       <PageHeader
-        eyebrow={calendar.status === 'off' ? 'Not connected to Google Calendar' : 'Synced with Google Calendar'}
+        eyebrow={calendar.google.account ? `Synced with ${calendar.google.account.email}` : calendar.status === 'off' ? 'Not connected to Google Calendar' : 'Synced from iCal links'}
         title="Calendar"
         aside={
           <Button variant="primary" onClick={() => openEditor({ type: 'event' })}>

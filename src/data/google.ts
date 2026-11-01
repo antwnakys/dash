@@ -1,0 +1,137 @@
+/**
+ * Google sign-in and read-only Google Calendar access.
+ * Web: OAuth popup (access token lasts an hour, then the user reconnects with one tap).
+ * iOS: native Google Sign-In, which restores and refreshes the session silently.
+ */
+import { SocialLogin } from '@capgo/capacitor-social-login'
+import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/config'
+import { isNative } from '@/lib/native'
+import type { CalendarEvent } from '@/types'
+
+const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly'
+const API = 'https://www.googleapis.com/calendar/v3'
+const DAY_MS = 86_400_000
+
+export const googleConfigured = Boolean(isNative ? GOOGLE_IOS_CLIENT_ID : GOOGLE_WEB_CLIENT_ID)
+
+/** Thrown when Google needs the user to sign in again (expired or revoked access). */
+export class GoogleReconnectError extends Error {}
+
+let ready: Promise<void> | null = null
+
+/** Sets up the plugin once. On the web this also completes a sign-in popup that loaded the app. */
+export function initGoogle(): Promise<void> {
+  if (!googleConfigured) return Promise.resolve()
+  ready ??= SocialLogin.initialize({
+    google: {
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      iOSClientId: GOOGLE_IOS_CLIENT_ID,
+      mode: 'online',
+    },
+  })
+  return ready
+}
+
+export interface GoogleAccount {
+  email: string
+  name?: string
+}
+
+export async function connectGoogle(): Promise<GoogleAccount> {
+  await initGoogle()
+  const res = await SocialLogin.login({ provider: 'google', options: { scopes: [SCOPE] } })
+  const r = res.result as { responseType?: string; profile?: { email?: string | null; name?: string | null } }
+  if (r.responseType === 'offline' || !r.profile?.email) throw new Error('Google didn’t return an account.')
+  return { email: r.profile.email, name: r.profile.name ?? undefined }
+}
+
+export async function disconnectGoogle(): Promise<void> {
+  await initGoogle()
+  await SocialLogin.logout({ provider: 'google' }).catch(() => {})
+}
+
+async function accessToken(): Promise<string> {
+  await initGoogle()
+  try {
+    const { accessToken } = await SocialLogin.getAuthorizationCode({ provider: 'google' })
+    if (!accessToken) throw new Error('no token')
+    return accessToken
+  } catch {
+    throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  }
+}
+
+async function api<T>(token: string, path: string, params: Record<string, string> = {}): Promise<T> {
+  const url = new URL(API + path)
+  url.search = new URLSearchParams(params).toString()
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  if (res.status === 401) throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+  if (res.status === 403) throw new Error('Google Calendar access was denied. Reconnect and allow calendar access.')
+  if (!res.ok) throw new Error(`Google Calendar returned ${res.status}.`)
+  return res.json() as Promise<T>
+}
+
+interface CalendarListEntry {
+  id: string
+  selected?: boolean
+  primary?: boolean
+  hidden?: boolean
+}
+
+interface GoogleEvent {
+  id: string
+  status?: string
+  summary?: string
+  location?: string
+  start?: { date?: string; dateTime?: string }
+}
+
+/** Upcoming events from every calendar the user shows in Google Calendar. */
+export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
+  const token = await accessToken()
+  const { items: calendars = [] } = await api<{ items?: CalendarListEntry[] }>(token, '/users/me/calendarList', {
+    minAccessRole: 'reader',
+  })
+  const shown = calendars.filter((c) => c.primary || (c.selected && !c.hidden))
+  const timeMin = new Date(Date.now() - DAY_MS).toISOString()
+  const timeMax = new Date(Date.now() + 180 * DAY_MS).toISOString()
+
+  const perCalendar = await Promise.all(
+    shown.map(async (cal) => {
+      const out: CalendarEvent[] = []
+      let pageToken: string | undefined
+      for (let page = 0; page < 5; page++) {
+        const data = await api<{ items?: GoogleEvent[]; nextPageToken?: string }>(
+          token,
+          `/calendars/${encodeURIComponent(cal.id)}/events`,
+          {
+            timeMin,
+            timeMax,
+            singleEvents: 'true',
+            orderBy: 'startTime',
+            maxResults: '250',
+            ...(pageToken ? { pageToken } : {}),
+          },
+        )
+        for (const e of data.items ?? []) {
+          if (e.status === 'cancelled' || !e.start) continue
+          const allDay = Boolean(e.start.date && !e.start.dateTime)
+          // All-day dates are calendar days, so read them as local midnight.
+          const start = allDay ? new Date(`${e.start.date}T00:00`) : new Date(e.start.dateTime!)
+          out.push({
+            id: `g-${cal.id}-${e.id}`,
+            title: e.summary?.trim() || '(No title)',
+            start: start.toISOString(),
+            allDay: allDay || undefined,
+            location: e.location || undefined,
+            kind: 'event',
+          })
+        }
+        pageToken = data.nextPageToken
+        if (!pageToken) break
+      }
+      return out
+    }),
+  )
+  return perCalendar.flat()
+}

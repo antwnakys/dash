@@ -57,7 +57,7 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
 }
 
 export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: number }) {
-  const { agenda, selectedDate, setSelectedDate, openEditor, calendar } = useDashboard()
+  const { agenda, selectedDate, setSelectedDate, openEditor, calendar, notify } = useDashboard()
   const now = useNow(60_000)
   const viewingToday = isSameDay(selectedDate, now)
 
@@ -75,6 +75,16 @@ export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: n
   }, [agenda, selectedDate, now, limit])
 
   const loading = calendar.status === 'syncing' && calendar.events.length === 0
+
+  const connectGoogle = async () => {
+    if (!calendar.google.available) return openEditor({ type: 'settings', section: 'calendar' })
+    try {
+      await calendar.google.connect()
+      notify('Google Calendar connected')
+    } catch (e) {
+      notify(e instanceof Error && /cancel|closed/i.test(e.message) ? 'Sign-in cancelled' : 'Couldn’t connect to Google. Try again.', 'error')
+    }
+  }
 
   return (
     <Section
@@ -99,17 +109,26 @@ export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: n
       }
     >
       <Card>
-        {calendar.status === 'off' && (
+        {(calendar.status === 'off' || calendar.status === 'reconnect') && (
           <button
-            onClick={() => openEditor({ type: 'settings', section: 'calendar' })}
+            onClick={connectGoogle}
+            disabled={calendar.google.connecting}
             className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-fill"
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
               <RefreshCw aria-hidden className="size-4" strokeWidth={2} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-body font-medium text-ink">Connect Google Calendar</span>
-              <span className="block text-subhead text-muted">Your events appear here and stay in sync.</span>
+              <span className="block text-body font-medium text-ink">
+                {calendar.google.connecting
+                  ? 'Waiting for Google…'
+                  : calendar.status === 'reconnect'
+                    ? 'Reconnect Google Calendar'
+                    : 'Connect Google Calendar'}
+              </span>
+              <span className="block text-subhead text-muted">
+                {calendar.status === 'reconnect' ? 'Google sign-in expired. Tap to sign in again.' : 'Sign in with Google to see your events here.'}
+              </span>
             </span>
             <ChevronRight aria-hidden className="size-4 shrink-0 text-faint" />
           </button>
@@ -139,7 +158,7 @@ export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: n
               </div>
             )}
             {!loading && groups.length === 0 && (
-              <div className={cn(calendar.status === 'off' && 'border-t border-line')}>
+              <div className={cn((calendar.status === 'off' || calendar.status === 'reconnect') && 'border-t border-line')}>
                 <EmptyState message={viewingToday ? 'Nothing coming up. Enjoy the free time.' : 'Nothing scheduled from this day on.'}>
                   <Button variant="plain" size="sm" onClick={() => openEditor({ type: 'event' })}>
                     Add an event
@@ -148,7 +167,7 @@ export function Agenda({ title = 'Up next', limit }: { title?: string; limit?: n
               </div>
             )}
             {groups.map(({ date, items }, i) => (
-              <div key={date.toDateString()} className={cn((i > 0 || calendar.status === 'off') && 'border-t border-line')}>
+              <div key={date.toDateString()} className={cn((i > 0 || calendar.status === 'off' || calendar.status === 'reconnect') && 'border-t border-line')}>
                 <h3 className="px-4 pt-3 pb-0.5 text-subhead font-semibold text-ink">{dayHeading(date, now)}</h3>
                 <ol className="separated">
                   {items.map((item) => (

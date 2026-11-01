@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
 import { currentPosition, searchPlace } from '@/data/weather'
@@ -6,7 +6,9 @@ import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
 import { Field, TextInput } from './fields'
 
-export function SettingsForm({ onDone }: { onDone: () => void }) {
+const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
+
+export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' }) {
   const { profile, setProfile, events, courses, calendar, loadSample, clearAll } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
@@ -14,6 +16,30 @@ export function SettingsForm({ onDone }: { onDone: () => void }) {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const calendarSection = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (section === 'calendar') calendarSection.current?.scrollIntoView({ block: 'start' })
+  }, [section])
+
+  const connect = (text: string) => {
+    const urls = text.split(/\s+/).filter(isCalendarUrl)
+    setProfile({ calendarUrls: urls })
+    setCalendarText(urls.join('\n'))
+  }
+
+  const pasteAndConnect = async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim()
+      if (!isCalendarUrl(text)) {
+        setMessage('The clipboard doesn’t hold a calendar link. Copy the “Secret address in iCal format” first.')
+        return
+      }
+      connect([calendarText, text].filter(Boolean).join('\n'))
+    } catch {
+      setMessage('Couldn’t read the clipboard. Long-press the box below and choose Paste instead.')
+    }
+  }
 
   const save = async (e: FormEvent) => {
     e.preventDefault()
@@ -87,13 +113,16 @@ export function SettingsForm({ onDone }: { onDone: () => void }) {
         </p>
       )}
 
-      <section className="flex flex-col gap-3 border-t border-line pt-5">
+      <section ref={calendarSection} className="flex scroll-mt-4 flex-col gap-3 border-t border-line pt-5">
         <h3 className="text-sm font-medium text-ink">Google Calendar</h3>
         <ol className="list-decimal space-y-1 pl-5 text-sm text-muted">
           <li>Open Google Calendar on a computer and go to Settings.</li>
           <li>Under “Settings for my calendars”, pick a calendar, then “Integrate calendar”.</li>
-          <li>Copy “Secret address in iCal format” and paste it below. Add one line per calendar.</li>
+          <li>Copy “Secret address in iCal format”, then tap Paste link here. Your Mac’s clipboard reaches your iPhone through Handoff.</li>
         </ol>
+        <Button variant="primary" onClick={pasteAndConnect} className="self-start">
+          Paste link and connect
+        </Button>
         <textarea
           value={calendarText}
           onChange={(e) => setCalendarText(e.target.value)}
@@ -107,15 +136,8 @@ export function SettingsForm({ onDone }: { onDone: () => void }) {
         />
         <p className="text-xs text-faint">The secret address stays on this device. Events sync every 15 minutes and are read-only in dash.</p>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="primary"
-            onClick={() => {
-              const urls = calendarText.split(/\s+/).map((u) => u.trim()).filter((u) => /^(https?|webcal):\/\//i.test(u))
-              setProfile({ calendarUrls: urls })
-              setCalendarText(urls.join('\n'))
-            }}
-          >
-            {profile.calendarUrls?.length ? 'Update calendars' : 'Connect'}
+          <Button onClick={() => connect(calendarText)}>
+            {profile.calendarUrls?.length ? 'Save changes' : 'Connect typed link'}
           </Button>
           {calendar.status !== 'off' && (
             <Button onClick={calendar.sync} disabled={calendar.status === 'syncing'}>

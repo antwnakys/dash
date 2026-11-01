@@ -56,7 +56,9 @@ export function EditorSheet() {
             />
           )}
           {type === 'event' && <EventForm key={newKind} id={'id' in target ? target.id : undefined} onDone={closeEditor} />}
-          {type === 'settings' && <SettingsForm onDone={closeEditor} />}
+          {type === 'settings' && (
+            <SettingsForm onDone={closeEditor} section={target.type === 'settings' ? target.section : undefined} />
+          )}
         </div>
       )}
     </Sheet>

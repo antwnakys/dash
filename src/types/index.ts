@@ -86,4 +86,4 @@ export type EditorTarget =
   | { type: 'course'; id?: string }
   | { type: 'deadline'; id?: string; courseId?: string }
   | { type: 'event'; id?: string }
-  | { type: 'settings' }
+  | { type: 'settings'; section?: 'calendar' }

@@ -68,6 +68,18 @@ export function Agenda({ limit }: { limit?: number }) {
           transition={{ duration: 0.18 }}
           className="flex flex-col gap-5"
         >
+          {calendar.status === 'off' && (
+            <button
+              onClick={() => openEditor({ type: 'settings', section: 'calendar' })}
+              className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-accent/40 bg-accent/[0.05] px-4 py-3 text-left transition-colors hover:bg-accent/[0.09]"
+            >
+              <span className="text-sm text-ink">
+                Connect Google Calendar
+                <span className="block text-xs text-muted">Your events appear here and stay in sync.</span>
+              </span>
+              <RefreshCw aria-hidden className="size-4 shrink-0 text-accent" strokeWidth={1.75} />
+            </button>
+          )}
           {groups.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <p className="text-sm text-muted">Nothing scheduled from this day on.</p>

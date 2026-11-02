@@ -6,4 +6,5 @@ export const kindLabel: Record<AgendaKind, string> = {
   quiz: 'Quiz',
   event: 'Event',
   reminder: 'Reminder',
+  class: 'Course',
 }

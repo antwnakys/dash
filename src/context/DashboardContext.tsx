@@ -7,6 +7,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
+import { EXAM, isClass, matchCourse } from '@/lib/campus'
 import { startOfDay } from '@/lib/date'
 import type { ViewId } from '@/views'
 import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Profile, ThemePreference } from '@/types'
@@ -48,9 +49,6 @@ interface DashboardValue {
 
 const DashboardContext = createContext<DashboardValue | null>(null)
 
-// Synced calendar entries that look like exams get the exam highlight.
-const EXAM = /\b(exams?|midterms?|finals?)\b|εξέταση|εξετάσεις/i
-
 function buildAgenda(
   courses: Course[],
   assignments: Assignment[],
@@ -58,6 +56,12 @@ function buildAgenda(
   synced: CalendarEvent[],
 ): AgendaItem[] {
   const courseCode = new Map(courses.map((c) => [c.id, c.code]))
+  // Events at campus (Sorou 74, Marousi) are classes: marked as a course and linked to one when the title matches.
+  const asClass = (e: CalendarEvent): Partial<AgendaItem> | null => {
+    if (!isClass(e)) return null
+    const course = matchCourse(e.title, courses)
+    return { kind: 'class', courseId: course?.id, context: [course?.code, e.location?.split(',')[0]].filter(Boolean).join(' · ') }
+  }
   return [
     ...assignments
       .filter((a) => !a.submitted)
@@ -77,6 +81,7 @@ function buildAgenda(
       kind: e.kind,
       context: e.location,
       allDay: e.allDay,
+      ...asClass(e),
     })),
     ...synced.map<AgendaItem>((e) => ({
       id: e.id,
@@ -86,6 +91,7 @@ function buildAgenda(
       kind: EXAM.test(e.title) ? 'exam' : 'event',
       context: e.location,
       allDay: e.allDay,
+      ...asClass(e),
     })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
 }

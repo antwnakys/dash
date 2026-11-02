@@ -28,13 +28,13 @@ export function MiniCalendar({ large = false }: { large?: boolean }) {
 
   const days = mode === 'month' ? monthGrid(cursor) : weekOf(cursor)
 
-  // Per day: how many items, and whether any is an exam (marked in accent).
+  // Per day, up to three dots: an exam in accent, a class in course green, everything else grey.
   const marks = useMemo(() => {
-    const m = new Map<string, { count: number; exam: boolean }>()
+    const m = new Map<string, { count: number; exam: boolean; class: boolean }>()
     for (const item of agenda) {
       const k = dayKey(item.date)
-      const prev = m.get(k) ?? { count: 0, exam: false }
-      m.set(k, { count: prev.count + 1, exam: prev.exam || item.kind === 'exam' })
+      const prev = m.get(k) ?? { count: 0, exam: false, class: false }
+      m.set(k, { count: prev.count + 1, exam: prev.exam || item.kind === 'exam', class: prev.class || item.kind === 'class' })
     }
     return m
   }, [agenda])
@@ -137,15 +137,9 @@ export function MiniCalendar({ large = false }: { large?: boolean }) {
                     {d.getDate()}
                     <span className="absolute bottom-1 flex gap-[3px]">
                       {mark &&
-                        Array.from({ length: Math.min(mark.count, 3) }, (_, i) => (
-                          <span
-                            key={i}
-                            className={cn(
-                              'size-1 rounded-full',
-                              selected ? 'bg-accent-ink/80' : mark.exam && i === 0 ? 'bg-accent' : 'bg-faint',
-                            )}
-                          />
-                        ))}
+                        [...(mark.exam ? ['bg-accent'] : []), ...(mark.class ? ['bg-course'] : []), 'bg-faint', 'bg-faint', 'bg-faint']
+                          .slice(0, Math.min(mark.count, 3))
+                          .map((tone, i) => <span key={i} className={cn('size-1 rounded-full', selected ? 'bg-accent-ink/80' : tone)} />)}
                     </span>
                   </button>
                 )

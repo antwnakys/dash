@@ -68,3 +68,54 @@ export function FormGroup({ title, footer, children }: { title?: string; footer?
     </section>
   )
 }
+
+/**
+ * A grey pill showing a date or time the way iOS Calendar does. Tapping it opens the system picker
+ * (the iOS wheel / calendar on iPhone, the browser's picker elsewhere) through a transparent native input.
+ */
+export function PickerPill({
+  type,
+  value,
+  onChange,
+  label,
+  display,
+  placeholder = 'None',
+  className,
+}: {
+  type: 'date' | 'time'
+  value: string
+  onChange: (value: string) => void
+  label: string
+  display: (value: string) => string
+  placeholder?: string
+  className?: string
+}) {
+  return (
+    <span
+      className={cn(
+        'relative inline-flex h-9 items-center rounded-[0.5rem] bg-fill px-3 text-[1.0625rem] tabular-nums transition-[background-color,box-shadow] duration-150 has-[:focus-visible]:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_35%,transparent)] has-[:active]:bg-fill-strong',
+        value ? 'text-ink' : 'text-faint',
+        className,
+      )}
+    >
+      <span aria-hidden className="whitespace-nowrap">
+        {value ? display(value) : placeholder}
+      </span>
+      <input
+        type={type}
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => {
+          try {
+            e.currentTarget.showPicker()
+          } catch {
+            // Older browsers open their picker on their own.
+          }
+        }}
+        // 16px keeps iOS from zooming; the input itself is invisible over the pill.
+        className="absolute inset-0 size-full cursor-pointer appearance-none text-base opacity-0"
+      />
+    </span>
+  )
+}

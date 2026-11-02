@@ -14,6 +14,15 @@ export interface CourseLink {
   kind: 'portal' | 'materials' | 'video'
 }
 
+/** One recurring class time: the weekdays it meets (0 = Sunday … 6 = Saturday) and its local times. */
+export interface CourseMeeting {
+  days: number[]
+  /** "HH:MM" */
+  start: string
+  /** "HH:MM" */
+  end?: string
+}
+
 export interface Course {
   id: string
   code: string
@@ -21,7 +30,11 @@ export interface Course {
   instructor: string
   /** 0–1, share of the syllabus completed */
   progress: number
+  /** Readable schedule, e.g. "Tue & Thu 13:00–14:30"; written from `meetings` when they exist. */
   schedule: string
+  meetings?: CourseMeeting[]
+  /** First and last day of classes, "YYYY-MM-DD". */
+  term?: { start?: string; end?: string }
   links: CourseLink[]
 }
 
@@ -40,12 +53,15 @@ export interface CalendarEvent {
   title: string
   /** ISO timestamp */
   start: string
+  /** ISO timestamp; synced calendar events only */
+  end?: string
   allDay?: boolean
   location?: string
   kind: 'event' | 'reminder'
 }
 
-export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder'
+/** `class`: a lesson on campus (Sorou 74, Marousi), marked as a course. */
+export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder' | 'class'
 
 /** Assignments and events merged into one chronological stream. */
 export interface AgendaItem {
@@ -56,6 +72,8 @@ export interface AgendaItem {
   kind: AgendaKind
   context?: string
   allDay?: boolean
+  /** The course a class belongs to, when its title matches one. */
+  courseId?: string
 }
 
 export interface Weather {

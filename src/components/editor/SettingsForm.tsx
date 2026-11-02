@@ -5,6 +5,8 @@ import { useDashboard } from '@/context/DashboardContext'
 import { currentPosition, searchPlace } from '@/data/weather'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
+import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
+import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
 import { Field, FormGroup, TextArea, TextInput } from './fields'
 
@@ -289,6 +291,16 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
             Delete all data
           </Button>
         </div>
+      </FormGroup>
+
+      <FormGroup
+        title="About"
+        footer={isNative ? 'The app downloads new versions from the website by itself and switches to them the next time you open it.' : undefined}
+      >
+        <p className="px-1 text-subhead text-muted">
+          Version <span className="font-medium text-ink tabular-nums">{BUILD}</span> · built{' '}
+          {BUILT_AT.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </p>
       </FormGroup>
     </div>
   )

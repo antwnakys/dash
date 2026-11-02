@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { sampleData } from '@/data/sample'
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
 import { EXAM, isClass, matchCourse } from '@/lib/campus'
 import { startOfDay } from '@/lib/date'
+import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
 import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Profile, ThemePreference } from '@/types'
 
@@ -113,6 +114,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<Toast | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
   const notify = useCallback((message: string, tone: Toast['tone'] = 'default') => setToast({ id: Date.now(), message, tone }), [])
+
+  // iPhone app: follow the website's version; tell the user once a newer one is downloaded.
+  useEffect(() => startLiveUpdates(() => notify('Update downloaded. It applies when you next open dash.')), [notify])
 
   const setProfile = useCallback(
     (patch: Partial<Profile>) => setStoredProfile((p) => ({ name: '', ...p, ...patch, updatedAt: Date.now() })),

@@ -44,6 +44,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
 - `src/hooks/useCalendarSync.ts`: read-only calendar copy, refreshed every 15 min and on focus
+- `src/lib/liveUpdate.ts`: the iPhone app updates itself from the website (`@capgo/capacitor-updater` in manual mode, no Capgo cloud).
+  `deploy.yml` publishes `app-bundle.zip` + `version.json` (`{version: short sha, url, checksum: sha256}`); the app compares with its
+  `__BUILD__` (short sha, `vite.config.ts`), downloads, and switches on next open. Settings → About shows the running version.
+  Native-only changes (new plugins, Info.plist, icons) still need a reinstall from Xcode.
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,
@@ -82,5 +86,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
      Free Apple ID builds expire after 7 days; re-run from Xcode to renew.
   4. Alternative without building: download `dash.ipa` from the `ios-latest` release and sideload it (e.g. Sideloadly).
   After install, sign in with Google once so calendar and Drive sync start.
+- **Nov 2, 2026 (evening)**: the user installed from the Xcode zip but didn't see the morning changes in the app (cause unclear).
+  Added live updates + version label so the app follows the website; needs one more install from Xcode to switch on.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react'
+import { CampusClasses } from '@/components/courses/CampusClasses'
 import { CourseCard } from '@/components/courses/CourseCard'
 import { usePendingByCourse } from '@/components/courses/usePendingByCourse'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -33,6 +34,7 @@ export function CoursesView() {
           </Button>
         }
       />
+      <CampusClasses />
       {courses.items.length === 0 ? (
         <RevealItem>
         <Card>

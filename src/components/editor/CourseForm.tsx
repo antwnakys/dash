@@ -1,8 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
-import type { Course, CourseLink } from '@/types'
+import { formatMeetings, newMeeting, parseSchedule } from '@/lib/schedule'
+import type { Course, CourseLink, CourseMeeting } from '@/types'
 import { Field, TextInput } from './fields'
+import { ScheduleEditor } from './ScheduleEditor'
+
+/** Saved times, or ones read from an older free-text schedule, or one empty time to fill in. */
+function initialMeetings(c?: Course): CourseMeeting[] {
+  if (c?.meetings?.length) return c.meetings
+  const parsed = c?.schedule ? parseSchedule(c.schedule) : []
+  return parsed.length ? parsed : [newMeeting()]
+}
 
 const linkUrl = (c: Course | undefined, kind: CourseLink['kind']) => c?.links.find((l) => l.kind === kind)?.url ?? ''
 
@@ -13,7 +22,8 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
   const [code, setCode] = useState(existing?.code ?? '')
   const [name, setName] = useState(existing?.name ?? '')
   const [instructor, setInstructor] = useState(existing?.instructor ?? '')
-  const [schedule, setSchedule] = useState(existing?.schedule ?? '')
+  const [meetings, setMeetings] = useState(() => initialMeetings(existing))
+  const [term, setTerm] = useState<NonNullable<Course['term']>>(existing?.term ?? {})
   const [progress, setProgress] = useState(Math.round((existing?.progress ?? 0) * 100))
   const [portal, setPortal] = useState(linkUrl(existing, 'portal'))
   const [materials, setMaterials] = useState(linkUrl(existing, 'materials'))
@@ -23,11 +33,15 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
     const links: CourseLink[] = []
     if (portal.trim()) links.push({ label: 'Course portal', url: portal.trim(), kind: 'portal' })
     if (materials.trim()) links.push({ label: 'Materials', url: materials.trim(), kind: 'materials' })
+    const set = meetings.filter((m) => m.days.length)
     const data = {
       code: code.trim(),
       name: name.trim(),
       instructor: instructor.trim(),
-      schedule: schedule.trim(),
+      // No days picked keeps whatever schedule text an older version saved.
+      schedule: set.length ? formatMeetings(set) : (existing?.meetings?.length ? '' : (existing?.schedule ?? '')),
+      meetings: set.length ? set : undefined,
+      term: term.start || term.end ? term : undefined,
       progress: progress / 100,
       links,
     }
@@ -55,13 +69,12 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
           <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Algorithms" required autoFocus={!existing} />
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Instructor">
-          <TextInput value={instructor} onChange={(e) => setInstructor(e.target.value)} />
-        </Field>
-        <Field label="When">
-          <TextInput value={schedule} onChange={(e) => setSchedule(e.target.value)} placeholder="Tue, Thu 13:00" />
-        </Field>
+      <Field label="Instructor">
+        <TextInput value={instructor} onChange={(e) => setInstructor(e.target.value)} />
+      </Field>
+      <div className="flex flex-col gap-1.5">
+        <span className="px-1 text-subhead font-medium text-muted">Class times</span>
+        <ScheduleEditor meetings={meetings} onMeetings={setMeetings} term={term} onTerm={setTerm} />
       </div>
       <Field label={`Syllabus progress: ${progress}%`}>
         <input

@@ -123,6 +123,7 @@ interface GoogleEvent {
   summary?: string
   location?: string
   start?: { date?: string; dateTime?: string }
+  end?: { date?: string; dateTime?: string }
 }
 
 /** Upcoming events from every calendar the user shows in Google Calendar. */
@@ -161,6 +162,7 @@ export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
             id: `g-${cal.id}-${e.id}`,
             title: e.summary?.trim() || '(No title)',
             start: start.toISOString(),
+            end: !allDay && e.end?.dateTime ? new Date(e.end.dateTime).toISOString() : undefined,
             allDay: allDay || undefined,
             location: e.location || undefined,
             kind: 'event',

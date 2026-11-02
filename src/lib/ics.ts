@@ -155,6 +155,9 @@ export function parseIcs(
       kind: 'event' as const,
     }
     const rrule = ev.RRULE?.[0]?.value
+    const endsAt = dateOf(ev.DTEND?.[0])
+    const duration = !start.allDay && endsAt ? endsAt.date.getTime() - start.date.getTime() : 0
+    const end = (d: Date) => (duration > 0 ? new Date(d.getTime() + duration).toISOString() : undefined)
 
     if (rrule && !ev['RECURRENCE-ID']) {
       const skip = new Set(overridden.get(uid))
@@ -165,11 +168,11 @@ export function parseIcs(
         }
       }
       for (const d of expand(start.date, rrule, from, to, skip)) {
-        out.push({ ...base, id: `${idPrefix}-${uid}-${d.getTime()}`, start: d.toISOString() })
+        out.push({ ...base, id: `${idPrefix}-${uid}-${d.getTime()}`, start: d.toISOString(), end: end(d) })
       }
     } else {
       const t = start.date.getTime()
-      if (t >= from && t <= to) out.push({ ...base, id: `${idPrefix}-${uid}-${t}`, start: start.date.toISOString() })
+      if (t >= from && t <= to) out.push({ ...base, id: `${idPrefix}-${uid}-${t}`, start: start.date.toISOString(), end: end(start.date) })
     }
   }
   return out.sort((a, b) => a.start.localeCompare(b.start))

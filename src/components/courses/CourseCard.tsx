@@ -2,6 +2,8 @@ import { ArrowUpRight, Plus } from 'lucide-react'
 import { Countdown } from '@/components/ui/Countdown'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useDashboard } from '@/context/DashboardContext'
+import { dayDiff, fmt } from '@/lib/date'
+import { nextMeeting } from '@/lib/schedule'
 import type { Assignment, Course } from '@/types'
 
 const linkName = { portal: 'Portal', materials: 'Materials', video: 'Lectures' } as const
@@ -13,8 +15,16 @@ interface CourseCardProps {
   now: Date
 }
 
+function whenLabel(d: Date, now: Date) {
+  const diff = dayDiff(now, d)
+  const day = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : fmt.shortDate.format(d)
+  return `${day}, ${fmt.time.format(d)}`
+}
+
 export function CourseCard({ course, pending, now }: CourseCardProps) {
-  const { openEditor } = useDashboard()
+  const { openEditor, agenda } = useDashboard()
+  // The calendar knows about cancellations and room changes, so it wins over the weekly times.
+  const next = agenda.find((i) => i.kind === 'class' && i.courseId === course.id && i.date > now)?.date ?? nextMeeting(course, now)
   const pct = Math.round(course.progress * 100)
   const when = [course.schedule, course.instructor && `with ${course.instructor}`].filter(Boolean).join(' ')
 
@@ -28,6 +38,11 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
         {course.code && <span className="text-subhead font-medium text-muted">{course.code}</span>}
         <h3 className="mt-0.5 text-headline text-ink">{course.name}</h3>
         {when && <p className="mt-0.5 text-subhead text-muted">{when}</p>}
+        {next && (
+          <p className="mt-1.5 text-subhead font-medium text-course">
+            Next class: {whenLabel(next, now)}
+          </p>
+        )}
         <div className="mt-4 flex items-center gap-3">
           <ProgressBar value={course.progress} label={`${course.name} syllabus progress`} className="flex-1" />
           <span className="text-subhead font-medium text-ink tabular-nums">{pct}%</span>

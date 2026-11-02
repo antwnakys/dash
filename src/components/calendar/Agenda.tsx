@@ -24,16 +24,29 @@ function dayHeading(d: Date, now: Date): string {
 function Row({ item, now }: { item: AgendaItem; now: Date }) {
   const { openEditor } = useDashboard()
   const flagged = item.kind === 'exam' || item.kind === 'quiz'
-  const editable = item.source !== 'calendar'
+  const isClass = item.kind === 'class'
+  // Synced calendar entries are edited in Google Calendar; a class opens its course instead.
+  const target =
+    item.source === 'assignment'
+      ? ({ type: 'deadline', id: item.id } as const)
+      : item.source === 'event'
+        ? ({ type: 'event', id: item.id } as const)
+        : item.courseId
+          ? ({ type: 'course', id: item.courseId } as const)
+          : null
   return (
     <li>
       <button
-        // Synced calendar entries are read-only; they are edited in Google Calendar.
-        disabled={!editable}
-        onClick={() => openEditor(item.source === 'assignment' ? { type: 'deadline', id: item.id } : { type: 'event', id: item.id })}
+        disabled={!target}
+        onClick={() => target && openEditor(target)}
         className="flex min-h-[3.25rem] w-full items-center gap-3 px-4 py-2.5 text-left transition-colors enabled:hover:bg-fill enabled:active:bg-fill-strong"
       >
-        <span className={cn('w-12 shrink-0 text-subhead tabular-nums', flagged ? 'font-semibold text-accent' : 'text-muted')}>
+        <span
+          className={cn(
+            'w-12 shrink-0 text-subhead tabular-nums',
+            flagged ? 'font-semibold text-accent' : isClass ? 'font-semibold text-course' : 'text-muted',
+          )}
+        >
           {item.allDay ? 'All day' : fmt.time.format(item.date)}
         </span>
         <span className="min-w-0 flex-1">
@@ -45,6 +58,11 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
             {flagged && (
               <span aria-hidden className="shrink-0 rounded-[0.35rem] bg-accent/12 px-1.5 py-px text-caption font-semibold text-accent">
                 {kindLabel[item.kind]}
+              </span>
+            )}
+            {isClass && (
+              <span aria-hidden className="shrink-0 rounded-[0.35rem] bg-course/14 px-1.5 py-px text-caption font-semibold text-course">
+                {kindLabel.class}
               </span>
             )}
           </span>

@@ -20,6 +20,7 @@
   --accent-fill: #0071e3;
   --accent-ink: #ffffff;
   --danger: #c4171d;
+  --course: #248a3d;
   --scrim: rgb(0 0 0 / 0.22);
 
   --glass: rgb(250 250 248 / 0.72);
@@ -49,6 +50,7 @@
     --accent-fill: #1d7cf2;
     --accent-ink: #ffffff;
     --danger: #ff6b66;
+    --course: #30d158;
     --scrim: rgb(0 0 0 / 0.5);
 
     --glass: rgb(28 28 31 / 0.72);
@@ -77,6 +79,7 @@
   --accent-fill: #1d7cf2;
   --accent-ink: #ffffff;
   --danger: #ff6b66;
+  --course: #30d158;
   --scrim: rgb(0 0 0 / 0.5);
 
   --glass: rgb(28 28 31 / 0.72);
@@ -104,6 +107,7 @@
   --color-accent-fill: var(--accent-fill);
   --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
+  --color-course: var(--course);
 }
 
 @theme {

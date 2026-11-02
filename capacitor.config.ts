@@ -16,6 +16,8 @@ const config: CapacitorConfig = {
     // The web intro animation takes over straight from the native splash.
     SplashScreen: { launchShowDuration: 300, launchAutoHide: true, backgroundColor: '#0b0d12', showSpinner: false },
     StatusBar: { style: 'DARK', overlaysWebView: true },
+    // Live updates from the website, driven by src/lib/liveUpdate.ts: no Capgo cloud, no update checks or stats sent elsewhere.
+    CapacitorUpdater: { autoUpdate: false, statsUrl: '', appReadyTimeout: 10000 },
   },
 }
 

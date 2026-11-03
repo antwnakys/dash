@@ -10,7 +10,6 @@ import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
-import { ScreenCheck } from './ScreenCheck'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
 
@@ -400,7 +399,6 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           Version <span className="font-medium text-ink tabular-nums">{BUILD}</span> · built{' '}
           {BUILT_AT.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
-        {isNative && <ScreenCheck />}
       </FormGroup>
     </div>
   )

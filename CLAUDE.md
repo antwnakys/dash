@@ -43,6 +43,14 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/lib/commute.ts` + `components/commute/LeaveCard.tsx`: "Leave by 08:10" card on Today for the first class of the day
   (calendar classes at campus + courses' weekly times; tomorrow's from 17:00). Home is Argyroupoli; route Line 2 → Line 3 to
   Doukissis Plakentias → suburban to Pentelis; default 80 min door to door, `profile.commuteMinutes` in Settings → Getting to campus.
+- `src/lib/classes.ts`: `classesOn(day)` = calendar classes at campus + courses' weekly times (deduped); used by the leave card,
+  `components/courses/Timetable.tsx` (week view on Courses) and reminders.
+- `src/lib/reminderPlan.ts` (pure) + `src/lib/reminders.ts` + `hooks/useReminders.ts`: iPhone local notifications
+  (`@capacitor/local-notifications`): 10 min before leave time for the first class, 20:00 the evening before and 3 h before
+  anything due. Rebuilt on every data change (cancel all, schedule next 14 days, max 60). Toggles in Settings → Reminders;
+  one-tap "Turn on reminders" card on Today (the user dislikes digging through Settings).
+- `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
+  "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/schedule.ts`: course meeting helpers (format, parse old text, next class, infer from calendar events)
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
@@ -94,6 +102,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 3, 2026**: GitHub's iOS build for #3 had been cancelled without a runner (GitHub capacity); re-run succeeded.
   Added the "Leave by" commute card. Plan: the user says "I'm home", then Claude installs the app on the iPhone through
   the Mac (folder `~/dash-xcode`, built at c92fcf5) via Remote Control; the user wants only simple Allow/yes-no prompts, no Settings trips.
-  Ideas the user was offered and may pick next: phone reminders (native, needs Xcode), weekly timetable, grades, home-screen widget.
+  Then added reminders (native plugin), weekly timetable and grades. Home-screen widget not built: it needs App Groups,
+  which free Apple ID (personal team) signing doesn't allow; revisit if the user gets a paid developer account.
+  `ios.yml` now also publishes `dash-xcode.zip` (Xcode project + plugin sources, no Node needed) on the `ios-latest` release:
+  on the Mac, download it and replace `~/dash-xcode`, then build and Run.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

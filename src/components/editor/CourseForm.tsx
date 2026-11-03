@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
+import { useNow } from '@/hooks/useNow'
+import { average, formatGrade, onScale, SCALE } from '@/lib/grades'
 import { formatMeetings, newMeeting, parseSchedule } from '@/lib/schedule'
-import type { Course, CourseLink, CourseMeeting } from '@/types'
+import type { Assignment, Course, CourseLink, CourseMeeting } from '@/types'
 import { Field, TextInput } from './fields'
 import { ScheduleEditor } from './ScheduleEditor'
 
@@ -15,8 +17,50 @@ function initialMeetings(c?: Course): CourseMeeting[] {
 
 const linkUrl = (c: Course | undefined, kind: CourseLink['kind']) => c?.links.find((l) => l.kind === kind)?.url ?? ''
 
+const dueFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' })
+
+/** Everything due for this course, with grades; tap one to grade or edit it. */
+function WorkAndGrades({ courseId, list, onOpen }: { courseId: string; list: Assignment[]; onOpen: (id: string) => void }) {
+  const now = useNow(60_000)
+  const work = list.filter((a) => a.courseId === courseId).sort((a, b) => a.due.localeCompare(b.due))
+  if (!work.length) return null
+  const avg = average(work)
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="px-1 text-subhead font-medium text-muted">
+        Work and grades{avg && ` · average ${formatGrade(avg.value)}/${SCALE}`}
+      </span>
+      <ul className="separated overflow-hidden rounded-[var(--radius-control)] bg-fill/60">
+        {work.map((a) => {
+          const g = onScale(a)
+          return (
+            <li key={a.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(a.id)}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-fill"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body text-ink">{a.title}</span>
+                  <span className="block text-caption text-muted">
+                    {dueFmt.format(new Date(a.due))} · {a.kind === 'assignment' ? 'Assignment' : a.kind === 'exam' ? 'Exam' : 'Quiz'}
+                    {a.submitted && g == null && ' · done'}
+                  </span>
+                </span>
+                <span className={g == null ? 'text-subhead text-accent' : 'text-body font-semibold text-ink tabular-nums'}>
+                  {g == null ? (a.submitted || new Date(a.due) < now ? 'Add grade' : '') : `${formatGrade(a.grade!)}/${a.outOf ?? SCALE}`}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) {
-  const { courses, assignments, notify } = useDashboard()
+  const { courses, assignments, notify, openEditor } = useDashboard()
   const existing = courses.items.find((c) => c.id === id)
 
   const [code, setCode] = useState(existing?.code ?? '')
@@ -87,6 +131,7 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
           className="h-6 w-full accent-[var(--accent-fill)]"
         />
       </Field>
+      {existing && <WorkAndGrades courseId={existing.id} list={assignments.items} onOpen={(id) => openEditor({ type: 'deadline', id })} />}
       <Field label="Course portal link">
         <TextInput type="url" inputMode="url" value={portal} onChange={(e) => setPortal(e.target.value)} placeholder="https://" />
       </Field>

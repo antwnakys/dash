@@ -26,6 +26,19 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx cap sync ios
+      # Ready-to-run Xcode folder (project + the plugin sources it points at), so a Mac without Node can build it.
+      - name: Package the Xcode project
+        run: |
+          mkdir -p build/dash-xcode
+          cp -R ios build/dash-xcode/
+          rm -rf build/dash-xcode/ios/App/build build/dash-xcode/ios/DerivedData
+          for dep in $(grep -o 'node_modules/[^"]*' ios/App/CapApp-SPM/Package.swift); do
+            mkdir -p "build/dash-xcode/$(dirname "$dep")"
+            cp -R "$dep" "build/dash-xcode/$dep"
+          done
+          printf 'dash %s for Xcode\n\nOpen ios/App/App.xcodeproj, choose your team and iPhone, then Product > Clean Build Folder and Run.\n' "${GITHUB_SHA::7}" > build/dash-xcode/START-HERE.txt
+          (cd build && zip -qry dash-xcode.zip dash-xcode)
+          ls -lh build/dash-xcode.zip
       - name: Archive (unsigned)
         run: |
           xcodebuild -version
@@ -52,7 +65,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete ios-latest --yes --cleanup-tag || true
-          gh release create ios-latest build/dash.ipa \
+          gh release create ios-latest build/dash.ipa build/dash-xcode.zip \
             --title "dash for iPhone (latest build)" \
-            --notes "Unsigned build of ${GITHUB_SHA::7}. Install with Sideloadly or Xcode using your Apple ID; see the README." \
+            --notes "Build of ${GITHUB_SHA::7}. dash.ipa is unsigned (install with Sideloadly); dash-xcode.zip is the ready-to-run Xcode project." \
             --target "$GITHUB_SHA" --prerelease

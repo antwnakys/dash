@@ -3,6 +3,7 @@ import { Countdown } from '@/components/ui/Countdown'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useDashboard } from '@/context/DashboardContext'
 import { dayDiff, fmt } from '@/lib/date'
+import { average, formatGrade, SCALE } from '@/lib/grades'
 import { nextMeeting } from '@/lib/schedule'
 import type { Assignment, Course } from '@/types'
 
@@ -22,7 +23,8 @@ function whenLabel(d: Date, now: Date) {
 }
 
 export function CourseCard({ course, pending, now }: CourseCardProps) {
-  const { openEditor, agenda } = useDashboard()
+  const { openEditor, agenda, assignments } = useDashboard()
+  const grades = average(assignments.items.filter((a) => a.courseId === course.id))
   // The calendar knows about cancellations and room changes, so it wins over the weekly times.
   const next = agenda.find((i) => i.kind === 'class' && i.courseId === course.id && i.date > now)?.date ?? nextMeeting(course, now)
   const pct = Math.round(course.progress * 100)
@@ -41,6 +43,12 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
         {next && (
           <p className="mt-1.5 text-subhead font-medium text-course">
             Next class: {whenLabel(next, now)}
+          </p>
+        )}
+        {grades && (
+          <p className="mt-1 text-subhead text-muted">
+            Average <span className="font-semibold text-ink tabular-nums">{formatGrade(grades.value)}</span>/{SCALE} · {grades.count}{' '}
+            {grades.count === 1 ? 'grade' : 'grades'}
           </p>
         )}
         <div className="mt-4 flex items-center gap-3">

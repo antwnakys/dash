@@ -9,7 +9,7 @@ import { COMMUTE_ROUTE, DEFAULT_COMMUTE } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
-import { Field, FormGroup, Select, TextArea, TextInput } from './fields'
+import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
 
@@ -20,7 +20,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
-  const { profile, setProfile, events, courses, calendar, cloud, loadSample, clearAll, theme, notify } = useDashboard()
+  const { profile, setProfile, events, courses, calendar, cloud, reminders, loadSample, clearAll, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
@@ -149,6 +149,43 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           </Field>
         </FormGroup>
       </div>
+
+      <FormGroup
+        title="Reminders"
+        footer={
+          reminders.permission === 'granted'
+            ? `${reminders.scheduled} ${reminders.scheduled === 1 ? 'reminder' : 'reminders'} lined up for the next two weeks. They arrive even when dash is closed.`
+            : reminders.permission === 'unavailable'
+              ? 'Reminders work in the dash iPhone app.'
+              : undefined
+        }
+      >
+        {reminders.permission === 'granted' && (
+          <div className="flex flex-col gap-1">
+            <Toggle
+              label="Time to leave for class"
+              checked={profile.reminders?.leave !== false}
+              onChange={(v) => setProfile({ reminders: { ...profile.reminders, leave: v } })}
+            />
+            <Toggle
+              label="Deadlines and exams"
+              checked={profile.reminders?.deadlines !== false}
+              onChange={(v) => setProfile({ reminders: { ...profile.reminders, deadlines: v } })}
+            />
+          </div>
+        )}
+        {reminders.permission === 'prompt' && (
+          <Button size="sm" variant="primary" className="self-start" onClick={reminders.enable}>
+            Turn on reminders
+          </Button>
+        )}
+        {reminders.permission === 'denied' && (
+          <p className="px-1 text-subhead text-muted">Notifications are switched off for dash in the iPhone's Settings app, under dash.</p>
+        )}
+        <p className="px-1 text-subhead text-muted">
+          Ten minutes before it's time to leave for your first class, and the evening before and three hours before anything is due.
+        </p>
+      </FormGroup>
 
       <div ref={calendarSection} className="scroll-mt-4">
         <FormGroup

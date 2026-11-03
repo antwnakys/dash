@@ -46,6 +46,9 @@ export interface Assignment {
   due: string
   kind: 'assignment' | 'exam' | 'quiz'
   submitted: boolean
+  /** Mark received; out of `outOf` (10 by default, the Greek scale). */
+  grade?: number
+  outOf?: number
 }
 
 export interface CalendarEvent {
@@ -69,6 +72,8 @@ export interface AgendaItem {
   source: 'assignment' | 'event' | 'calendar'
   title: string
   date: Date
+  /** When it ends, if known (synced calendar events). */
+  end?: Date
   kind: AgendaKind
   context?: string
   allDay?: boolean
@@ -97,6 +102,8 @@ export interface Profile {
   place?: Place
   /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
   commuteMinutes?: number
+  /** Phone reminders (iPhone app). Missing flags count as on. */
+  reminders?: { leave?: boolean; deadlines?: boolean }
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */

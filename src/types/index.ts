@@ -11,7 +11,7 @@ export interface Task {
 export interface CourseLink {
   label: string
   url: string
-  kind: 'portal' | 'materials' | 'video'
+  kind: 'portal' | 'materials' | 'video' | 'meeting'
 }
 
 /** One recurring class time: the weekdays it meets (0 = Sunday … 6 = Saturday) and its local times. */
@@ -60,6 +60,10 @@ export interface CalendarEvent {
   end?: string
   allDay?: boolean
   location?: string
+  /** Teams / Zoom / Meet link found in the event. */
+  link?: string
+  /** Taken online (says so, or has a meeting link): no trip to campus. */
+  online?: boolean
   kind: 'event' | 'reminder'
 }
 
@@ -79,6 +83,9 @@ export interface AgendaItem {
   allDay?: boolean
   /** The course a class belongs to, when its title matches one. */
   courseId?: string
+  /** Meeting link, for online lessons. */
+  link?: string
+  online?: boolean
 }
 
 export interface Weather {

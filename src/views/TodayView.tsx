@@ -1,6 +1,6 @@
 import { Agenda } from '@/components/calendar/Agenda'
 import { MiniCalendar } from '@/components/calendar/MiniCalendar'
-import { LeaveCard } from '@/components/commute/LeaveCard'
+import { LeaveCard, OnlineCard } from '@/components/commute/LeaveCard'
 import { RemindersPrompt } from '@/components/commute/RemindersPrompt'
 import { CourseList } from '@/components/courses/CourseList'
 import { WeatherChip } from '@/components/header/WeatherChip'
@@ -68,6 +68,7 @@ export function TodayView() {
         <div className="contents xl:flex xl:flex-col xl:gap-8">
           <RevealItem className="order-0 flex flex-col gap-3 empty:hidden">
             <RemindersPrompt />
+            <OnlineCard />
             <LeaveCard />
           </RevealItem>
           <RevealItem className="order-1">

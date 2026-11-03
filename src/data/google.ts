@@ -5,6 +5,7 @@
  */
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/config'
+import { findMeetingLink, looksOnline } from '@/lib/meeting'
 import { isNative } from '@/lib/native'
 import type { CalendarEvent } from '@/types'
 
@@ -122,6 +123,9 @@ interface GoogleEvent {
   status?: string
   summary?: string
   location?: string
+  description?: string
+  hangoutLink?: string
+  conferenceData?: { entryPoints?: Array<{ uri?: string }> }
   start?: { date?: string; dateTime?: string }
   end?: { date?: string; dateTime?: string }
 }
@@ -158,6 +162,7 @@ export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
           const allDay = Boolean(e.start.date && !e.start.dateTime)
           // All-day dates are calendar days, so read them as local midnight.
           const start = allDay ? new Date(`${e.start.date}T00:00`) : new Date(e.start.dateTime!)
+          const link = findMeetingLink(e.description, e.location, e.hangoutLink, ...(e.conferenceData?.entryPoints ?? []).map((p) => p.uri))
           out.push({
             id: `g-${cal.id}-${e.id}`,
             title: e.summary?.trim() || '(No title)',
@@ -165,6 +170,8 @@ export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
             end: !allDay && e.end?.dateTime ? new Date(e.end.dateTime).toISOString() : undefined,
             allDay: allDay || undefined,
             location: e.location || undefined,
+            link,
+            online: looksOnline(link, e.summary, e.description) || undefined,
             kind: 'event',
           })
         }

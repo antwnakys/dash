@@ -71,12 +71,16 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
   const [progress, setProgress] = useState(Math.round((existing?.progress ?? 0) * 100))
   const [portal, setPortal] = useState(linkUrl(existing, 'portal'))
   const [materials, setMaterials] = useState(linkUrl(existing, 'materials'))
+  const [meeting, setMeeting] = useState(linkUrl(existing, 'meeting'))
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const links: CourseLink[] = []
     if (portal.trim()) links.push({ label: 'Course portal', url: portal.trim(), kind: 'portal' })
     if (materials.trim()) links.push({ label: 'Materials', url: materials.trim(), kind: 'materials' })
+    if (meeting.trim()) links.push({ label: 'Online lesson', url: meeting.trim(), kind: 'meeting' })
+    // Keep links of other kinds (e.g. recorded lectures) that this form doesn't edit.
+    links.push(...(existing?.links ?? []).filter((l) => l.kind === 'video'))
     const set = meetings.filter((m) => m.days.length)
     const data = {
       code: code.trim(),
@@ -134,6 +138,9 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       {existing && <WorkAndGrades courseId={existing.id} list={assignments.items} onOpen={(id) => openEditor({ type: 'deadline', id })} />}
       <Field label="Course portal link">
         <TextInput type="url" inputMode="url" value={portal} onChange={(e) => setPortal(e.target.value)} placeholder="https://" />
+      </Field>
+      <Field label="Teams link" hint="For online lessons. A link in the calendar event is used first.">
+        <TextInput type="url" inputMode="url" value={meeting} onChange={(e) => setMeeting(e.target.value)} placeholder="https://teams.microsoft.com/…" />
       </Field>
       <Field label="Materials link">
         <TextInput type="url" inputMode="url" value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder="https://" />

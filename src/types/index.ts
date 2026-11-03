@@ -6,6 +6,9 @@ export interface Task {
   category: TaskCategory
   done: boolean
   createdAt: string
+  /** When it's due (ISO); with `dueAllDay` only the date counts. */
+  due?: string
+  dueAllDay?: boolean
 }
 
 export interface CourseLink {
@@ -81,12 +84,12 @@ export interface CalendarEvent {
 }
 
 /** `class`: a lesson on campus (Sorou 74, Marousi), marked as a course. */
-export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder' | 'class'
+export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder' | 'class' | 'task'
 
 /** Assignments and events merged into one chronological stream. */
 export interface AgendaItem {
   id: string
-  source: 'assignment' | 'event' | 'calendar'
+  source: 'assignment' | 'event' | 'calendar' | 'task'
   title: string
   date: Date
   /** When it ends, if known (synced calendar events). */
@@ -139,7 +142,7 @@ export type EditorTarget =
   | { type: 'course'; id?: string }
   | { type: 'deadline'; id?: string; courseId?: string }
   | { type: 'event'; id?: string }
-  | { type: 'task' }
+  | { type: 'task'; id?: string }
   | { type: 'new' }
   | { type: 'settings'; section?: 'calendar' | 'commute' }
 

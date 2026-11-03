@@ -32,6 +32,8 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
       ? ({ type: 'deadline', id: item.id } as const)
       : item.source === 'event'
         ? ({ type: 'event', id: item.id } as const)
+        : item.source === 'task'
+          ? ({ type: 'task', id: item.id } as const)
         : item.courseId
           ? ({ type: 'course', id: item.courseId } as const)
           : null

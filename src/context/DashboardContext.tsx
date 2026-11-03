@@ -14,7 +14,8 @@ import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
 import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, StudySession, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
   id: number
@@ -64,6 +65,7 @@ function buildAgenda(
   assignments: Assignment[],
   events: CalendarEvent[],
   synced: CalendarEvent[],
+  tasks: Task[],
 ): AgendaItem[] {
   const courseCode = new Map(courses.map((c) => [c.id, c.code]))
   // Events at campus (Sorou 74, Marousi) are classes: marked as a course and linked to one when the title matches.
@@ -92,6 +94,18 @@ function buildAgenda(
         date: new Date(a.due),
         kind: a.kind,
         context: courseCode.get(a.courseId),
+      })),
+    // Tasks with a due date show up next to deadlines.
+    ...tasks
+      .filter((t) => t.due && !t.done)
+      .map<AgendaItem>((t) => ({
+        id: t.id,
+        source: 'task',
+        title: t.title,
+        date: new Date(t.due!),
+        kind: 'task',
+        allDay: t.dueAllDay,
+        context: categoryLabel[t.category],
       })),
     ...events.map<AgendaItem>((e) => ({
       id: e.id,
@@ -148,8 +162,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   )
 
   const agenda = useMemo(
-    () => buildAgenda(courses.items, assignments.items, events.items, calendar.events),
-    [courses.items, assignments.items, events.items, calendar.events],
+    () => buildAgenda(courses.items, assignments.items, events.items, calendar.events, tasks.tasks),
+    [courses.items, assignments.items, events.items, calendar.events, tasks.tasks],
   )
 
   const reminders = useReminders(agenda, courses.items, profile)

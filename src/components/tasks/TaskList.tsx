@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Segmented } from '@/components/ui/Segmented'
 import { Card, Section } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
+import { useNow } from '@/hooks/useNow'
+import { dueInfo, overdueFirst } from '@/lib/taskDue'
 import type { TaskCategory } from '@/types'
 import { AddTask } from './AddTask'
 import { categories, categoryLabel } from './categories'
@@ -18,8 +20,9 @@ const filters = [
 export function TaskList({ title = 'Tasks' }: { title?: string }) {
   const { tasks } = useDashboard()
   const [filter, setFilter] = useState<Filter>('all')
+  const now = useNow(60_000)
 
-  const visible = filter === 'all' ? tasks.tasks : tasks.tasks.filter((t) => t.category === filter)
+  const visible = overdueFirst(filter === 'all' ? tasks.tasks : tasks.tasks.filter((t) => t.category === filter), now)
   const done = visible.filter((t) => t.done).length
 
   return (
@@ -38,6 +41,7 @@ export function TaskList({ title = 'Tasks' }: { title?: string }) {
                 key={task.id}
                 task={task}
                 showCategory={filter === 'all'}
+                due={dueInfo(task, now)}
                 onToggle={() => tasks.toggle(task.id)}
                 onRemove={() => tasks.remove(task.id)}
               />

@@ -5,7 +5,8 @@ import { useCollection } from './useCollection'
 
 export interface TasksApi {
   tasks: Task[]
-  add: (title: string, category: TaskCategory) => void
+  add: (title: string, category: TaskCategory, due?: Pick<Task, 'due' | 'dueAllDay'>) => void
+  update: (id: string, patch: Partial<Omit<Task, 'id'>>) => void
   toggle: (id: string) => void
   remove: (id: string) => void
   /** Apply a new order for a subset (e.g. one filtered category) of tasks. */
@@ -17,8 +18,13 @@ export function useTasks(): TasksApi {
   const { items, set, remove } = useCollection<Task>('dash.tasks.v1')
 
   const add = useCallback(
-    (title: string, category: TaskCategory) =>
-      set((ts) => [{ id: uid(), title, category, done: false, createdAt: new Date().toISOString() }, ...ts]),
+    (title: string, category: TaskCategory, due?: Pick<Task, 'due' | 'dueAllDay'>) =>
+      set((ts) => [{ id: uid(), title, category, done: false, createdAt: new Date().toISOString(), ...due }, ...ts]),
+    [set],
+  )
+
+  const update = useCallback(
+    (id: string, patch: Partial<Omit<Task, 'id'>>) => set((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     [set],
   )
 
@@ -40,5 +46,5 @@ export function useTasks(): TasksApi {
 
   const replaceAll = useCallback((tasks: Task[]) => set(() => tasks), [set])
 
-  return { tasks: items, add, toggle, remove, reorder, replaceAll }
+  return { tasks: items, add, update, toggle, remove, reorder, replaceAll }
 }

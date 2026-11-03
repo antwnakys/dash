@@ -7,4 +7,5 @@ export const kindLabel: Record<AgendaKind, string> = {
   event: 'Event',
   reminder: 'Reminder',
   class: 'Course',
+  task: 'Task',
 }

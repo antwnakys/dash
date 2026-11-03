@@ -75,6 +75,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   off, so nothing dark shows behind the Dynamic Island (it used to show the `#0b0d12` config background in light mode).
   `DashThemePlugin` ("DashTheme".set({style})) sets the window's light/dark override from the in-app theme; called in
   `hooks/useTheme.ts`. Changing Swift needs a reinstall from Xcode.
+  Web side (AppShell): nothing covers the status bar at scroll top, so the page and ambient glow run up behind the
+  Dynamic Island; a solid-then-fading blur overlay fades in over the first 28 px of scroll. (A permanent solid strip
+  there looked like a dark band against the glow; the user disliked it on Nov 3.)
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,

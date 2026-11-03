@@ -82,6 +82,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   a temporary Settings → About "Screen:" line showed top 59 and page 393×852 = full screen, so the page wasn't offset. Fixed by
   `scrollView.topEdgeEffect/bottomEdgeEffect.isHidden = true` in DashViewController (needs Xcode 26 / iOS 26 SDK;
   CI uses iPhoneOS26.5.sdk). Confirmed fixed on the phone on Nov 3.
+- App icon: `assets/app-icon-light.svg` (white, iOS Default home screen) and `assets/app-icon.svg` (navy, Dark), rendered by
+  `npm run icons` into `AppIcon.appiconset` as `AppIcon-Light.png` / `AppIcon-Dark.png` (luminosity appearance). The user
+  uses the Default style and wanted a white icon there; Dark stays as it was. No tinted/clear variant (not used). Native: Xcode install.
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,

@@ -8,7 +8,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = CAPBridgeViewController()
+        window?.rootViewController = DashViewController()
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
@@ -20,5 +20,54 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
+    }
+}
+
+/// dash's page colour (`--bg` in src/index.css), light and dark. Everything native behind the web page uses it,
+/// so nothing dark shows behind the Dynamic Island, during overscroll or while the page loads.
+private let dashBackground = UIColor { traits in
+    traits.userInterfaceStyle == .dark
+        ? UIColor(red: 11 / 255, green: 11 / 255, blue: 13 / 255, alpha: 1)
+        : UIColor(red: 242 / 255, green: 242 / 255, blue: 240 / 255, alpha: 1)
+}
+
+/// The Capacitor screen, edge to edge, in dash's colours.
+class DashViewController: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        super.capacitorDidLoad()
+        bridge?.registerPluginInstance(DashThemePlugin())
+        view.backgroundColor = dashBackground
+        guard let webView = webView else { return }
+        webView.backgroundColor = dashBackground
+        webView.scrollView.backgroundColor = dashBackground
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        if #available(iOS 15.0, *) {
+            webView.underPageBackgroundColor = dashBackground
+        }
+    }
+}
+
+/// Lets the web app tell iOS which theme it shows (it can differ from the phone's setting),
+/// so the native colours and the status bar text match.
+@objc(DashThemePlugin)
+class DashThemePlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "DashThemePlugin"
+    let jsName = "DashTheme"
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "set", returnType: CAPPluginReturnPromise)
+    ]
+
+    /// `style`: "light", "dark" or "system" (follow the phone's setting).
+    @objc func set(_ call: CAPPluginCall) {
+        let style: UIUserInterfaceStyle
+        switch call.getString("style") {
+        case "dark": style = .dark
+        case "light": style = .light
+        default: style = .unspecified
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.bridge?.viewController?.view.window?.overrideUserInterfaceStyle = style
+            call.resolve()
+        }
     }
 }

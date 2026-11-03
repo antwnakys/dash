@@ -70,6 +70,11 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   `deploy.yml` publishes `app-bundle.zip` + `version.json` (`{version: short sha, url, checksum: sha256}`); the app compares with its
   `__BUILD__` (short sha, `vite.config.ts`), downloads, and switches on next open. Settings → About shows the running version.
   Native-only changes (new plugins, Info.plist, icons) still need a reinstall from Xcode.
+- Native iOS (`ios/App/App/SceneDelegate.swift`): `DashViewController` (subclass of CAPBridgeViewController) paints the view,
+  web view, scroll view and under-page area in dash's `--bg` (light #f2f2f0 / dark #0b0b0d, dynamic) with content insets
+  off, so nothing dark shows behind the Dynamic Island (it used to show the `#0b0d12` config background in light mode).
+  `DashThemePlugin` ("DashTheme".set({style})) sets the window's light/dark override from the in-app theme; called in
+  `hooks/useTheme.ts`. Changing Swift needs a reinstall from Xcode.
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,

@@ -19,6 +19,8 @@ export interface Exam {
   allDay?: boolean
   context?: string
   courseId?: string
+  /** Where it was added: the calendar, a course deadline, or + → Exam in dash. */
+  source: AgendaItem['source']
 }
 
 /** Title without emoji and extra spaces. */
@@ -38,7 +40,7 @@ export function upcomingExams(agenda: AgendaItem[], now: Date): Exam[] {
   const today = startOfDay(now)
   return agenda
     .filter((i) => i.kind === 'exam' && i.date >= today)
-    .map((i) => ({ id: i.id, subject: examSubject(i.title), date: i.date, allDay: i.allDay, context: i.context, courseId: i.courseId }))
+    .map((i) => ({ id: i.id, subject: examSubject(i.title), date: i.date, allDay: i.allDay, context: i.context, courseId: i.courseId, source: i.source }))
     .sort((a, b) => a.date.getTime() - b.date.getTime())
 }
 

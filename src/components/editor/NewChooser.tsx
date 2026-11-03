@@ -1,10 +1,11 @@
-import { CalendarPlus, CheckSquare, FileText, GraduationCap, type LucideIcon } from 'lucide-react'
+import { CalendarPlus, CheckSquare, ClipboardCheck, FileText, GraduationCap, type LucideIcon } from 'lucide-react'
 import { useDashboard } from '@/context/DashboardContext'
 import type { EditorTarget } from '@/types'
 
 const choices: Array<{ label: string; detail: string; icon: LucideIcon; target: EditorTarget }> = [
   { label: 'Task', detail: 'Something to get done', icon: CheckSquare, target: { type: 'task' } },
-  { label: 'Deadline', detail: 'Assignment, quiz or exam', icon: FileText, target: { type: 'deadline' } },
+  { label: 'Exam', detail: 'A test to study for, with a countdown and plan', icon: ClipboardCheck, target: { type: 'exam' } },
+  { label: 'Deadline', detail: 'Assignment or quiz for a course', icon: FileText, target: { type: 'deadline' } },
   { label: 'Event', detail: 'Plans or a reminder', icon: CalendarPlus, target: { type: 'event' } },
   { label: 'Course', detail: 'A class you’re taking', icon: GraduationCap, target: { type: 'course' } },
 ]

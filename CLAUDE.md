@@ -63,6 +63,8 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   dash), ticks stored in the synced `dash.study.v1` collection (`fromCalendar`); otherwise "Make a study plan" (`planStudy`):
   up to 6 × 90 min at 18:00/19:30/16:30/11:00 on free days, campus classes block 100 min of travel before them, topics shared
   out, last one a practice test. Today shows `NextExamCard` within 14 days.
+  + → Exam (`editor/ExamForm.tsx`) adds an own event with `kind: 'exam'` (title, day, optional time and place) and opens
+  the Exams tab; "Edit exam" on the card (own exams → ExamForm, course deadlines → DeadlineForm); "Add exam" in the header.
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).

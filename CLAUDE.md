@@ -51,6 +51,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   one-tap "Turn on reminders" card on Today (the user dislikes digging through Settings).
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
+- `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
+  data and iCal DESCRIPTION/URL into `CalendarEvent.link`; "online" in the title (or a link) sets `online`. Online classes stay
+  `kind: 'class'` but get no Leave card or leave reminder; Today shows `OnlineCard` ("Academic Skills online at 17:00", Join on
+  Teams) from 3 h before; Join buttons on Up next, timetable and the course card. Courses can also store a `meeting` link.
 - `src/lib/schedule.ts`: course meeting helpers (format, parse old text, next class, infer from calendar events)
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
@@ -106,5 +110,11 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   which free Apple ID (personal team) signing doesn't allow; revisit if the user gets a paid developer account.
   `ios.yml` now also publishes `dash-xcode.zip` (Xcode project + plugin sources, no Node needed) on the `ios-latest` release:
   on the Mac, download it and replace `~/dash-xcode`, then build and Run.
+- **Academic Skills**: Google Calendar recurring event "ACADEMIC SKILLS/ONLINE", every second Friday 17:00–19:00 until
+  Dec 18 2026 (location "Sorou 74", note "spiti" = from home). The college Outlook can't be connected (Microsoft 365 needs
+  college admin approval; the user declined forwarding emails to Gmail). On Nov 3 the user pasted the Teams link
+  `https://teams.microsoft.com/meet/3698245118325463?p=298byDUz7YvfJieEVn` and Claude appended it ("Teams: …") to the
+  series description. If a Friday email brings a different link, the user pastes it and Claude updates the series again.
+  If the college approves Microsoft 365, set up a Friday scheduled task to do this automatically.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

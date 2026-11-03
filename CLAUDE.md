@@ -82,6 +82,12 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   a temporary Settings → About "Screen:" line showed top 59 and page 393×852 = full screen, so the page wasn't offset. Fixed by
   `scrollView.topEdgeEffect/bottomEdgeEffect.isHidden = true` in DashViewController (needs Xcode 26 / iOS 26 SDK;
   CI uses iPhoneOS26.5.sdk). Confirmed fixed on the phone on Nov 3.
+- Location (`lib/location.ts`, `hooks/useHereLocation.ts`): when `profile.autoLocation` isn't false (default on), each
+  device looks up where it is on open and on return to the foreground (at most every 2 min) and the weather uses it;
+  stored per device in `dash.here.v1`, so phone and laptop don't overwrite each other; `profile.place` (the city) is the
+  fallback. iPhone uses `@capacitor/geolocation` (iOS asks once; the web view's own prompt would repeat every launch);
+  an app build without the plugin skips it. Place name from BigDataCloud's free reverse-geocode-client with coordinates
+  rounded to 2 decimals; looked up again only after moving > 1 km. Toggle in Settings → You.
 - App icon: `assets/app-icon-light.svg` (white, iOS Default home screen) and `assets/app-icon.svg` (navy, Dark), rendered by
   `npm run icons` into `AppIcon.appiconset` as `AppIcon-Light.png` / `AppIcon-Dark.png` (luminosity appearance). The user
   uses the Default style and wanted a white icon there; Dark stays as it was. No tinted/clear variant (not used). Native: Xcode install.

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
@@ -61,16 +61,21 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [editor, openEditor, setView])
 
+  const { scrollY } = useScroll()
+  const statusFade = useTransform(scrollY, [0, 28], [0, 1])
+
   return (
     <div className="relative min-h-dvh">
       <AmbientBackground />
       {isNative ? (
-        // iPhone app: solid page colour behind the status bar and Dynamic Island, then a soft fade
-        // (tint and blur both taper off) where the page scrolls underneath, with no hard edge.
-        <div
+        // iPhone app: at the top of the page nothing covers the status bar, so the page and its glow run
+        // straight up behind the Dynamic Island. Once you scroll, a soft fade (tint and blur tapering off)
+        // fades in so the clock stays readable over content; the compact title bar takes over after that.
+        <motion.div
           aria-hidden
           className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[calc(env(safe-area-inset-top)+1.5rem)] backdrop-blur-md"
           style={{
+            opacity: statusFade,
             background: 'linear-gradient(to bottom, var(--bg) calc(env(safe-area-inset-top) - 0.25rem), transparent)',
             maskImage: 'linear-gradient(to bottom, black env(safe-area-inset-top), transparent)',
             WebkitMaskImage: 'linear-gradient(to bottom, black env(safe-area-inset-top), transparent)',

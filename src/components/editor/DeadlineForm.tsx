@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { Segmented } from '@/components/ui/Segmented'
 import { useDashboard } from '@/context/DashboardContext'
 import type { Assignment } from '@/types'
+import { SCALE } from '@/lib/grades'
 import { localInput } from '@/lib/localInput'
 import { Field, Select, TextInput, Toggle } from './fields'
 
@@ -29,6 +30,8 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
   const [kind, setKind] = useState<Assignment['kind']>(existing?.kind ?? 'assignment')
   const [due, setDue] = useState(localInput.fromIso(existing?.due ?? defaultDue(selectedDate)))
   const [submitted, setSubmitted] = useState(existing?.submitted ?? false)
+  const [grade, setGrade] = useState(existing?.grade != null ? String(existing.grade) : '')
+  const [outOf, setOutOf] = useState(String(existing?.outOf ?? SCALE))
 
   if (courses.items.length === 0) {
     return <p className="px-1 pb-4 text-body text-muted">Add a course first, then you can add its deadlines.</p>
@@ -36,7 +39,18 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    const data = { title: title.trim(), courseId: course, kind, due: localInput.toIso(due), submitted }
+    const mark = grade.trim() === '' ? undefined : Number(grade.replace(',', '.'))
+    const scale = Number(outOf.replace(',', '.')) || SCALE
+    const data = {
+      title: title.trim(),
+      courseId: course,
+      kind,
+      due: localInput.toIso(due),
+      // A grade means it's done.
+      submitted: submitted || mark != null,
+      grade: mark != null && Number.isFinite(mark) ? mark : undefined,
+      outOf: mark != null && scale !== SCALE ? scale : undefined,
+    }
     if (existing) assignments.update(existing.id, data)
     else assignments.add(data)
     notify(existing ? 'Deadline saved' : 'Deadline added')
@@ -70,7 +84,17 @@ export function DeadlineForm({ id, courseId, onDone }: { id?: string; courseId?:
           <TextInput type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} required />
         </Field>
       </div>
-      {existing && <Toggle label="Submitted" checked={submitted} onChange={setSubmitted} />}
+      {existing && <Toggle label={kind === 'assignment' ? 'Submitted' : 'Done'} checked={submitted} onChange={setSubmitted} />}
+      {existing && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Grade" hint="Leave empty until you get it.">
+            <TextInput type="text" inputMode="decimal" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="–" />
+          </Field>
+          <Field label="Out of">
+            <TextInput type="text" inputMode="decimal" value={outOf} onChange={(e) => setOutOf(e.target.value)} />
+          </Field>
+        </div>
+      )}
       <div className="mt-1 flex items-center gap-2">
         {existing && (
           <Button variant="danger" onClick={remove}>

@@ -1,4 +1,5 @@
-import { addDays, isSameDay, startOfDay } from './date'
+import { classesOn } from './classes'
+import { addDays, startOfDay } from './date'
 import type { AgendaItem, Course } from '@/types'
 
 /**
@@ -19,23 +20,10 @@ export interface Departure {
 // From this hour the evening before, tomorrow's first class is shown.
 const EVENING = 17
 
-/** Class start times on `day` from a course's weekly times, inside its term. */
-function meetingsOn(course: Course, day: Date): Date[] {
-  const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
-  if ((course.term?.start && key < course.term.start) || (course.term?.end && key > course.term.end)) return []
-  return (course.meetings ?? [])
-    .filter((m) => m.days.includes(day.getDay()))
-    .map((m) => {
-      const [h, min] = m.start.split(':').map(Number)
-      return new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, min)
-    })
-}
-
-/** First class of a day: from the calendar (classes at campus) and from courses' weekly times. */
+/** First class of a day. */
 function firstClass(day: Date, agenda: AgendaItem[], courses: Course[]): { title: string; at: Date } | undefined {
-  const fromCalendar = agenda.filter((i) => i.kind === 'class' && !i.allDay && isSameDay(i.date, day)).map((i) => ({ title: i.title, at: i.date }))
-  const fromCourses = courses.flatMap((c) => meetingsOn(c, day).map((at) => ({ title: c.name, at })))
-  return [...fromCalendar, ...fromCourses].sort((a, b) => a.at.getTime() - b.at.getTime())[0]
+  const first = classesOn(day, agenda, courses)[0]
+  return first && { title: first.title, at: first.start }
 }
 
 /**

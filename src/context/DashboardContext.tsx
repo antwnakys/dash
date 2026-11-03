@@ -4,6 +4,7 @@ import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useReminders, type RemindersState } from '@/hooks/useReminders'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
@@ -30,6 +31,8 @@ interface DashboardValue {
   /** Syncs this device's data with every other device signed in to the same Google account. */
   cloud: CloudSync
   weather: WeatherState
+  /** Phone reminders for leaving and for deadlines (iPhone app). */
+  reminders: RemindersState
   /** Open assignments and events in one chronological list. */
   agenda: AgendaItem[]
   selectedDate: Date
@@ -79,6 +82,7 @@ function buildAgenda(
       source: 'event',
       title: e.title,
       date: new Date(e.start),
+      end: e.end ? new Date(e.end) : undefined,
       kind: e.kind,
       context: e.location,
       allDay: e.allDay,
@@ -89,6 +93,7 @@ function buildAgenda(
       source: 'calendar',
       title: e.title,
       date: new Date(e.start),
+      end: e.end ? new Date(e.end) : undefined,
       kind: EXAM.test(e.title) ? 'exam' : 'event',
       context: e.location,
       allDay: e.allDay,
@@ -128,6 +133,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [courses.items, assignments.items, events.items, calendar.events],
   )
 
+  const reminders = useReminders(agenda, courses.items, profile)
+
   const loadSample = useCallback(() => {
     const s = sampleData()
     courses.set(() => s.courses)
@@ -153,6 +160,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     calendar,
     cloud,
     weather,
+    reminders,
     agenda,
     selectedDate,
     setSelectedDate,

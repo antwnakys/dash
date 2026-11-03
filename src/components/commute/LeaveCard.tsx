@@ -1,13 +1,28 @@
-import { TrainFront, Video } from 'lucide-react'
+import { CloudLightning, Snowflake, ThermometerSun, TrainFront, Umbrella, Video } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
+import { useTripForecast } from '@/hooks/useTripForecast'
 import { CAMPUS } from '@/lib/campus'
 import { cn } from '@/lib/cn'
 import { JoinButton } from '@/components/ui/JoinButton'
 import { classesOn } from '@/lib/classes'
 import { COMMUTE_ROUTE, DEFAULT_COMMUTE, nextDeparture } from '@/lib/commute'
-import { fmt } from '@/lib/date'
+import { fmt, startOfDay } from '@/lib/date'
+import { tripHint, type TripHint } from '@/lib/tripWeather'
+
+const hintIcon = { rain: Umbrella, storm: CloudLightning, cold: Snowflake, hot: ThermometerSun } as const
+
+/** "Rain likely from 14:00 in Marousi. Take an umbrella." */
+function WeatherHint({ hint }: { hint: TripHint }) {
+  const Icon = hintIcon[hint.kind]
+  return (
+    <span className={cn('mt-1 flex items-start gap-1.5 text-subhead font-medium', hint.kind === 'hot' || hint.kind === 'cold' ? 'text-ink' : 'text-accent')}>
+      <Icon aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2.2} />
+      <span>{hint.text}</span>
+    </span>
+  )
+}
 
 const inWords = (mins: number) => (mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}`)
 
@@ -48,6 +63,15 @@ export function LeaveCard() {
   const now = useNow(30_000)
   const minutes = profile.commuteMinutes ?? DEFAULT_COMMUTE
   const trip = useMemo(() => nextDeparture(agenda, courses.items, now, minutes), [agenda, courses.items, now, minutes])
+  const forecast = useTripForecast(Boolean(trip))
+  const hint = useMemo(() => {
+    if (!trip || !forecast) return undefined
+    // On campus until the last class of that day ends, then the trip home.
+    const onCampus = classesOn(startOfDay(trip.classAt), agenda, courses.items).filter((c) => !c.online)
+    const doneAt = new Date(Math.max(...onCampus.map((c) => (c.end ?? new Date(c.start.getTime() + 90 * 60_000)).getTime()), trip.classAt.getTime()))
+    const backAt = new Date(doneAt.getTime() + minutes * 60_000)
+    return tripHint(forecast.home, forecast.campus, { leaveAt: trip.leaveAt, arriveAt: trip.classAt, doneAt, backAt })
+  }, [trip, forecast, agenda, courses.items, minutes])
   if (!trip) return null
 
   const left = Math.ceil((trip.leaveAt.getTime() - now.getTime()) / 60_000)
@@ -82,6 +106,7 @@ export function LeaveCard() {
       <span className="min-w-0 flex-1">
         <span className={cn('block text-headline tabular-nums', late ? 'text-danger' : 'text-ink')}>{headline}</span>
         <span className="block text-subhead text-muted">{detail}</span>
+        {hint && <WeatherHint hint={hint} />}
         <span className="mt-0.5 block truncate text-caption text-faint">
           About {inWords(minutes)} · {COMMUTE_ROUTE}
         </span>

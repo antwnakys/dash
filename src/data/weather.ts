@@ -38,6 +38,40 @@ export async function fetchWeather(place: Place): Promise<Weather> {
   }
 }
 
+export interface HourlyPoint {
+  /** Local hour, e.g. "2026-11-06T17:00" (Europe/Athens). */
+  time: string
+  tempC: number
+  rainChance: number
+  rainMm: number
+  code: number
+}
+
+/** Next two days, hour by hour, for several places in one request (Open-Meteo accepts lists of coordinates). */
+export async function fetchHourly(places: Array<{ latitude: number; longitude: number }>): Promise<HourlyPoint[][]> {
+  const url = new URL('https://api.open-meteo.com/v1/forecast')
+  url.search = new URLSearchParams({
+    latitude: places.map((p) => p.latitude).join(','),
+    longitude: places.map((p) => p.longitude).join(','),
+    hourly: 'temperature_2m,precipitation_probability,precipitation,weather_code',
+    timezone: 'Europe/Athens',
+    forecast_days: '2',
+  }).toString()
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Weather service returned ${res.status}`)
+  const json = await res.json()
+  const list = Array.isArray(json) ? json : [json]
+  return list.map((loc: { hourly: Record<string, Array<number | string | null>> }) =>
+    loc.hourly.time.map((time, i) => ({
+      time: String(time),
+      tempC: Number(loc.hourly.temperature_2m[i] ?? 0),
+      rainChance: Number(loc.hourly.precipitation_probability[i] ?? 0),
+      rainMm: Number(loc.hourly.precipitation[i] ?? 0),
+      code: Number(loc.hourly.weather_code[i] ?? 0),
+    })),
+  )
+}
+
 /** Look up a city by name. */
 export async function searchPlace(query: string): Promise<Place | null> {
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search')

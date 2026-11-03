@@ -43,6 +43,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/lib/commute.ts` + `components/commute/LeaveCard.tsx`: "Leave by 08:10" card on Today for the first class of the day
   (calendar classes at campus + courses' weekly times; tomorrow's from 17:00). Home is Argyroupoli; route Line 2 → Line 3 to
   Doukissis Plakentias → suburban to Pentelis; default 80 min door to door, `profile.commuteMinutes` in Settings → Getting to campus.
+  Weather hint on the card (`lib/tripWeather.ts`, `hooks/useTripForecast.ts`): hourly Open-Meteo for home (Argyroupoli) around
+  leaving/returning and Marousi while on campus (until the day's last class ends); storm > rain (≥50% or ≥0.3 mm) > cold (≤10°)
+  > hot (≥33°). Fetched only while a trip is coming up, cached 30 min. (Open-Meteo is blocked from Claude's cloud sandbox,
+  so test it with a mocked route.)
 - `src/lib/classes.ts`: `classesOn(day)` = calendar classes at campus + courses' weekly times (deduped); used by the leave card,
   `components/courses/Timetable.tsx` (week view on Courses) and reminders.
 - `src/lib/reminderPlan.ts` (pure) + `src/lib/reminders.ts` + `hooks/useReminders.ts`: iPhone local notifications

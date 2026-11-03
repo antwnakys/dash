@@ -44,6 +44,14 @@ class DashViewController: CAPBridgeViewController {
         if #available(iOS 15.0, *) {
             webView.underPageBackgroundColor = dashBackground
         }
+        // iOS 26 draws a dimmed, blurred "edge effect" (with a divider line) under the status bar and at the
+        // bottom of every scroll view. dash fills the whole screen and fades its own content, so switch it off.
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            webView.scrollView.topEdgeEffect.isHidden = true
+            webView.scrollView.bottomEdgeEffect.isHidden = true
+        }
+        #endif
     }
 }
 

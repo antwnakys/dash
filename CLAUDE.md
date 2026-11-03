@@ -78,6 +78,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   Web side (AppShell): nothing covers the status bar at scroll top, so the page and ambient glow run up behind the
   Dynamic Island; a solid-then-fading blur overlay fades in over the first 28 px of scroll. (A permanent solid strip
   there looked like a dark band against the glow; the user disliked it on Nov 3.)
+  The remaining band on the user's iPhone 15 (iOS 26) was iOS 26's scroll edge effect under the status bar:
+  Settings → About "Screen:" showed top 59 and page 393×852 = full screen, so the page wasn't offset. Fixed by
+  `scrollView.topEdgeEffect/bottomEdgeEffect.isHidden = true` in DashViewController (needs Xcode 26 / iOS 26 SDK;
+  CI uses iPhoneOS26.5.sdk).
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,

@@ -113,13 +113,12 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 
 ## Next up
 
-- **Install the latest build on the user's iPhone** from their laptop (they asked to do this next):
-  1. On the Mac: `git pull` on `main`, `npm ci`, `npm run ios`.
-  2. In Xcode: App target → Signing & Capabilities → team (personal Apple ID works); plug in the iPhone, pick it, Run.
-  3. First run on the phone: Settings → General → VPN & Device Management → trust the developer.
-     Free Apple ID builds expire after 7 days; re-run from Xcode to renew.
-  4. Alternative without building: download `dash.ipa` from the `ios-latest` release and sideload it (e.g. Sideloadly).
-  After install, sign in with Google once so calendar and Drive sync start.
+- **Installed on the iPhone (Nov 3, 2026, build d1e406e)** from a local Claude session on the user's Mac (folder
+  `~/dash-xcode`): download `dash-xcode.zip` from the `ios-latest` release, unzip to `latest/`, `xcodebuild` (team WDTXV8PP35,
+  `-allowProvisioningUpdates`), `xcrun devicectl device install app` + `process launch`. Remote Control folder sharing never
+  showed up for the cloud session, so use the local Mac session. The test notification arrived, so reminders work.
+  Free Apple ID signing expires after 7 days (next around Nov 10): repeat the same install to renew.
+  Web changes reach the app by live update; only native changes need this install.
 - **Nov 2, 2026 (evening)**: the user installed from the Xcode zip but didn't see the morning changes in the app (cause unclear).
   Added live updates + version label so the app follows the website; needs one more install from Xcode to switch on.
 - **Nov 3, 2026**: GitHub's iOS build for #3 had been cancelled without a runner (GitHub capacity); re-run succeeded.

@@ -9,6 +9,9 @@ export interface ClassSlot {
   courseId?: string
   /** Code of the course it belongs to, when known. */
   code?: string
+  online?: boolean
+  /** Meeting link for online lessons. */
+  link?: string
 }
 
 const at = (day: Date, hhmm: string) => {
@@ -35,7 +38,15 @@ export function classesOn(day: Date, agenda: AgendaItem[], courses: Course[]): C
   const code = new Map(courses.map((c) => [c.id, c.code || undefined]))
   const calendar: ClassSlot[] = agenda
     .filter((i) => i.kind === 'class' && !i.allDay && isSameDay(i.date, day))
-    .map((i) => ({ title: i.title, start: i.date, end: i.end, courseId: i.courseId, code: i.courseId ? code.get(i.courseId) : undefined }))
+    .map((i) => ({
+      title: i.title,
+      start: i.date,
+      end: i.end,
+      courseId: i.courseId,
+      code: i.courseId ? code.get(i.courseId) : undefined,
+      online: i.online,
+      link: i.link,
+    }))
   const key = (s: ClassSlot) => `${s.start.getTime()}|${s.courseId ?? normalize(s.title)}`
   const seen = new Set(calendar.map(key))
   const weekly = courses.flatMap((c) => fromCourse(c, day)).filter((s) => !seen.has(key(s)))

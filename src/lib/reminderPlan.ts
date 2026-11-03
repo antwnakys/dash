@@ -33,7 +33,14 @@ export function planReminders(input: {
 
   if (prefs.leave !== false) {
     for (let i = 0; i < DAYS; i++) {
-      const first = classesOn(addDays(startOfDay(now), i), agenda, courses)[0]
+      const day = classesOn(addDays(startOfDay(now), i), agenda, courses)
+      // Online lessons: a heads-up to join instead of a reminder to leave.
+      for (const c of day.filter((c) => c.online)) {
+        const join = new Date(c.start.getTime() - LEAVE_HEADS_UP * 60_000)
+        if (join > now)
+          out.push({ at: join, title: `${c.title} online in ${LEAVE_HEADS_UP} min`, body: c.link ? 'Open dash to join on Teams' : 'Online lesson' })
+      }
+      const first = day.find((c) => !c.online)
       if (!first) continue
       const at = new Date(first.start.getTime() - (commuteMinutes + LEAVE_HEADS_UP) * 60_000)
       if (at > now)

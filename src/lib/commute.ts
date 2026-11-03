@@ -22,7 +22,8 @@ const EVENING = 17
 
 /** First class of a day. */
 function firstClass(day: Date, agenda: AgendaItem[], courses: Course[]): { title: string; at: Date } | undefined {
-  const first = classesOn(day, agenda, courses)[0]
+  // Online lessons are taken from home, so only classes on campus need the trip.
+  const first = classesOn(day, agenda, courses).find((c) => !c.online)
   return first && { title: first.title, at: first.start }
 }
 

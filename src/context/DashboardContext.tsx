@@ -9,6 +9,7 @@ import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
 import { EXAM, isClass, matchCourse } from '@/lib/campus'
+import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
 import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
@@ -64,7 +65,17 @@ function buildAgenda(
   const asClass = (e: CalendarEvent): Partial<AgendaItem> | null => {
     if (!isClass(e)) return null
     const course = matchCourse(e.title, courses)
-    return { kind: 'class', courseId: course?.id, context: [course?.code, e.location?.split(',')[0]].filter(Boolean).join(' · ') }
+    const link = e.link ?? course?.links.find((l) => l.kind === 'meeting')?.url
+    const online = e.online || looksOnline(e.link, e.title) || undefined
+    return {
+      kind: 'class',
+      // "ACADEMIC SKILLS/ONLINE" reads as the course it belongs to: "Academic Skills".
+      title: online ? (course?.name ?? e.title.replace(/\s*[/(–-]?\s*online\s*\)?\s*$/i, '')) : e.title,
+      courseId: course?.id,
+      link: online ? link : e.link,
+      online,
+      context: [course?.code, online ? 'Online' : e.location?.split(',')[0]].filter(Boolean).join(' · '),
+    }
   }
   return [
     ...assignments

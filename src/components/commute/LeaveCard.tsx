@@ -1,13 +1,46 @@
-import { TrainFront } from 'lucide-react'
+import { TrainFront, Video } from 'lucide-react'
 import { useMemo } from 'react'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { CAMPUS } from '@/lib/campus'
 import { cn } from '@/lib/cn'
+import { JoinButton } from '@/components/ui/JoinButton'
+import { classesOn } from '@/lib/classes'
 import { COMMUTE_ROUTE, DEFAULT_COMMUTE, nextDeparture } from '@/lib/commute'
 import { fmt } from '@/lib/date'
 
 const inWords = (mins: number) => (mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h${mins % 60 ? ` ${mins % 60} min` : ''}`)
+
+const SHOW_ONLINE_FROM = 3 * 3_600_000 // an online lesson's card appears 3 hours before it starts
+
+/** "Academic Skills online at 17:00 · Join on Teams": today's next online lesson, until it ends. */
+export function OnlineCard() {
+  const { agenda, courses } = useDashboard()
+  const now = useNow(30_000)
+  const lesson = useMemo(
+    () =>
+      classesOn(now, agenda, courses.items).find(
+        (c) => c.online && (c.end ?? new Date(c.start.getTime() + 3_600_000)) > now && c.start.getTime() - now.getTime() < SHOW_ONLINE_FROM,
+      ),
+    [agenda, courses.items, now],
+  )
+  if (!lesson) return null
+  const started = lesson.start <= now
+  return (
+    <div className="surface flex items-center gap-3.5 px-4 py-3.5">
+      <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#5b5fc7]/16 text-[#7b7fe0]">
+        <Video className="size-5" strokeWidth={2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-headline text-ink">{started ? `${lesson.title} is on now` : `${lesson.title} online at ${fmt.time.format(lesson.start)}`}</span>
+        <span className="block text-subhead text-muted">
+          {lesson.link ? 'From home, no need to travel.' : 'From home. The Teams link will appear here once it arrives.'}
+        </span>
+        {lesson.link && <JoinButton url={lesson.link} className="mt-2.5" />}
+      </span>
+    </div>
+  )
+}
 
 /** "Leave by 08:10 for Databases": when to set off for the first class of the day. */
 export function LeaveCard() {

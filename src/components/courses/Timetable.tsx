@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
+import { JoinButton } from '@/components/ui/JoinButton'
 import { Card, Section } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
@@ -61,24 +62,25 @@ export function Timetable() {
                         {classes.map((c) => {
                           const past = (c.end ?? c.start) < now
                           return (
-                            <li key={`${c.start.getTime()}-${c.title}`}>
+                            <li key={`${c.start.getTime()}-${c.title}`} className="flex items-center gap-2">
                               <button
                                 disabled={!c.courseId}
                                 onClick={() => c.courseId && openEditor({ type: 'course', id: c.courseId })}
                                 className={cn(
-                                  'flex w-full items-start gap-3 rounded-[0.6rem] border-l-[3px] border-course bg-course/8 px-3 py-2 text-left transition-colors enabled:hover:bg-course/14',
+                                  'flex min-w-0 flex-1 items-start gap-3 rounded-[0.6rem] border-l-[3px] border-course bg-course/8 px-3 py-2 text-left transition-colors enabled:hover:bg-course/14',
                                   past && 'opacity-55',
                                 )}
                               >
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-body font-medium text-ink">{c.title}</span>
-                                  {c.code && <span className="block text-caption text-muted">{c.code}</span>}
-                                </span>
-                                <span className="shrink-0 text-subhead text-muted tabular-nums">
-                                  {fmt.time.format(c.start)}
-                                  {c.end && `–${fmt.time.format(c.end)}`}
+                                  <span className="block text-caption text-muted tabular-nums">
+                                    {[`${fmt.time.format(c.start)}${c.end ? `–${fmt.time.format(c.end)}` : ''}`, c.code, c.online && 'Online']
+                                      .filter(Boolean)
+                                      .join(' · ')}
+                                  </span>
                                 </span>
                               </button>
+                              {c.online && c.link && !past && <JoinButton url={c.link} compact />}
                             </li>
                           )
                         })}

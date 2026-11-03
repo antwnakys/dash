@@ -3,6 +3,7 @@ import { ChevronRight, RefreshCw } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Countdown } from '@/components/ui/Countdown'
+import { JoinButton } from '@/components/ui/JoinButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton } from '@/components/ui/IconButton'
 import { Card, Section } from '@/components/ui/Section'
@@ -35,11 +36,11 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
           ? ({ type: 'course', id: item.courseId } as const)
           : null
   return (
-    <li>
+    <li className="flex items-center">
       <button
         disabled={!target}
         onClick={() => target && openEditor(target)}
-        className="flex min-h-[3.25rem] w-full items-center gap-3 px-4 py-2.5 text-left transition-colors enabled:hover:bg-fill enabled:active:bg-fill-strong"
+        className="flex min-h-[3.25rem] w-full min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left transition-colors enabled:hover:bg-fill enabled:active:bg-fill-strong"
       >
         <span
           className={cn(
@@ -70,6 +71,7 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
         </span>
         <Countdown date={item.date} now={now} />
       </button>
+      {item.online && item.link && <JoinButton url={item.link} compact className="mr-4" />}
     </li>
   )
 }

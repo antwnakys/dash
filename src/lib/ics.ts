@@ -1,3 +1,4 @@
+import { findMeetingLink, looksOnline } from './meeting'
 import type { CalendarEvent } from '@/types'
 
 interface Prop {
@@ -148,10 +149,15 @@ export function parseIcs(
     if (!summary || !start || ev.STATUS?.[0]?.value === 'CANCELLED') continue
 
     const uid = ev.UID?.[0]?.value ?? `${summary}-${ev.DTSTART![0].value}`
+    const location = ev.LOCATION?.[0] ? unescape(ev.LOCATION[0].value) || undefined : undefined
+    const description = ev.DESCRIPTION?.[0] ? unescape(ev.DESCRIPTION[0].value) : undefined
+    const link = findMeetingLink(description, location, ev.URL?.[0]?.value)
     const base = {
       title: unescape(summary),
       allDay: start.allDay || undefined,
-      location: ev.LOCATION?.[0] ? unescape(ev.LOCATION[0].value) || undefined : undefined,
+      location,
+      link,
+      online: looksOnline(link, summary, description) || undefined,
       kind: 'event' as const,
     }
     const rrule = ev.RRULE?.[0]?.value

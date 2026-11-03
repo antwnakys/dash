@@ -1,5 +1,6 @@
 import { ArrowUpRight, Plus } from 'lucide-react'
 import { Countdown } from '@/components/ui/Countdown'
+import { JoinButton } from '@/components/ui/JoinButton'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useDashboard } from '@/context/DashboardContext'
 import { dayDiff, fmt } from '@/lib/date'
@@ -7,7 +8,7 @@ import { average, formatGrade, SCALE } from '@/lib/grades'
 import { nextMeeting } from '@/lib/schedule'
 import type { Assignment, Course } from '@/types'
 
-const linkName = { portal: 'Portal', materials: 'Materials', video: 'Lectures' } as const
+const linkName = { portal: 'Portal', materials: 'Materials', video: 'Lectures', meeting: 'Teams' } as const
 
 interface CourseCardProps {
   course: Course
@@ -26,7 +27,9 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
   const { openEditor, agenda, assignments } = useDashboard()
   const grades = average(assignments.items.filter((a) => a.courseId === course.id))
   // The calendar knows about cancellations and room changes, so it wins over the weekly times.
-  const next = agenda.find((i) => i.kind === 'class' && i.courseId === course.id && i.date > now)?.date ?? nextMeeting(course, now)
+  const nextItem = agenda.find((i) => i.kind === 'class' && i.courseId === course.id && (i.end ?? i.date) > now)
+  const next = nextItem?.date ?? nextMeeting(course, now)
+  const joinUrl = nextItem?.online ? (nextItem.link ?? course.links.find((l) => l.kind === 'meeting')?.url) : undefined
   const pct = Math.round(course.progress * 100)
   const when = [course.schedule, course.instructor && `with ${course.instructor}`].filter(Boolean).join(' ')
 
@@ -42,7 +45,7 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
         {when && <p className="mt-0.5 text-subhead text-muted">{when}</p>}
         {next && (
           <p className="mt-1.5 text-subhead font-medium text-course">
-            Next class: {whenLabel(next, now)}
+            {nextItem?.online ? 'Next class (online)' : 'Next class'}: {whenLabel(next, now)}
           </p>
         )}
         {grades && (
@@ -57,6 +60,11 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
         </div>
       </button>
 
+      {joinUrl && (
+        <div className="border-t border-line px-5 py-3">
+          <JoinButton url={joinUrl} />
+        </div>
+      )}
       <div className="border-t border-line">
         {pending.length === 0 ? (
           <p className="px-5 py-3 text-subhead text-muted">Nothing due</p>

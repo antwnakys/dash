@@ -21,8 +21,19 @@ export function atCampus(location?: string): boolean {
   return NUMBER.test(l) || (STREET.test(l) && AREA.test(l))
 }
 
-/** Calendar entries that look like exams get the exam highlight. */
-export const EXAM = /\b(exams?|midterms?|finals?)\b|εξέταση|εξετάσεις/i
+// normalize() strips accents and turns ς into σ, so "Εξετάσεις" reads "εξετασεισ".
+const EXAM_WORDS = /\b(exams?|midterms?|finals?)\b|εξετασ(η|εισ)/
+// "Warm-up before the exam" is a study session, not the exam.
+const AROUND_EXAM = /(πριν|μετα|για) (την |τισ |το )?εξετασ|\b(before|after|for) (the |my )?exams?\b/
+
+/** Whether a calendar title is an exam: accents and capitals don't matter ("ΕΞΕΤΑΣΗ ΣΗΜΑΤΑ" counts). */
+export const isExamTitle = (title: string) => {
+  const t = normalize(title)
+  return EXAM_WORDS.test(t) && !AROUND_EXAM.test(t)
+}
+
+/** @deprecated use isExamTitle; kept so `.test(title)` callers keep working. */
+export const EXAM = { test: isExamTitle }
 
 /** A class at campus: on campus, timed, and not an exam (exams keep their own highlight). */
 export const isClass = (e: CalendarEvent) => e.kind === 'event' && !e.allDay && atCampus(e.location) && !EXAM.test(e.title)

@@ -56,6 +56,13 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/lib/metroCard.ts` + `components/commute/MetroCardCard.tsx`: the monthly transport card runs out on the 3rd; reminder
   at 10:00 on the 2nd ("Your metro card expires tomorrow", next two months always scheduled) and a Today card on the 2nd/3rd
   with "Renewed" (dismissed per month). Toggle `profile.reminders.metroCard`.
+- Exams tab (`views/ExamsView.tsx`, `lib/exams.ts`, `hooks/useExams.ts`, `components/exams/`): exams = agenda items of kind
+  "exam" (`isExamTitle` in campus.ts: accent/case-insensitive, so "ΕΞΕΤΑΣΗ ΣΗΜΑΤΑ" counts; "πριν την εξέταση"/"before the exam"
+  doesn't; applies to synced and own events) plus Exam-type deadlines. Study sessions: calendar events in the 60 days before
+  whose title contains the exam's subject (e.g. "🚨 ΣΗΜΑΤΑ – Απαγορευτικές" for "🚨🚨 ΕΞΕΤΑΣΗ ΣΗΜΑΤΑ", topic = text after the
+  dash), ticks stored in the synced `dash.study.v1` collection (`fromCalendar`); otherwise "Make a study plan" (`planStudy`):
+  up to 6 × 90 min at 18:00/19:30/16:30/11:00 on free days, campus classes block 100 min of travel before them, topics shared
+  out, last one a practice test. Today shows `NextExamCard` within 14 days.
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference

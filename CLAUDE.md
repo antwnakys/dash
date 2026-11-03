@@ -65,6 +65,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   out, last one a practice test. Today shows `NextExamCard` within 14 days.
   + → Exam (`editor/ExamForm.tsx`) adds an own event with `kind: 'exam'` (title, day, optional time and place) and opens
   the Exams tab; "Edit exam" on the card (own exams → ExamForm, course deadlines → DeadlineForm); "Add exam" in the header.
+  Exam links: any non-meeting web link in an event's notes/location (`findOtherLink` in meeting.ts → `CalendarEvent.url`) or
+  the ExamForm "Link" field shows as a blue `LinkButton` ("Practice ↗" for practice/test sites) on the exam card, the Today
+  exam card and the exam in Up next. ΣΗΜΑΤΑ's practice site was added to the Google exam event's notes ("Practice: …") on Nov 3.
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).

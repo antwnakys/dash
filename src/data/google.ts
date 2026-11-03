@@ -5,7 +5,7 @@
  */
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/config'
-import { findMeetingLink, looksOnline } from '@/lib/meeting'
+import { findMeetingLink, findOtherLink, looksOnline } from '@/lib/meeting'
 import { isNative } from '@/lib/native'
 import type { CalendarEvent } from '@/types'
 
@@ -171,6 +171,7 @@ export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
             allDay: allDay || undefined,
             location: e.location || undefined,
             link,
+            url: findOtherLink(e.description, e.location),
             online: looksOnline(link, e.summary, e.description) || undefined,
             kind: 'event',
           })

@@ -5,7 +5,7 @@ import { useDashboard } from '@/context/DashboardContext'
 import { currentPosition, searchPlace } from '@/data/weather'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
-import { COMMUTE_ROUTE, DEFAULT_COMMUTE } from '@/lib/commute'
+import { COMMUTE_ROUTE, DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
@@ -132,7 +132,25 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           title="Getting to campus"
           footer={`${COMMUTE_ROUTE}. Today shows when to leave for your first class; in the evening, for tomorrow's.`}
         >
-          <Field label="Door to door">
+          <Field
+            label="Suburban trains you take"
+            hint="From Doukissis Plakentias to Pentelis. dash picks the latest one that gets you to class on time."
+          >
+            <TextInput
+              defaultValue={(profile.suburbanTrains ?? DEFAULT_TRAINS).join(', ')}
+              inputMode="numeric"
+              placeholder="17:11, 17:32, 17:50"
+              onBlur={(e) => {
+                const times = parseTrainTimes(e.target.value)
+                e.target.value = times.join(', ')
+                if (times.join() !== (profile.suburbanTrains ?? DEFAULT_TRAINS).join()) {
+                  setProfile({ suburbanTrains: times })
+                  notify('Train times saved')
+                }
+              }}
+            />
+          </Field>
+          <Field label="Door to door, when no train fits">
             <Select
               value={profile.commuteMinutes ?? DEFAULT_COMMUTE}
               onChange={(e) => {

@@ -24,17 +24,18 @@ export function useReminders(agenda: AgendaItem[], courses: Course[], profile: P
   const leave = profile.reminders?.leave
   const deadlines = profile.reminders?.deadlines
   const metroCard = profile.reminders?.metroCard
+  const trains = profile.suburbanTrains?.join(',')
 
   // Rebuild shortly after the data settles (sync can change several things in a row).
   useEffect(() => {
     if (permission !== 'granted') return
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
-      const plan = planReminders({ agenda, courses, commuteMinutes: commute, prefs: { leave, deadlines, metroCard }, now: new Date() })
+      const plan = planReminders({ agenda, courses, commuteMinutes: commute, trains: trains ? trains.split(',') : undefined, prefs: { leave, deadlines, metroCard }, now: new Date() })
       applyReminders(plan).then(() => setScheduled(plan.length), () => {})
     }, 1500)
     return () => window.clearTimeout(timer.current)
-  }, [permission, agenda, courses, commute, leave, deadlines, metroCard])
+  }, [permission, agenda, courses, commute, trains, leave, deadlines, metroCard])
 
   const enable = useCallback(async () => {
     setPermission(await askForReminders())

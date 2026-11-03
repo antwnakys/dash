@@ -7,7 +7,7 @@ import { CAMPUS } from '@/lib/campus'
 import { cn } from '@/lib/cn'
 import { JoinButton } from '@/components/ui/JoinButton'
 import { classesOn } from '@/lib/classes'
-import { COMMUTE_ROUTE, DEFAULT_COMMUTE, nextDeparture } from '@/lib/commute'
+import { COMMUTE_ROUTE, DEFAULT_COMMUTE, nextDeparture, TO_TRAIN } from '@/lib/commute'
 import { fmt, startOfDay } from '@/lib/date'
 import { tripHint, type TripHint } from '@/lib/tripWeather'
 
@@ -62,7 +62,8 @@ export function LeaveCard() {
   const { agenda, courses, profile, openEditor } = useDashboard()
   const now = useNow(30_000)
   const minutes = profile.commuteMinutes ?? DEFAULT_COMMUTE
-  const trip = useMemo(() => nextDeparture(agenda, courses.items, now, minutes), [agenda, courses.items, now, minutes])
+  const trains = profile.suburbanTrains
+  const trip = useMemo(() => nextDeparture(agenda, courses.items, now, minutes, trains), [agenda, courses.items, now, minutes, trains])
   const forecast = useTripForecast(Boolean(trip))
   const hint = useMemo(() => {
     if (!trip || !forecast) return undefined
@@ -86,7 +87,7 @@ export function LeaveCard() {
         : `Leave by ${fmt.time.format(trip.leaveAt)}`
   const detail = late
     ? `${inWords(-left)} later than usual. ${trip.title} starts at ${fmt.time.format(trip.classAt)}.`
-    : `${trip.title} at ${fmt.time.format(trip.classAt)} · ${CAMPUS.split(',')[0]}`
+    : `${trip.train ? `Take the ${fmt.time.format(trip.train)} suburban · ` : ''}${trip.title} at ${fmt.time.format(trip.classAt)}`
 
   return (
     <button
@@ -108,7 +109,9 @@ export function LeaveCard() {
         <span className="block text-subhead text-muted">{detail}</span>
         {hint && <WeatherHint hint={hint} />}
         <span className="mt-0.5 block truncate text-caption text-faint">
-          About {inWords(minutes)} · {COMMUTE_ROUTE}
+          {trip.train
+            ? `Metro to Doukissis Plakentias (about ${inWords(TO_TRAIN)}) · suburban to Pentelis · ${CAMPUS.split(',')[0]}`
+            : `About ${inWords(minutes)} · ${COMMUTE_ROUTE}`}
         </span>
       </span>
     </button>

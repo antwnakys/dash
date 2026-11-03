@@ -109,6 +109,8 @@ export interface Profile {
   place?: Place
   /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
   commuteMinutes?: number
+  /** Suburban departures from Doukissis Plakentias toward Pentelis ("17:11"); unset means the defaults in lib/commute.ts. */
+  suburbanTrains?: string[]
   /** Phone reminders (iPhone app). Missing flags count as on. */
   reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean }
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */

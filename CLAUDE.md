@@ -123,9 +123,10 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   `https://teams.microsoft.com/meet/3698245118325463?p=298byDUz7YvfJieEVn` and Claude appended it ("Teams: …") to the
   series description. If a Friday email brings a different link, the user pastes it and Claude updates the series again.
   If the college approves Microsoft 365, set up a Friday scheduled task to do this automatically.
-- **Suburban train times (wanted)**: the user wants "Leave by 08:12 to catch the 08:58 suburban" from real Hellenic Train
-  times (Doukissis Plakentias → Pentelis). hellenictrain.gr is blocked from Claude's cloud sandbox, so the timetable couldn't
-  be fetched; waiting for the user to send it (screenshot/PDF) or to allow the domain. Plan: built-in weekday/weekend
-  departures, leave time = train − metro leg − walk, updated when Hellenic Train changes the timetable.
+- **Suburban trains (Nov 3)**: the user takes the 17:11, 17:32 or 17:50 from Doukissis Plakentias to Pentelis (1 min ride),
+  from a Hellenic Train screenshot. `planTrip` (lib/commute.ts) picks the latest listed train that arrives with an 8 min walk
+  + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → suburban platform). Otherwise
+  the door-to-door estimate. Train times are editable in Settings → Getting to campus (`profile.suburbanTrains`).
+  hellenictrain.gr is blocked from the sandbox, so new times come from the user.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

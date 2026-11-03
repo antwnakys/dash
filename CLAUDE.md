@@ -40,6 +40,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/views/`: Today, Courses, Tasks, Calendar screens
 - `src/components/editor/`: bottom-sheet forms (CourseForm + ScheduleEditor, DeadlineForm, EventForm, TaskForm, SettingsForm); `fields.tsx` has inputs, `PickerPill` (native iOS date/time picker behind a pill)
 - `src/lib/campus.ts`: campus = **Sorou 74, Marousi**; `atCampus`, `isClass`, `EXAM` regex, `matchCourse`
+- `src/lib/commute.ts` + `components/commute/LeaveCard.tsx`: "Leave by 08:10" card on Today for the first class of the day
+  (calendar classes at campus + courses' weekly times; tomorrow's from 17:00). Home is Argyroupoli; route Line 2 → Line 3 to
+  Doukissis Plakentias → suburban to Pentelis; default 80 min door to door, `profile.commuteMinutes` in Settings → Getting to campus.
 - `src/lib/schedule.ts`: course meeting helpers (format, parse old text, next class, infer from calendar events)
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
@@ -88,5 +91,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   After install, sign in with Google once so calendar and Drive sync start.
 - **Nov 2, 2026 (evening)**: the user installed from the Xcode zip but didn't see the morning changes in the app (cause unclear).
   Added live updates + version label so the app follows the website; needs one more install from Xcode to switch on.
+- **Nov 3, 2026**: GitHub's iOS build for #3 had been cancelled without a runner (GitHub capacity); re-run succeeded.
+  Added the "Leave by" commute card. Plan: the user says "I'm home", then Claude installs the app on the iPhone through
+  the Mac (folder `~/dash-xcode`, built at c92fcf5) via Remote Control; the user wants only simple Allow/yes-no prompts, no Settings trips.
+  Ideas the user was offered and may pick next: phone reminders (native, needs Xcode), weekly timetable, grades, home-screen widget.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

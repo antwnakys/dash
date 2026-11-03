@@ -5,10 +5,11 @@ import { useDashboard } from '@/context/DashboardContext'
 import { currentPosition, searchPlace } from '@/data/weather'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
+import { COMMUTE_ROUTE, DEFAULT_COMMUTE } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
-import { Field, FormGroup, TextArea, TextInput } from './fields'
+import { Field, FormGroup, Select, TextArea, TextInput } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
 
@@ -18,7 +19,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
   { value: 'dark', label: 'Dark' },
 ]
 
-export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' }) {
+export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
   const { profile, setProfile, events, courses, calendar, cloud, loadSample, clearAll, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
@@ -26,9 +27,11 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
   const [busy, setBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const calendarSection = useRef<HTMLDivElement>(null)
+  const commuteSection = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (section === 'calendar') calendarSection.current?.scrollIntoView({ block: 'start' })
+    const target = section === 'calendar' ? calendarSection : section === 'commute' ? commuteSection : null
+    target?.current?.scrollIntoView({ block: 'start' })
   }, [section])
 
   const connect = (text: string) => {
@@ -123,6 +126,29 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           </div>
         </FormGroup>
       </form>
+
+      <div ref={commuteSection} className="scroll-mt-4">
+        <FormGroup
+          title="Getting to campus"
+          footer={`${COMMUTE_ROUTE}. Today shows when to leave for your first class; in the evening, for tomorrow's.`}
+        >
+          <Field label="Door to door">
+            <Select
+              value={profile.commuteMinutes ?? DEFAULT_COMMUTE}
+              onChange={(e) => {
+                setProfile({ commuteMinutes: +e.target.value })
+                notify('Travel time saved')
+              }}
+            >
+              {Array.from({ length: 27 }, (_, i) => 20 + i * 5).map((m) => (
+                <option key={m} value={m}>
+                  {m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </FormGroup>
+      </div>
 
       <div ref={calendarSection} className="scroll-mt-4">
         <FormGroup

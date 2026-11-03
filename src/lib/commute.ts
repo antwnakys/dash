@@ -8,6 +8,10 @@ import type { AgendaItem, Course } from '@/types'
  * most of the spread being the wait for the suburban train.
  */
 export const DEFAULT_COMMUTE = 80
+/** Both ends of the trip, for the weather hint. */
+export const HOME_PLACE = { name: 'Argyroupoli', latitude: 37.906, longitude: 23.752 }
+export const CAMPUS_PLACE = { name: 'Marousi', latitude: 38.045, longitude: 23.809 }
+
 export const COMMUTE_ROUTE = 'Walk to Argyroupoli · metro to Doukissis Plakentias · suburban to Pentelis · walk'
 
 export interface Departure {

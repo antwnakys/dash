@@ -130,7 +130,7 @@ export interface Profile {
   /** Suburban departures from Doukissis Plakentias toward Pentelis ("17:11"); unset means the defaults in lib/commute.ts. */
   suburbanTrains?: string[]
   /** Phone reminders (iPhone app). Missing flags count as on. */
-  reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean }
+  reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean; appExpiry?: boolean }
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */

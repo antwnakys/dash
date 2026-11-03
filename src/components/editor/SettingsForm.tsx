@@ -20,7 +20,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
-  const { profile, setProfile, events, courses, calendar, cloud, reminders, location, loadSample, clearAll, theme, notify } = useDashboard()
+  const { profile, setProfile, events, courses, calendar, cloud, reminders, location, appExpires, loadSample, clearAll, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
@@ -190,6 +190,13 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
               checked={profile.reminders?.deadlines !== false}
               onChange={(v) => setProfile({ reminders: { ...profile.reminders, deadlines: v } })}
             />
+            {appExpires && (
+              <Toggle
+                label="Before the app stops opening"
+                checked={profile.reminders?.appExpiry !== false}
+                onChange={(v) => setProfile({ reminders: { ...profile.reminders, appExpiry: v } })}
+              />
+            )}
             <Toggle
               label="Metro card (2nd of each month)"
               checked={profile.reminders?.metroCard !== false}
@@ -399,6 +406,13 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           Version <span className="font-medium text-ink tabular-nums">{BUILD}</span> · built{' '}
           {BUILT_AT.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
+        {appExpires && (
+          <p className="px-1 text-subhead text-muted">
+            App signed until{' '}
+            <span className="font-medium text-ink">{appExpires.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            . Reinstall from the Mac before then.
+          </p>
+        )}
       </FormGroup>
     </div>
   )

@@ -66,6 +66,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).
+- App expiry (`lib/appExpiry.ts`, `hooks/useAppExpiry.ts`, `components/commute/AppExpiryCard.tsx`): native `DashAppPlugin`
+  ("DashApp".info() in SceneDelegate.swift) reads ExpirationDate from the app's `embedded.mobileprovision` (free Apple ID
+  profiles last 7 days). Reminders at 20:00 the evening before and 3 h before; Today card in the last 2 days with
+  "Copy Mac message" (the reinstall prompt); Settings → About shows "App signed until …". Toggle `reminders.appExpiry`.
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference

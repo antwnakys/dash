@@ -36,6 +36,7 @@ class DashViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(DashThemePlugin())
+        bridge?.registerPluginInstance(DashAppPlugin())
         view.backgroundColor = dashBackground
         guard let webView = webView else { return }
         webView.backgroundColor = dashBackground
@@ -77,5 +78,39 @@ class DashThemePlugin: CAPPlugin, CAPBridgedPlugin {
             self?.bridge?.viewController?.view.window?.overrideUserInterfaceStyle = style
             call.resolve()
         }
+    }
+}
+
+/// Facts about the installed app for the web side. `info()` returns `expires`: when the signing profile Xcode put
+/// into the app runs out (free Apple ID profiles last 7 days, then the app stops opening until it's reinstalled).
+@objc(DashAppPlugin)
+class DashAppPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "DashAppPlugin"
+    let jsName = "DashApp"
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "info", returnType: CAPPluginReturnPromise)
+    ]
+
+    @objc func info(_ call: CAPPluginCall) {
+        var result: [String: Any] = [:]
+        if let expires = DashAppPlugin.profileExpiry() {
+            result["expires"] = ISO8601DateFormatter().string(from: expires)
+        }
+        call.resolve(result)
+    }
+
+    /// `embedded.mobileprovision` is a signed file with a property list inside; read its ExpirationDate.
+    /// Absent in the simulator and in App Store builds, which then report no expiry.
+    static func profileExpiry() -> Date? {
+        guard
+            let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+            let data = try? Data(contentsOf: url),
+            let text = String(data: data, encoding: .isoLatin1),
+            let start = text.range(of: "<?xml"),
+            let end = text.range(of: "</plist>"),
+            let xml = String(text[start.lowerBound..<end.upperBound]).data(using: .isoLatin1),
+            let plist = try? PropertyListSerialization.propertyList(from: xml, format: nil) as? [String: Any]
+        else { return nil }
+        return plist["ExpirationDate"] as? Date
     }
 }

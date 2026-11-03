@@ -3,6 +3,7 @@ import { sampleData } from '@/data/sample'
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
+import { useAppExpiry } from '@/hooks/useAppExpiry'
 import { useHereLocation } from '@/hooks/useHereLocation'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useReminders, type RemindersState } from '@/hooks/useReminders'
@@ -38,6 +39,8 @@ interface DashboardValue {
   weather: WeatherState
   /** This device's current location (when following it) and whether location was refused. */
   location: { here?: Place; denied: boolean }
+  /** When the installed iPhone app stops opening (free Apple ID signing), if known. */
+  appExpires?: Date
   /** Phone reminders for leaving and for deadlines (iPhone app). */
   reminders: RemindersState
   /** Open assignments and events in one chronological list. */
@@ -166,7 +169,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [courses.items, assignments.items, events.items, calendar.events, tasks.tasks],
   )
 
-  const reminders = useReminders(agenda, courses.items, profile)
+  const appExpires = useAppExpiry()
+  const reminders = useReminders(agenda, courses.items, profile, appExpires)
 
   const loadSample = useCallback(() => {
     const s = sampleData()
@@ -194,6 +198,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     calendar,
     cloud,
     weather,
+    appExpires,
     location,
     reminders,
     agenda,

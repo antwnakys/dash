@@ -1,8 +1,8 @@
 /** What dash reminds you about, worked out from your data. No phone APIs here, so it can be tested anywhere. */
 import type { AgendaItem, Course, Profile } from '@/types'
-import { CAMPUS } from './campus'
 import { classesOn } from './classes'
 import { addDays, fmt, startOfDay } from './date'
+import { planTrip } from './commute'
 import { cardReminders } from './metroCard'
 
 export interface Reminder {
@@ -25,10 +25,11 @@ export function planReminders(input: {
   agenda: AgendaItem[]
   courses: Course[]
   commuteMinutes: number
+  trains?: string[]
   prefs: NonNullable<Profile['reminders']>
   now: Date
 }): Reminder[] {
-  const { agenda, courses, commuteMinutes, prefs, now } = input
+  const { agenda, courses, commuteMinutes, trains, prefs, now } = input
   const out: Omit<Reminder, 'id'>[] = []
   const until = addDays(startOfDay(now), DAYS)
 
@@ -43,12 +44,13 @@ export function planReminders(input: {
       }
       const first = day.find((c) => !c.online)
       if (!first) continue
-      const at = new Date(first.start.getTime() - (commuteMinutes + LEAVE_HEADS_UP) * 60_000)
+      const trip = planTrip(first.start, commuteMinutes, trains)
+      const at = new Date(trip.leaveAt.getTime() - LEAVE_HEADS_UP * 60_000)
       if (at > now)
         out.push({
           at,
           title: `Leave in ${LEAVE_HEADS_UP} min`,
-          body: `${first.title} at ${fmt.time.format(first.start)} · ${CAMPUS.split(',')[0]}`,
+          body: `${trip.train ? `Take the ${fmt.time.format(trip.train)} suburban · ` : ''}${first.title} at ${fmt.time.format(first.start)}`,
         })
     }
   }

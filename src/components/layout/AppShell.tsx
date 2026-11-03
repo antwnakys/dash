@@ -65,10 +65,16 @@ export function AppShell() {
     <div className="relative min-h-dvh">
       <AmbientBackground />
       {isNative ? (
-        // iPhone app: the status bar sits on a soft fade (blur and tint both taper off), with no hard edge.
+        // iPhone app: solid page colour behind the status bar and Dynamic Island, then a soft fade
+        // (tint and blur both taper off) where the page scrolls underneath, with no hard edge.
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[calc(env(safe-area-inset-top)+1.75rem)] bg-[linear-gradient(to_bottom,var(--bg)_35%,transparent)] backdrop-blur-md [mask-image:linear-gradient(to_bottom,black_50%,transparent)]"
+          className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[calc(env(safe-area-inset-top)+1.5rem)] backdrop-blur-md"
+          style={{
+            background: 'linear-gradient(to bottom, var(--bg) calc(env(safe-area-inset-top) - 0.25rem), transparent)',
+            maskImage: 'linear-gradient(to bottom, black env(safe-area-inset-top), transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black env(safe-area-inset-top), transparent)',
+          }}
         />
       ) : (
         // Keeps a browser's status bar legible as content scrolls under it.

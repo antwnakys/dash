@@ -1,8 +1,12 @@
+import { registerPlugin } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { useEffect, useState } from 'react'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
 import { useLocalStorage } from './useLocalStorage'
+
+/** Native side in ios/App/App/SceneDelegate.swift: matches iOS's colours behind the page to dash's theme. */
+const DashTheme = registerPlugin<{ set(options: { style: ThemePreference }): Promise<void> }>('DashTheme')
 
 const media = () => window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -25,7 +29,11 @@ export function useTheme() {
     const root = document.documentElement
     if (preference === 'system') delete root.dataset.theme
     else root.dataset.theme = preference
-    if (isNative) StatusBar.setStyle({ style: resolved === 'dark' ? Style.Dark : Style.Light }).catch(() => {})
+    if (isNative) {
+      // Older app builds don't have DashTheme yet; that only means the native colours follow the phone.
+      DashTheme.set({ style: preference }).catch(() => {})
+      StatusBar.setStyle({ style: resolved === 'dark' ? Style.Dark : Style.Light }).catch(() => {})
+    }
   }, [preference, resolved])
 
   return { preference, resolved, setPreference: (p: ThemePreference) => setStored(p) }

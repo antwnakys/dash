@@ -3,6 +3,7 @@ import type { AgendaItem, Course, Profile } from '@/types'
 import { CAMPUS } from './campus'
 import { classesOn } from './classes'
 import { addDays, fmt, startOfDay } from './date'
+import { cardReminders } from './metroCard'
 
 export interface Reminder {
   id: number
@@ -50,6 +51,12 @@ export function planReminders(input: {
           body: `${first.title} at ${fmt.time.format(first.start)} · ${CAMPUS.split(',')[0]}`,
         })
     }
+  }
+
+  if (prefs.metroCard !== false) {
+    // Monthly, so these are scheduled beyond the two-week window: the next two, in case dash isn't opened for a while.
+    for (const at of cardReminders(now))
+      out.push({ at, title: 'Your metro card expires tomorrow', body: 'Renew it today so you can travel tomorrow.' })
   }
 
   if (prefs.deadlines !== false) {

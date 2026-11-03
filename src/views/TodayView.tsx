@@ -19,7 +19,7 @@ function useSummary(now: Date) {
   const { agenda, tasks } = useDashboard()
   const leftToday = agenda.filter((i) => isSameDay(i.date, now) && (i.allDay || i.date >= now)).length
   const open = tasks.tasks.filter((t) => !t.done).length
-  const deadline = agenda.find((i) => (i.kind === 'assignment' || i.kind === 'exam' || i.kind === 'quiz') && i.date > now)
+  const deadline = agenda.find((i) => (i.kind === 'assignment' || i.kind === 'exam' || i.kind === 'quiz' || i.kind === 'task') && i.date > now)
 
   const first = leftToday === 0 ? 'Nothing else on today' : `${leftToday} more ${leftToday === 1 ? 'thing' : 'things'} today`
   const second = open === 0 ? 'no open tasks' : `${open} open ${open === 1 ? 'task' : 'tasks'}`

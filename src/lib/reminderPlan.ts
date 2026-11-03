@@ -18,7 +18,7 @@ const LEAVE_HEADS_UP = 10 // minutes before it's time to leave
 const DUE_SOON_HOURS = 3
 const EVENING_BEFORE = 20 // 20:00 the day before
 
-const kindName = { assignment: 'Due', exam: 'Exam', quiz: 'Quiz' } as const
+const kindName = { assignment: 'Due', task: 'Due', exam: 'Exam', quiz: 'Quiz' } as const
 
 /** What to remind about in the next two weeks, soonest first. Pure, so it can be tested. */
 export function planReminders(input: {
@@ -63,7 +63,7 @@ export function planReminders(input: {
 
   if (prefs.deadlines !== false) {
     for (const item of agenda) {
-      if (item.kind !== 'assignment' && item.kind !== 'exam' && item.kind !== 'quiz') continue
+      if (item.kind !== 'assignment' && item.kind !== 'task' && item.kind !== 'exam' && item.kind !== 'quiz') continue
       if (item.date <= now || item.date > until) continue
       const label = kindName[item.kind]
       const where = item.context ? ` · ${item.context}` : ''
@@ -72,14 +72,14 @@ export function planReminders(input: {
       if (evening > now)
         out.push({
           at: evening,
-          title: item.kind === 'assignment' ? `Due tomorrow: ${item.title}` : `${label} tomorrow: ${item.title}`,
+          title: item.kind === 'assignment' || item.kind === 'task' ? `Due tomorrow: ${item.title}` : `${label} tomorrow: ${item.title}`,
           body: `${item.allDay ? 'All day' : fmt.time.format(item.date)}${where}`,
         })
       const soon = new Date(item.date.getTime() - DUE_SOON_HOURS * 3_600_000)
       if (!item.allDay && soon > now && soon > evening)
         out.push({
           at: soon,
-          title: item.kind === 'assignment' ? `Due in ${DUE_SOON_HOURS} hours: ${item.title}` : `${label} in ${DUE_SOON_HOURS} hours: ${item.title}`,
+          title: item.kind === 'assignment' || item.kind === 'task' ? `Due in ${DUE_SOON_HOURS} hours: ${item.title}` : `${label} in ${DUE_SOON_HOURS} hours: ${item.title}`,
           body: `${fmt.time.format(item.date)}${where}`,
         })
     }

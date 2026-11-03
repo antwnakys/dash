@@ -1,5 +1,8 @@
 import { motion, Reorder, useDragControls } from 'framer-motion'
-import { GripVertical, X } from 'lucide-react'
+import { CalendarClock, GripVertical, X } from 'lucide-react'
+import { useDashboard } from '@/context/DashboardContext'
+import { cn } from '@/lib/cn'
+import type { DueState } from '@/lib/taskDue'
 import type { Task } from '@/types'
 import { categoryLabel } from './categories'
 import { Checkbox } from './Checkbox'
@@ -7,12 +10,21 @@ import { Checkbox } from './Checkbox'
 interface TaskItemProps {
   task: Task
   showCategory: boolean
+  due?: { state: DueState; label: string }
   onToggle: () => void
   onRemove: () => void
 }
 
-export function TaskItem({ task, showCategory, onToggle, onRemove }: TaskItemProps) {
+const dueTone: Record<DueState, string> = {
+  overdue: 'font-medium text-danger',
+  today: 'font-medium text-accent',
+  soon: 'text-muted',
+  later: 'text-muted',
+}
+
+export function TaskItem({ task, showCategory, due, onToggle, onRemove }: TaskItemProps) {
   const controls = useDragControls()
+  const { openEditor } = useDashboard()
 
   return (
     <Reorder.Item
@@ -38,7 +50,12 @@ export function TaskItem({ task, showCategory, onToggle, onRemove }: TaskItemPro
 
         <Checkbox checked={task.done} onToggle={onToggle} label={task.title} />
 
-        <div className="ml-2 flex min-w-0 flex-1 flex-col">
+        <button
+          type="button"
+          onClick={() => openEditor({ type: 'task', id: task.id })}
+          aria-label={`Edit “${task.title}”`}
+          className="ml-2 flex min-w-0 flex-1 flex-col text-left"
+        >
           <span className="relative w-fit max-w-full">
             <span className={`block truncate text-body transition-colors duration-300 ${task.done ? 'text-faint' : 'text-ink'}`}>
               {task.title}
@@ -51,8 +68,19 @@ export function TaskItem({ task, showCategory, onToggle, onRemove }: TaskItemPro
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             />
           </span>
-          {showCategory && <span className="text-subhead text-muted">{categoryLabel[task.category]}</span>}
-        </div>
+          {(showCategory || (due && !task.done)) && (
+            <span className="flex min-w-0 items-center gap-1.5 text-subhead text-muted">
+              {due && !task.done && (
+                <span className={cn('inline-flex shrink-0 items-center gap-1 tabular-nums', dueTone[due.state])}>
+                  <CalendarClock aria-hidden className="size-3.5" strokeWidth={2.2} />
+                  {due.label}
+                </span>
+              )}
+              {due && !task.done && showCategory && <span aria-hidden>·</span>}
+              {showCategory && <span className="truncate">{categoryLabel[task.category]}</span>}
+            </span>
+          )}
+        </button>
 
         <button
           type="button"

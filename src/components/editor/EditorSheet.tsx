@@ -46,7 +46,7 @@ export function EditorSheet() {
       : type === 'new'
         ? 'New'
         : type === 'task'
-          ? 'New task'
+          ? target && idOf(target) ? 'Edit task' : 'New task'
           : type
             ? titles[type][target && idOf(target) ? 1 : 0]
             : ''
@@ -59,7 +59,7 @@ export function EditorSheet() {
             <Segmented label="What to add" options={newKinds} value={newKind} onChange={setNewKind} block />
           )}
           {type === 'new' && <NewChooser />}
-          {type === 'task' && <TaskForm onDone={closeEditor} />}
+          {type === 'task' && <TaskForm id={target.type === 'task' ? target.id : undefined} onDone={closeEditor} />}
           {type === 'course' && <CourseForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'deadline' && (
             <DeadlineForm

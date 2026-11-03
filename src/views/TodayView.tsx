@@ -1,5 +1,6 @@
 import { Agenda } from '@/components/calendar/Agenda'
 import { MiniCalendar } from '@/components/calendar/MiniCalendar'
+import { AppExpiryCard } from '@/components/commute/AppExpiryCard'
 import { LeaveCard, OnlineCard } from '@/components/commute/LeaveCard'
 import { NextExamCard } from '@/components/exams/NextExamCard'
 import { MetroCardCard } from '@/components/commute/MetroCardCard'
@@ -69,6 +70,7 @@ export function TodayView() {
       <div className="flex flex-col gap-8 xl:grid xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:items-start xl:gap-x-8 xl:gap-y-0">
         <div className="contents xl:flex xl:flex-col xl:gap-8">
           <RevealItem className="order-0 flex flex-col gap-3 empty:hidden">
+            <AppExpiryCard />
             <RemindersPrompt />
             <MetroCardCard />
             <OnlineCard />

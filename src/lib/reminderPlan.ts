@@ -26,10 +26,12 @@ export function planReminders(input: {
   courses: Course[]
   commuteMinutes: number
   trains?: string[]
+  /** When the installed app stops opening (iPhone app signed with a free Apple ID). */
+  appExpires?: Date
   prefs: NonNullable<Profile['reminders']>
   now: Date
 }): Reminder[] {
-  const { agenda, courses, commuteMinutes, trains, prefs, now } = input
+  const { agenda, courses, commuteMinutes, trains, appExpires, prefs, now } = input
   const out: Omit<Reminder, 'id'>[] = []
   const until = addDays(startOfDay(now), DAYS)
 
@@ -53,6 +55,16 @@ export function planReminders(input: {
           body: `${trip.train ? `Take the ${fmt.time.format(trip.train)} suburban · ` : ''}${first.title} at ${fmt.time.format(first.start)}`,
         })
     }
+  }
+
+  if (appExpires && prefs.appExpiry !== false) {
+    // The evening before at 20:00 (like deadlines), and three hours before as a last call.
+    const dayBefore = addDays(startOfDay(appExpires), -1)
+    dayBefore.setHours(EVENING_BEFORE, 0, 0, 0)
+    const lastCall = new Date(appExpires.getTime() - 3 * 3_600_000)
+    const body = 'Reinstall it from your Mac to keep it working. It takes about a minute.'
+    if (dayBefore > now && dayBefore < lastCall) out.push({ at: dayBefore, title: 'dash stops opening tomorrow', body })
+    if (lastCall > now) out.push({ at: lastCall, title: `dash stops opening at ${fmt.time.format(appExpires)}`, body })
   }
 
   if (prefs.metroCard !== false) {

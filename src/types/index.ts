@@ -110,7 +110,7 @@ export interface Profile {
   /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
   commuteMinutes?: number
   /** Phone reminders (iPhone app). Missing flags count as on. */
-  reminders?: { leave?: boolean; deadlines?: boolean }
+  reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean }
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */

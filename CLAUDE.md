@@ -53,6 +53,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   (`@capacitor/local-notifications`): 10 min before leave time for the first class, 20:00 the evening before and 3 h before
   anything due. Rebuilt on every data change (cancel all, schedule next 14 days, max 60). Toggles in Settings → Reminders;
   one-tap "Turn on reminders" card on Today (the user dislikes digging through Settings).
+- `src/lib/metroCard.ts` + `components/commute/MetroCardCard.tsx`: the monthly transport card runs out on the 3rd; reminder
+  at 10:00 on the 2nd ("Your metro card expires tomorrow", next two months always scheduled) and a Today card on the 2nd/3rd
+  with "Renewed" (dismissed per month). Toggle `profile.reminders.metroCard`.
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
@@ -120,5 +123,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   `https://teams.microsoft.com/meet/3698245118325463?p=298byDUz7YvfJieEVn` and Claude appended it ("Teams: …") to the
   series description. If a Friday email brings a different link, the user pastes it and Claude updates the series again.
   If the college approves Microsoft 365, set up a Friday scheduled task to do this automatically.
+- **Suburban train times (wanted)**: the user wants "Leave by 08:12 to catch the 08:58 suburban" from real Hellenic Train
+  times (Doukissis Plakentias → Pentelis). hellenictrain.gr is blocked from Claude's cloud sandbox, so the timetable couldn't
+  be fetched; waiting for the user to send it (screenshot/PDF) or to allow the domain. Plan: built-in weekday/weekend
+  departures, leave time = train − metro leg − walk, updated when Hellenic Train changes the timetable.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

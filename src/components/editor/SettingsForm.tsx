@@ -172,6 +172,11 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
               checked={profile.reminders?.deadlines !== false}
               onChange={(v) => setProfile({ reminders: { ...profile.reminders, deadlines: v } })}
             />
+            <Toggle
+              label="Metro card (2nd of each month)"
+              checked={profile.reminders?.metroCard !== false}
+              onChange={(v) => setProfile({ reminders: { ...profile.reminders, metroCard: v } })}
+            />
           </div>
         )}
         {reminders.permission === 'prompt' && (
@@ -183,7 +188,7 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           <p className="px-1 text-subhead text-muted">Notifications are switched off for dash in the iPhone's Settings app, under dash.</p>
         )}
         <p className="px-1 text-subhead text-muted">
-          Ten minutes before it's time to leave for your first class, and the evening before and three hours before anything is due.
+          Ten minutes before it's time to leave for your first class, the evening before and three hours before anything is due, and at 10:00 on the 2nd of each month for your metro card.
         </p>
       </FormGroup>
 

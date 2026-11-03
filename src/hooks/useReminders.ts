@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEFAULT_COMMUTE } from '@/lib/commute'
-import { applyReminders, askForReminders, planReminders, reminderPermission, type ReminderPermission } from '@/lib/reminders'
+import { applyReminders, askForReminders, planReminders, reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders'
 import type { AgendaItem, Course, Profile } from '@/types'
 
 export interface RemindersState {
@@ -8,6 +8,8 @@ export interface RemindersState {
   /** How many reminders are lined up for the next two weeks. */
   scheduled: number
   enable: () => Promise<void>
+  /** Sends a notification in 5 seconds (asks for permission first if needed). */
+  test: () => Promise<void>
 }
 
 /** Keeps the phone's scheduled reminders in step with dash's data (iPhone app only). */
@@ -41,5 +43,11 @@ export function useReminders(agenda: AgendaItem[], courses: Course[], profile: P
     setPermission(await askForReminders())
   }, [])
 
-  return { permission, scheduled, enable }
+  const test = useCallback(async () => {
+    const granted = permission === 'granted' ? 'granted' : await askForReminders()
+    setPermission(granted)
+    if (granted === 'granted') await sendTestReminder()
+  }, [permission])
+
+  return { permission, scheduled, enable, test }
 }

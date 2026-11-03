@@ -31,5 +31,6 @@ plug in your iPhone, pick it as the run destination and press Run.
 
 ## Icons
 
-Edit `assets/app-icon.svg` / `assets/logo-mark.svg`, then `npm run icons` and copy
-`assets/app-icon-1024.png` to `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png`.
+Edit `assets/app-icon.svg` (Dark home screen icon), `assets/app-icon-light.svg` (Default home screen icon) or
+`assets/logo-mark.svg`, then run `npm run icons`. It renders the PNGs, including both iPhone icons in
+`ios/App/App/Assets.xcassets/AppIcon.appiconset` (iOS picks one by the home screen's appearance).

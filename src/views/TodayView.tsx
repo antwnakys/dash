@@ -1,5 +1,6 @@
 import { Agenda } from '@/components/calendar/Agenda'
 import { MiniCalendar } from '@/components/calendar/MiniCalendar'
+import { LeaveCard } from '@/components/commute/LeaveCard'
 import { CourseList } from '@/components/courses/CourseList'
 import { WeatherChip } from '@/components/header/WeatherChip'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -64,6 +65,9 @@ export function TodayView() {
       {/* One column in priority order until 1280px, then two. */}
       <div className="flex flex-col gap-8 xl:grid xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:items-start xl:gap-x-8 xl:gap-y-0">
         <div className="contents xl:flex xl:flex-col xl:gap-8">
+          <RevealItem className="order-0 empty:hidden">
+            <LeaveCard />
+          </RevealItem>
           <RevealItem className="order-1">
             <Agenda limit={6} />
           </RevealItem>

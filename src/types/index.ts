@@ -95,6 +95,8 @@ export interface Profile {
   name: string
   /** Weather location; when unset the device location is used. */
   place?: Place
+  /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
+  commuteMinutes?: number
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */
@@ -108,6 +110,6 @@ export type EditorTarget =
   | { type: 'event'; id?: string }
   | { type: 'task' }
   | { type: 'new' }
-  | { type: 'settings'; section?: 'calendar' }
+  | { type: 'settings'; section?: 'calendar' | 'commute' }
 
 export type ThemePreference = 'system' | 'light' | 'dark'

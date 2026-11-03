@@ -5,6 +5,7 @@ import type { EditorTarget } from '@/types'
 import { CourseForm } from './CourseForm'
 import { DeadlineForm } from './DeadlineForm'
 import { EventForm } from './EventForm'
+import { ExamForm } from './ExamForm'
 import { NewChooser } from './NewChooser'
 import { SettingsForm } from './SettingsForm'
 import { Sheet } from './Sheet'
@@ -14,6 +15,7 @@ const titles = {
   course: ['New course', 'Edit course'],
   deadline: ['New deadline', 'Edit deadline'],
   event: ['New event', 'Edit event'],
+  exam: ['New exam', 'Edit exam'],
 } as const
 
 const newKinds = [
@@ -70,6 +72,7 @@ export function EditorSheet() {
             />
           )}
           {type === 'event' && <EventForm key={newKind} id={idOf(target)} onDone={closeEditor} />}
+          {type === 'exam' && <ExamForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'settings' && (
             <SettingsForm onDone={closeEditor} section={target.type === 'settings' ? target.section : undefined} />
           )}

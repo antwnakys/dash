@@ -38,7 +38,9 @@ function SessionRow({ s, now, onToggle }: { s: SessionView; now: Date; onToggle:
 
 /** One exam: countdown, progress, and its study sessions to tick off (or a button to plan them). */
 export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; now: Date; open?: boolean }) {
-  const { study, agenda, notify } = useDashboard()
+  const { study, agenda, notify, openEditor } = useDashboard()
+  const editTarget =
+    exam.source === 'event' ? ({ type: 'exam', id: exam.id } as const) : exam.source === 'assignment' ? ({ type: 'deadline', id: exam.id } as const) : null
   const [open, setOpen] = useState(Boolean(startOpen))
   const [topics, setTopics] = useState('')
   const total = exam.sessions.length
@@ -146,6 +148,11 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
                       Remove plan
                     </Button>
                   )}
+                  {editTarget && (
+                    <Button size="sm" variant="plain" onClick={() => openEditor(editTarget)}>
+                      Edit exam
+                    </Button>
+                  )}
                 </div>
               </>
             ) : (
@@ -160,10 +167,17 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
                   placeholder="Topics, one per line or separated by commas (optional)"
                   className="w-full resize-none rounded-[var(--radius-control)] bg-fill px-3.5 py-2.5 text-base text-ink placeholder:text-faint outline-none focus:bg-surface sm:text-[0.9375rem]"
                 />
-                <Button size="sm" variant="primary" className="self-start" onClick={makePlan}>
-                  <Sparkles aria-hidden className="size-4" strokeWidth={2.2} />
-                  Make a study plan
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="primary" onClick={makePlan}>
+                    <Sparkles aria-hidden className="size-4" strokeWidth={2.2} />
+                    Make a study plan
+                  </Button>
+                  {editTarget && (
+                    <Button size="sm" variant="plain" onClick={() => openEditor(editTarget)}>
+                      Edit exam
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </motion.div>

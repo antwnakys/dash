@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ExamCard } from '@/components/exams/ExamCard'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +23,12 @@ export function ExamsView() {
         shortTitle="Exams"
         eyebrow="Coming up"
         title="Exams"
+        aside={
+          <Button variant="primary" onClick={() => openEditor({ type: 'exam' })}>
+            <Plus aria-hidden className="size-4" strokeWidth={2.4} />
+            Add exam
+          </Button>
+        }
         summary={
           next &&
           `${exams.length} ${exams.length === 1 ? 'exam' : 'exams'} ahead. Next: ${next.subject} ${days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}` +
@@ -31,8 +38,8 @@ export function ExamsView() {
       {exams.length === 0 ? (
         <RevealItem>
           <Card>
-            <EmptyState message="No exams coming up. Exams in your calendar show up here by themselves, or add one as a deadline of type Exam.">
-              <Button size="sm" variant="primary" onClick={() => openEditor({ type: 'deadline' })}>
+            <EmptyState message="No exams coming up. Exams in your calendar show up here by themselves, or add one with + → Exam.">
+              <Button size="sm" variant="primary" onClick={() => openEditor({ type: 'exam' })}>
                 Add an exam
               </Button>
             </EmptyState>

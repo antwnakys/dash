@@ -80,7 +80,8 @@ export interface CalendarEvent {
   link?: string
   /** Taken online (says so, or has a meeting link): no trip to campus. */
   online?: boolean
-  kind: 'event' | 'reminder'
+  /** `exam`: an exam added in dash from + → Exam. */
+  kind: 'event' | 'reminder' | 'exam'
 }
 
 /** `class`: a lesson on campus (Sorou 74, Marousi), marked as a course. */
@@ -142,6 +143,7 @@ export type EditorTarget =
   | { type: 'course'; id?: string }
   | { type: 'deadline'; id?: string; courseId?: string }
   | { type: 'event'; id?: string }
+  | { type: 'exam'; id?: string }
   | { type: 'task'; id?: string }
   | { type: 'new' }
   | { type: 'settings'; section?: 'calendar' | 'commute' }

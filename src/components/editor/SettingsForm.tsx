@@ -202,6 +202,18 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
             Turn on reminders
           </Button>
         )}
+        {(reminders.permission === 'granted' || reminders.permission === 'prompt') && (
+          <Button
+            size="sm"
+            className="self-start"
+            onClick={async () => {
+              await reminders.test()
+              notify('Test sent. It arrives in 5 seconds.')
+            }}
+          >
+            Send test notification
+          </Button>
+        )}
         {reminders.permission === 'denied' && (
           <p className="px-1 text-subhead text-muted">Notifications are switched off for dash in the iPhone's Settings app, under dash.</p>
         )}

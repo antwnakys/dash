@@ -81,14 +81,3 @@ export async function searchPlace(query: string): Promise<Place | null> {
   const hit = (await res.json()).results?.[0]
   return hit ? { name: hit.name, latitude: hit.latitude, longitude: hit.longitude } : null
 }
-
-export function currentPosition(): Promise<Place> {
-  return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) return reject(new Error('Location is not available on this device'))
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ name: 'Here', latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-      (err) => reject(new Error(err.message)),
-      { timeout: 8000, maximumAge: 30 * 60_000 },
-    )
-  })
-}

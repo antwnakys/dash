@@ -107,6 +107,8 @@ export interface Profile {
   name: string
   /** Weather location; when unset the device location is used. */
   place?: Place
+  /** Follow this device's location for the weather, refreshed each time dash opens. Missing means on. */
+  autoLocation?: boolean
   /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
   commuteMinutes?: number
   /** Suburban departures from Doukissis Plakentias toward Pentelis ("17:11"); unset means the defaults in lib/commute.ts. */

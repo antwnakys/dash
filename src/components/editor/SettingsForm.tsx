@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Segmented } from '@/components/ui/Segmented'
 import { useDashboard } from '@/context/DashboardContext'
-import { currentPosition, searchPlace } from '@/data/weather'
+import { searchPlace } from '@/data/weather'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
 import { COMMUTE_ROUTE, DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
@@ -20,7 +20,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
-  const { profile, setProfile, events, courses, calendar, cloud, reminders, loadSample, clearAll, theme, notify } = useDashboard()
+  const { profile, setProfile, events, courses, calendar, cloud, reminders, location, loadSample, clearAll, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
@@ -79,17 +79,6 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
     }
   }
 
-  const useLocation = async () => {
-    try {
-      const here = await currentPosition()
-      const place = { ...here, name: 'Current location' }
-      setProfile({ place })
-      setCity(place.name)
-      notify('Weather follows your location')
-    } catch {
-      notify('Location access is off. Allow it in iPhone Settings, or type a city.', 'error')
-    }
-  }
 
   const importIcs = async (file: File) => {
     const imported = parseIcs(await file.text())
@@ -113,13 +102,24 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
           <Field label="Name" hint="Used in the greeting.">
             <TextInput value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
           </Field>
-          <Field label="Weather location">
+          <Toggle
+            label="Update my location when I open dash"
+            checked={profile.autoLocation !== false}
+            onChange={(v) => setProfile({ autoLocation: v })}
+          />
+          {profile.autoLocation !== false && (
+            <p className="-mt-1 px-1 text-subhead text-muted">
+              {location.denied
+                ? 'Location is off for dash, so the weather uses the city below. Allow location for dash to follow where you are.'
+                : location.here
+                  ? `Weather for where you are: ${location.here.name}. This device only.`
+                  : 'Finding where you are…'}
+            </p>
+          )}
+          <Field label={profile.autoLocation !== false ? 'City when your location isn’t available' : 'Weather location'}>
             <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" autoComplete="address-level2" />
           </Field>
-          <div className="flex items-center justify-between gap-2">
-            <Button variant="plain" size="sm" onClick={useLocation} className="-ml-3">
-              Use my current location
-            </Button>
+          <div className="flex items-center justify-end gap-2">
             <Button type="submit" variant="primary" disabled={busy} className="min-w-24">
               {busy ? 'Saving…' : 'Save'}
             </Button>

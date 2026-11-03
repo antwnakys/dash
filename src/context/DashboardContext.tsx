@@ -3,6 +3,7 @@ import { sampleData } from '@/data/sample'
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
+import { useHereLocation } from '@/hooks/useHereLocation'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useReminders, type RemindersState } from '@/hooks/useReminders'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
@@ -13,7 +14,7 @@ import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
 import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Profile, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, ThemePreference } from '@/types'
 
 export interface Toast {
   id: number
@@ -32,6 +33,8 @@ interface DashboardValue {
   /** Syncs this device's data with every other device signed in to the same Google account. */
   cloud: CloudSync
   weather: WeatherState
+  /** This device's current location (when following it) and whether location was refused. */
+  location: { here?: Place; denied: boolean }
   /** Phone reminders for leaving and for deadlines (iPhone app). */
   reminders: RemindersState
   /** Open assignments and events in one chronological list. */
@@ -120,7 +123,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const assignments = useCollection<Assignment>('dash.assignments.v1')
   const events = useCollection<CalendarEvent>('dash.events.v1')
   const tasks = useTasks()
-  const weather = useWeather(profile.place)
+  const location = useHereLocation(profile.autoLocation !== false)
+  const weather = useWeather(location.here ?? profile.place)
   const calendar = useCalendarSync(profile.calendarUrls)
   const cloud = useCloudSync(Boolean(calendar.google.account))
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
@@ -171,6 +175,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     calendar,
     cloud,
     weather,
+    location,
     reminders,
     agenda,
     selectedDate,

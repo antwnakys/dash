@@ -9,12 +9,12 @@ import { useReminders, type RemindersState } from '@/hooks/useReminders'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
-import { EXAM, isClass, matchCourse } from '@/lib/campus'
+import { isClass, isExamTitle, matchCourse } from '@/lib/campus'
 import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
 import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, StudySession, ThemePreference } from '@/types'
 
 export interface Toast {
   id: number
@@ -28,6 +28,8 @@ interface DashboardValue {
   courses: Collection<Course>
   assignments: Collection<Assignment>
   events: Collection<CalendarEvent>
+  /** Study sessions planned by dash, and ticks on study events from the calendar. */
+  study: Collection<StudySession>
   tasks: TasksApi
   calendar: CalendarSync
   /** Syncs this device's data with every other device signed in to the same Google account. */
@@ -97,7 +99,8 @@ function buildAgenda(
       title: e.title,
       date: new Date(e.start),
       end: e.end ? new Date(e.end) : undefined,
-      kind: e.kind,
+      // Events added in dash count as exams by their title too ("ΕΞΕΤΑΣΗ ΣΗΜΑΤΑ").
+      kind: e.kind === 'event' && isExamTitle(e.title) ? 'exam' : e.kind,
       context: e.location,
       allDay: e.allDay,
       ...asClass(e),
@@ -108,7 +111,7 @@ function buildAgenda(
       title: e.title,
       date: new Date(e.start),
       end: e.end ? new Date(e.end) : undefined,
-      kind: EXAM.test(e.title) ? 'exam' : 'event',
+      kind: isExamTitle(e.title) ? 'exam' : 'event',
       context: e.location,
       allDay: e.allDay,
       ...asClass(e),
@@ -122,6 +125,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const courses = useCollection<Course>('dash.courses.v1')
   const assignments = useCollection<Assignment>('dash.assignments.v1')
   const events = useCollection<CalendarEvent>('dash.events.v1')
+  const study = useCollection<StudySession>('dash.study.v1')
   const tasks = useTasks()
   const location = useHereLocation(profile.autoLocation !== false)
   const weather = useWeather(location.here ?? profile.place)
@@ -171,6 +175,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     courses,
     assignments,
     events,
+    study,
     tasks,
     calendar,
     cloud,

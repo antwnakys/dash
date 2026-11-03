@@ -51,6 +51,19 @@ export interface Assignment {
   outOf?: number
 }
 
+/** One study session for an exam: planned by dash, or a tick on a study event from the calendar. */
+export interface StudySession {
+  /** `<examId>@<start>` for planned sessions, the calendar event id for calendar ones. */
+  id: string
+  examId: string
+  /** ISO timestamp */
+  start: string
+  minutes: number
+  topic?: string
+  done: boolean
+  fromCalendar?: boolean
+}
+
 export interface CalendarEvent {
   id: string
   title: string

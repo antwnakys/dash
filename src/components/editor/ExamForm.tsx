@@ -15,6 +15,7 @@ export function ExamForm({ id, onDone }: { id?: string; onDone: () => void }) {
   const [date, setDate] = useState(() => (start ? ymd(start) : ymd(new Date(Date.now() + 7 * 86_400_000))))
   const [time, setTime] = useState(start && !existing?.allDay ? hhmm(start) : '')
   const [location, setLocation] = useState(existing?.location ?? '')
+  const [url, setUrl] = useState(existing?.url ?? '')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -24,6 +25,7 @@ export function ExamForm({ id, onDone }: { id?: string; onDone: () => void }) {
       start: new Date(`${date}T${time || '00:00'}`).toISOString(),
       allDay: time ? undefined : true,
       location: location.trim() || undefined,
+      url: /^https?:\/\//i.test(url.trim()) ? url.trim() : url.trim() ? `https://${url.trim()}` : undefined,
       kind: 'exam' as const,
     }
     if (existing) {
@@ -61,6 +63,9 @@ export function ExamForm({ id, onDone }: { id?: string; onDone: () => void }) {
       </div>
       <Field label="Where">
         <TextInput value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" />
+      </Field>
+      <Field label="Link" hint="A practice site or anything you'll want one tap away. Shows as a button on the exam.">
+        <TextInput type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" />
       </Field>
       <div className="flex items-center gap-2">
         {existing && (

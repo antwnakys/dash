@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { Checkbox } from '@/components/tasks/Checkbox'
 import { Button } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ui/LinkButton'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useDashboard } from '@/context/DashboardContext'
 import type { ExamWithPlan } from '@/hooks/useExams'
@@ -99,6 +100,12 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
           </span>
         </span>
       </button>
+
+      {exam.url && (
+        <div className="px-5 pb-4">
+          <LinkButton url={exam.url} />
+        </div>
+      )}
 
       {total > 0 && (
         <div className="flex items-center gap-3 px-5 pb-4">

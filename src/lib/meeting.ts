@@ -11,6 +11,22 @@ export function findMeetingLink(...texts: Array<string | undefined>): string | u
   return undefined
 }
 
+const ANY_LINK = /https?:\/\/[^\s"'<>)\]]+/gi
+
+/** The first web link that isn't a meeting link (a practice site, course page…), from notes that may be HTML. */
+export function findOtherLink(...texts: Array<string | undefined>): string | undefined {
+  for (const t of texts) {
+    for (const m of t?.replace(/&amp;/g, '&').matchAll(ANY_LINK) ?? []) {
+      const url = m[0].replace(/[.,;]+$/, '')
+      if (!LINK.test(url)) return url
+    }
+  }
+  return undefined
+}
+
+/** A short button label for a link: "Practice" for practice and test sites, else "Open link". */
+export const linkLabel = (url: string) => (/practi|quiz|test|exam|mock/i.test(url) ? 'Practice' : 'Open link')
+
 /** "Teams", "Zoom" or "Meet". */
 export const meetingName = (url: string) => (/zoom\.us/i.test(url) ? 'Zoom' : /meet\.google/i.test(url) ? 'Meet' : 'Teams')
 

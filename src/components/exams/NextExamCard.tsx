@@ -1,4 +1,5 @@
 import { ChevronRight, ClipboardCheck } from 'lucide-react'
+import { LinkButton } from '@/components/ui/LinkButton'
 import { useDashboard } from '@/context/DashboardContext'
 import { useExams } from '@/hooks/useExams'
 import { useNow } from '@/hooks/useNow'
@@ -25,7 +26,8 @@ export function NextExamCard() {
       : 'No study plan yet. Tap to make one.'
 
   return (
-    <button onClick={() => setView('exams')} className="surface flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-fill/60">
+    <div className="surface flex items-center gap-2 pr-3">
+    <button onClick={() => setView('exams')} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-[var(--radius-card)] px-4 py-3.5 text-left transition-colors hover:bg-fill/60">
       <span
         aria-hidden
         className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', days <= 2 ? 'bg-danger/14 text-danger' : 'bg-accent/12 text-accent')}
@@ -41,7 +43,9 @@ export function NextExamCard() {
           </span>
         )}
       </span>
-      <ChevronRight aria-hidden className="size-4 shrink-0 text-faint" />
+      {!exam.url && <ChevronRight aria-hidden className="size-4 shrink-0 text-faint" />}
     </button>
+    {exam.url && <LinkButton url={exam.url} compact />}
+    </div>
   )
 }

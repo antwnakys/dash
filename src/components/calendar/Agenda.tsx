@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Countdown } from '@/components/ui/Countdown'
 import { JoinButton } from '@/components/ui/JoinButton'
+import { LinkButton } from '@/components/ui/LinkButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton } from '@/components/ui/IconButton'
 import { Card, Section } from '@/components/ui/Section'
@@ -76,6 +77,7 @@ function Row({ item, now }: { item: AgendaItem; now: Date }) {
         <Countdown date={item.date} now={now} />
       </button>
       {item.online && item.link && <JoinButton url={item.link} compact className="mr-4" />}
+      {item.kind === 'exam' && item.url && <LinkButton url={item.url} compact className="mr-4" />}
     </li>
   )
 }

@@ -120,6 +120,7 @@ function buildAgenda(
       kind: e.kind === 'event' && isExamTitle(e.title) ? 'exam' : e.kind,
       context: e.location,
       allDay: e.allDay,
+      url: e.url,
       ...asClass(e),
     })),
     ...synced.map<AgendaItem>((e) => ({
@@ -131,6 +132,7 @@ function buildAgenda(
       kind: isExamTitle(e.title) ? 'exam' : 'event',
       context: e.location,
       allDay: e.allDay,
+      url: e.url,
       ...asClass(e),
     })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())

@@ -78,6 +78,8 @@ export interface CalendarEvent {
   location?: string
   /** Teams / Zoom / Meet link found in the event. */
   link?: string
+  /** Any other web link in the event's notes (a practice site, slides…). */
+  url?: string
   /** Taken online (says so, or has a meeting link): no trip to campus. */
   online?: boolean
   /** `exam`: an exam added in dash from + → Exam. */
@@ -102,6 +104,8 @@ export interface AgendaItem {
   courseId?: string
   /** Meeting link, for online lessons. */
   link?: string
+  /** Other web link from the event (shown as a button on exams). */
+  url?: string
   online?: boolean
 }
 

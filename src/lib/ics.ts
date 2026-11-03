@@ -1,4 +1,4 @@
-import { findMeetingLink, looksOnline } from './meeting'
+import { findMeetingLink, findOtherLink, looksOnline } from './meeting'
 import type { CalendarEvent } from '@/types'
 
 interface Prop {
@@ -157,6 +157,7 @@ export function parseIcs(
       allDay: start.allDay || undefined,
       location,
       link,
+      url: findOtherLink(description, location, ev.URL?.[0]?.value),
       online: looksOnline(link, summary, description) || undefined,
       kind: 'event' as const,
     }

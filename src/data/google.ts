@@ -2,11 +2,14 @@
  * Google sign-in and read-only Google Calendar access.
  * Web: OAuth popup (access token lasts an hour, then the user reconnects with one tap).
  * iOS: native Google Sign-In, which restores and refreshes the session silently.
+ * Mac app: sign-in in the default browser (googleMac.ts), also refreshed silently.
  */
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/config'
 import { findMeetingLink, findOtherLink, looksOnline } from '@/lib/meeting'
+import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
+import { MacSignInExpired, macAccessToken, macForgetToken, macSignIn, macSignOut } from './googleMac'
 import type { CalendarEvent } from '@/types'
 
 // Read-only calendar, plus dash's own hidden folder in Drive for syncing between devices.
@@ -14,7 +17,7 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://ww
 const API = 'https://www.googleapis.com/calendar/v3'
 const DAY_MS = 86_400_000
 
-export const googleConfigured = Boolean(isNative ? GOOGLE_IOS_CLIENT_ID : GOOGLE_WEB_CLIENT_ID)
+export const googleConfigured = Boolean(isNative || isMacApp ? GOOGLE_IOS_CLIENT_ID : GOOGLE_WEB_CLIENT_ID)
 
 /** Thrown when Google needs the user to sign in again (expired or revoked access). */
 export class GoogleReconnectError extends Error {}
@@ -23,7 +26,7 @@ let ready: Promise<void> | null = null
 
 /** Sets up the plugin once. On the web this also completes a sign-in popup that loaded the app. */
 export function initGoogle(): Promise<void> {
-  if (!googleConfigured) return Promise.resolve()
+  if (!googleConfigured || isMacApp) return Promise.resolve()
   ready ??= SocialLogin.initialize({
     google: {
       webClientId: GOOGLE_WEB_CLIENT_ID,
@@ -40,8 +43,9 @@ export interface GoogleAccount {
 }
 
 export async function connectGoogle(): Promise<GoogleAccount> {
-  await initGoogle()
   invalidateGoogleToken()
+  if (isMacApp) return macSignIn(SCOPES)
+  await initGoogle()
   const res = await SocialLogin.login({ provider: 'google', options: { scopes: SCOPES } })
   const r = res.result as { responseType?: string; profile?: { email?: string | null; name?: string | null } }
   if (r.responseType === 'offline' || !r.profile?.email) throw new Error('Google didn’t return an account.')
@@ -49,8 +53,9 @@ export async function connectGoogle(): Promise<GoogleAccount> {
 }
 
 export async function disconnectGoogle(): Promise<void> {
-  await initGoogle()
   invalidateGoogleToken()
+  if (isMacApp) return macSignOut()
+  await initGoogle()
   await SocialLogin.logout({ provider: 'google' }).catch(() => {})
 }
 
@@ -73,6 +78,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 /** Forget the current token, e.g. after Google rejected it or the user signed in again. */
 export function invalidateGoogleToken() {
   cachedToken = null
+  if (isMacApp) macForgetToken()
 }
 
 /**
@@ -82,6 +88,16 @@ export function invalidateGoogleToken() {
 export function googleAccessToken(): Promise<string> {
   if (cachedToken && Date.now() - cachedToken.at < TOKEN_REUSE) return Promise.resolve(cachedToken.value)
   pendingToken ??= (async () => {
+    if (isMacApp) {
+      try {
+        const token = await macAccessToken()
+        cachedToken = { value: token, at: Date.now() }
+        return token
+      } catch (e) {
+        if (e instanceof MacSignInExpired) throw new GoogleReconnectError('Google sign-in has expired. Reconnect to keep syncing.')
+        throw e
+      }
+    }
     await initGoogle()
     try {
       const { accessToken } = await withTimeout(SocialLogin.getAuthorizationCode({ provider: 'google' }), TOKEN_TIMEOUT)

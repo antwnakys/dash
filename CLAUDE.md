@@ -167,5 +167,19 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → suburban platform). Otherwise
   the door-to-door estimate. Train times are editable in Settings → Getting to campus (`profile.suburbanTrains`).
   hellenictrain.gr is blocked from the sandbox, so new times come from the user.
+- **NEXT: Mac app as a downloadable .dmg (user chose this on Nov 4, over Safari's File → Add to Dock).** Plan:
+  - Wrapper: Tauri v2 (small, uses macOS WKWebView) or Electron; GitHub Actions on `macos-latest` builds a universal
+    `dash.dmg` and publishes it on a `mac-latest` release (like `ios.yml`). Unsigned (no paid Apple account), so the user
+    approves it once (right-click → Open, or System Settings → Privacy & Security → Open Anyway); say so in the release notes.
+  - Load the live site (https://antwnakys.github.io/dash/) in the window so it's always current, with the bundled `dist/`
+    as an offline fallback; or bundle `dist/` and reuse the live-update idea.
+  - Risk to solve first: Google sign-in. Google blocks OAuth inside embedded web views ("disallowed_useragent"), and sign-in
+    is what syncs data (Drive app-data) and reads the calendar. Likely fix: open Google sign-in in the system browser with a
+    loopback/deep-link redirect (needs a "Desktop app" OAuth client in the Google Cloud project; client IDs live in
+    `src/config.ts`), or keep the page on the github.io origin and let the popup open in the default browser. Test this
+    before polishing anything else.
+  - Dock icon: use the white `assets/app-icon-light.svg` (the user prefers white icons).
+  - Native extras that would be nice later: menu bar, notifications (Tauri notification plugin) for the same reminders.
+  - Explain every step to the user simply; they prefer one question at a time and no trips through Settings.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The dash website (and the offline page) may open links in the browser and hear the Google sign-in redirect.",
+  "windows": ["main"],
+  "local": true,
+  "remote": { "urls": ["https://antwnakys.github.io/*"] },
+  "permissions": ["core:default", "opener:default", "deep-link:default"]
+}

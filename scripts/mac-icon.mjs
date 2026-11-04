@@ -18,8 +18,11 @@ await sharp({ create: { width: 1024, height: 1024, channels: 4, background: { r:
   .composite([{ input: shadow }, { input: tile, left: 100, top: 100 }, { input: edge, left: 100, top: 100 }])
   .png()
   .toFile('assets/mac-icon-1024.png')
+// Menu bar icon: the dash mark in black, which macOS treats as a template and tints for light/dark menu bars.
+const mark = readFileSync('assets/logo-mark.svg', 'utf8').replace(/#[0-9a-f]{6}/gi, '#000').replace('viewBox="0 0 100 100"', 'viewBox="12 16 80 68"')
+await sharp(Buffer.from(mark), { density: 400 }).resize({ height: 36 }).png().toFile('src-tauri/icons/tray.png')
 execFileSync('npx', ['tauri', 'icon', 'assets/mac-icon-1024.png', '-o', 'src-tauri/icons'], { stdio: 'inherit' })
 // Only the Mac sizes are used; tauri icon also writes Windows, Android and iOS ones.
-const keep = new Set(['icon.icns', 'icon.png', '32x32.png', '128x128.png', '128x128@2x.png'])
+const keep = new Set(['tray.png', 'icon.icns', 'icon.png', '32x32.png', '128x128.png', '128x128@2x.png'])
 for (const f of readdirSync('src-tauri/icons')) if (!keep.has(f)) rmSync(`src-tauri/icons/${f}`, { recursive: true })
 console.log('mac icon written')

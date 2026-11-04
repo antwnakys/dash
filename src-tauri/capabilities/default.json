@@ -1,9 +1,21 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The dash website (and the offline page) may open links in the browser and hear the Google sign-in redirect.",
-  "windows": ["main"],
+  "description": "The dash website (and the offline page) may open links in the browser, hear the Google sign-in redirect and the menu bar, and hand over reminders.",
+  "windows": [
+    "main"
+  ],
   "local": true,
-  "remote": { "urls": ["https://antwnakys.github.io/*"] },
-  "permissions": ["core:default", "opener:default", "deep-link:default"]
+  "remote": {
+    "urls": [
+      "https://antwnakys.github.io/*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "deep-link:default",
+    "allow-set-reminders",
+    "allow-notify"
+  ]
 }

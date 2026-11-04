@@ -125,7 +125,15 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   github.io origin) and keeps the refresh token in `dash.mac.google.v1` (device only), refreshed silently. Drive app-data is
   per Cloud project, so sync shares data with the web and iPhone. Checked Nov 4: Google accepts that redirect for the iOS client
   (loopback is blocked for it), and the whole hand-off ran in a Tauri window on Linux with a simulated redirect.
-  Not on Mac yet: reminders/notifications, iCal-link calendars (CORS; Google calendars work), location (falls back to the city).
+  **Menu bar** (src-tauri/src/main.rs): a template icon (`icons/tray.png`, the dash mark in black) with New…, Today, Courses,
+  Exams, Tasks, Calendar (show the window, emit `dash://menu`; `onMenuBar` in AppShell switches view / opens New), Open at
+  Login (autostart LaunchAgent, switched on at first launch) and Quit. Closing the window hides it; the Dock icon reopens it.
+  **Reminders**: `applyReminders` sends the same plan as the iPhone to the app command `set_reminders`; a Rust thread shows each
+  one when due (up to 30 min late after sleep) through the notification plugin, so they arrive while dash runs in the menu bar.
+  `Info.plist` sets NSAppSleepDisabled so App Nap doesn't delay them. App commands are listed in build.rs (AppManifest) and
+  allowed for the remote site in capabilities. Tested Nov 4 in a Linux Tauri window (menu → Exams, New sheet, IPC, clock);
+  the macOS notification banner itself was first seen on the user's Mac.
+  Not on Mac yet: iCal-link calendars (CORS; Google calendars work), location (falls back to the city).
   Icon: `assets/mac-icon-1024.png` (white icon in Apple's rounded square, `npm run icons:mac`).
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
@@ -186,6 +194,6 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   hellenictrain.gr is blocked from the sandbox, so new times come from the user.
 - **Mac app (Nov 4, 2026)**: built as planned (Tauri, live site, browser sign-in, `mac-latest` release). Unsigned, so the first
   open needs `xattr -cr /Applications/dash.app` in Terminal or System Settings → Privacy & Security → Open Anyway (in the release
-  notes). Nice later: menu bar extra, notifications for the same reminders (Tauri notification plugin), iCal links via Tauri HTTP.
+  notes). Menu bar + reminders added the same day (user's pick). Nice later: iCal links via Tauri HTTP.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

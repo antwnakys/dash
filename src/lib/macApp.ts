@@ -66,3 +66,20 @@ export async function nextDeepLink(matches: (url: string) => boolean, timeoutMs:
     )
   })
 }
+
+export type MenuBarChoice = 'new' | 'today' | 'courses' | 'exams' | 'tasks' | 'calendar'
+
+/** Calls `onChoice` when something is picked in dash's menu bar menu (the app has already shown the window). */
+export function onMenuBar(onChoice: (choice: MenuBarChoice) => void): () => void {
+  if (!isMacApp) return () => {}
+  let stop: (() => void) | undefined
+  let gone = false
+  tauriEvent()
+    .then(({ listen }) => listen<MenuBarChoice>('dash://menu', (e) => onChoice(e.payload)))
+    .then((unlisten) => (gone ? unlisten() : (stop = unlisten)))
+    .catch(() => {})
+  return () => {
+    gone = true
+    stop?.()
+  }
+}

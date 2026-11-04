@@ -1,8 +1,9 @@
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
 import { useDashboard } from '@/context/DashboardContext'
+import { onMenuBar } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
 import { views } from '@/views'
 import { AmbientBackground } from './AmbientBackground'
@@ -27,7 +28,7 @@ function usePhone() {
 }
 
 export function AppShell() {
-  const { view, setView, editor, openEditor, dismissToast, calendar, cloud } = useDashboard()
+  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud } = useDashboard()
   const reduce = useReducedMotion()
   const phone = usePhone()
   // Scale around the middle of what's on screen, not the top of the page.
@@ -45,6 +46,21 @@ export function AppShell() {
     calendar.sync()
     await new Promise((r) => setTimeout(r, 900))
   }, [cloud, calendar])
+
+  // Mac app: New and the sections in the menu bar menu.
+  const closeRef = useRef(closeEditor)
+  useEffect(() => {
+    closeRef.current = closeEditor
+  })
+  useEffect(
+    () =>
+      onMenuBar((choice) => {
+        if (choice === 'new') return openEditor({ type: 'new' })
+        closeRef.current()
+        setView(choice)
+      }),
+    [openEditor, setView],
+  )
 
   // Keyboard: N opens New, 1–4 switch sections.
   useEffect(() => {

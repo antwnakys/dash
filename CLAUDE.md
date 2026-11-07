@@ -195,5 +195,17 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Mac app (Nov 4, 2026)**: built as planned (Tauri, live site, browser sign-in, `mac-latest` release). Unsigned, so the first
   open needs `xattr -cr /Applications/dash.app` in Terminal or System Settings → Privacy & Security → Open Anyway (in the release
   notes). Menu bar + reminders added the same day (user's pick). Nice later: iCal links via Tauri HTTP.
+- **TestFlight (prepared Nov 7, 2026; waiting on the user's paid Apple Developer account).** The user wants the
+  iPhone app from TestFlight so it stops expiring every 7 days. Repo side is ready: `scripts/testflight.sh` (archive +
+  `xcodebuild -exportArchive` with method app-store-connect / destination upload; build number = UTC `YYYYMMDD.HHMM`),
+  `.github/workflows/testflight.yml` (on native changes to main, monthly on the 1st since builds last 90 days, and by
+  hand; skips green until secrets `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` exist; API key must be
+  Admin for cloud signing; tries an unsigned archive cloud-signed at export, then a signed archive),
+  `ios/App/App/PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption = NO`. User steps in `docs/TESTFLIGHT.md`.
+  The user will do the setup from a Claude session on a Mac signed in to the paid account. Once it works: put the paid
+  team ID in `project.pbxproj` (still the free `WDTXV8PP35`), and note here that TestFlight builds have no
+  `embedded.mobileprovision`, so the 7-day app-expiry card/reminders stay silent there (fine). If the bundle ID
+  `com.antwnakys.dash` can't be registered to the paid team, `docs/TESTFLIGHT.md` step 4 says what to change
+  (including a new Google iOS OAuth client).
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

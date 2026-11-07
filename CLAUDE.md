@@ -167,6 +167,18 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → suburban platform). Otherwise
   the door-to-door estimate. Train times are editable in Settings → Getting to campus (`profile.suburbanTrains`).
   hellenictrain.gr is blocked from the sandbox, so new times come from the user.
+- **TestFlight (prepared Nov 7, 2026; waiting on the user's paid Apple Developer account).** The user wants the
+  iPhone app from TestFlight so it stops expiring every 7 days. Repo side is ready: `scripts/testflight.sh` (archive +
+  `xcodebuild -exportArchive` with method app-store-connect / destination upload; build number = UTC `YYYYMMDD.HHMM`),
+  `.github/workflows/testflight.yml` (on native changes to main, monthly on the 1st since builds last 90 days, and by
+  hand; skips green until secrets `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` exist; API key must be
+  Admin for cloud signing; tries an unsigned archive cloud-signed at export, then a signed archive),
+  `ios/App/App/PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption = NO`. User steps in `docs/TESTFLIGHT.md`.
+  The user will do the setup from a Claude session on a Mac signed in to the paid account. Once it works: put the paid
+  team ID in `project.pbxproj` (still the free `WDTXV8PP35`), and note here that TestFlight builds have no
+  `embedded.mobileprovision`, so the 7-day app-expiry card/reminders stay silent there (fine). If the bundle ID
+  `com.antwnakys.dash` can't be registered to the paid team, `docs/TESTFLIGHT.md` step 4 says what to change
+  (including a new Google iOS OAuth client).
 - **NEXT: Mac app as a downloadable .dmg (user chose this on Nov 4, over Safari's File → Add to Dock).** Plan:
   - Wrapper: Tauri v2 (small, uses macOS WKWebView) or Electron; GitHub Actions on `macos-latest` builds a universal
     `dash.dmg` and publishes it on a `mac-latest` release (like `ios.yml`). Unsigned (no paid Apple account), so the user

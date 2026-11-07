@@ -7,6 +7,7 @@ import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
 import { COMMUTE_ROUTE, DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
+import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
@@ -172,9 +173,9 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
         title="Reminders"
         footer={
           reminders.permission === 'granted'
-            ? `${reminders.scheduled} ${reminders.scheduled === 1 ? 'reminder' : 'reminders'} lined up for the next two weeks. They arrive even when dash is closed.`
+            ? `${reminders.scheduled} ${reminders.scheduled === 1 ? 'reminder' : 'reminders'} lined up for the next two weeks. ${isMacApp ? 'They arrive while dash is in the menu bar (closing the window keeps it there).' : 'They arrive even when dash is closed.'}`
             : reminders.permission === 'unavailable'
-              ? 'Reminders work in the dash iPhone app.'
+              ? 'Reminders work in the dash iPhone and Mac apps.'
               : undefined
         }
       >

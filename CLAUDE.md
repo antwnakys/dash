@@ -12,6 +12,9 @@ One React codebase ships three ways:
 - **Home-screen web app** (PWA manifest in `public/`)
 - **iOS app**: Capacitor 8 project in `ios/` (bundle id `com.antwnakys.dash`, team `WDTXV8PP35`, iOS 15+).
   `.github/workflows/ios.yml` builds an unsigned `dash.ipa` on every push to `main` and publishes it on the `ios-latest` release.
+- **Mac app**: Tauri 2 project in `src-tauri/` (bundle id `com.antwnakys.dash`). `.github/workflows/mac.yml` builds a universal,
+  ad-hoc signed `dash.dmg` and publishes it on the `mac-latest` release (pushes to `main` that touch `src-tauri/`, the workflow
+  or the lockfile, or run it by hand; pull requests only build). The window loads the live site, so web changes need no rebuild.
 
 The user writes requests for Claude as **tasks inside the app** (often under College/Personal), and
 sends screenshots. They mostly use the site in Chrome on iPhone, and the native app.
@@ -27,6 +30,8 @@ npm run build      # tsc -b && vite build; must pass before pushing
 npm run lint       # oxlint; two existing set-state-in-effect warnings and one only-export-components in DashboardContext are known
 npm run ios        # build, cap sync ios, open Xcode (Mac only)
 npm run ios:sync   # build + cap sync without opening Xcode
+npm run mac        # Tauri dev window (needs Rust; on Linux also libwebkit2gtk-4.1-dev)
+npm run icons:mac  # Mac icon from app-icon-light.svg → src-tauri/icons
 ```
 
 There is no test suite. Verify changes with `tsc -b`, `oxlint`, `npm run build`, and by driving the built site
@@ -110,6 +115,26 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - App icon: `assets/app-icon-light.svg` (white, iOS Default home screen) and `assets/app-icon.svg` (navy, Dark), rendered by
   `npm run icons` into `AppIcon.appiconset` as `AppIcon-Light.png` / `AppIcon-Dark.png` (luminosity appearance). The user
   uses the Default style and wanted a white icon there; Dark stays as it was. No tinted/clear variant (not used). Native: Xcode install.
+- Mac app (`src-tauri/`, `src/lib/macApp.ts`, `src/data/googleMac.ts`): the window opens `src-tauri/launcher/index.html`, which
+  goes straight on to https://antwnakys.github.io/dash/ (or waits for the internet). `capabilities/default.json` lets that remote
+  page use Tauri IPC (opener + deep-link). `isMacApp` = `__TAURI_INTERNALS__` in window. Links to other sites and `window.open`
+  open in the default browser (WKWebView ignores target=_blank). **Google sign-in**: Google blocks OAuth in app web views, so
+  `macSignIn` opens Google in the browser with PKCE on the **iOS client ID** (Google's Mac sign-in uses the iOS client type; no
+  client secret) and redirect `com.googleusercontent.apps.<id>:/oauth2redirect`; that scheme is registered in tauri.conf.json
+  (deep-link plugin), macOS hands the URL to the app, JS swaps the code for tokens at oauth2.googleapis.com (CORS allows the
+  github.io origin) and keeps the refresh token in `dash.mac.google.v1` (device only), refreshed silently. Drive app-data is
+  per Cloud project, so sync shares data with the web and iPhone. Checked Nov 4: Google accepts that redirect for the iOS client
+  (loopback is blocked for it), and the whole hand-off ran in a Tauri window on Linux with a simulated redirect.
+  **Menu bar** (src-tauri/src/main.rs): a template icon (`icons/tray.png`, the dash mark in black) with New…, Today, Courses,
+  Exams, Tasks, Calendar (show the window, emit `dash://menu`; `onMenuBar` in AppShell switches view / opens New), Open at
+  Login (autostart LaunchAgent, switched on at first launch) and Quit. Closing the window hides it; the Dock icon reopens it.
+  **Reminders**: `applyReminders` sends the same plan as the iPhone to the app command `set_reminders`; a Rust thread shows each
+  one when due (up to 30 min late after sleep) through the notification plugin, so they arrive while dash runs in the menu bar.
+  `Info.plist` sets NSAppSleepDisabled so App Nap doesn't delay them. App commands are listed in build.rs (AppManifest) and
+  allowed for the remote site in capabilities. Tested Nov 4 in a Linux Tauri window (menu → Exams, New sheet, IPC, clock);
+  the macOS notification banner itself was first seen on the user's Mac.
+  Not on Mac yet: iCal-link calendars (CORS; Google calendars work), location (falls back to the city).
+  Icon: `assets/mac-icon-1024.png` (white icon in Apple's rounded square, `npm run icons:mac`).
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
 
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,
@@ -167,6 +192,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → suburban platform). Otherwise
   the door-to-door estimate. Train times are editable in Settings → Getting to campus (`profile.suburbanTrains`).
   hellenictrain.gr is blocked from the sandbox, so new times come from the user.
+- **Mac app (Nov 4, 2026)**: built as planned (Tauri, live site, browser sign-in, `mac-latest` release). Unsigned, so the first
+  open needs `xattr -cr /Applications/dash.app` in Terminal or System Settings → Privacy & Security → Open Anyway (in the release
+  notes). Menu bar + reminders added the same day (user's pick). Nice later: iCal links via Tauri HTTP.
 - **TestFlight (prepared Nov 7, 2026; waiting on the user's paid Apple Developer account).** The user wants the
   iPhone app from TestFlight so it stops expiring every 7 days. Repo side is ready: `scripts/testflight.sh` (archive +
   `xcodebuild -exportArchive` with method app-store-connect / destination upload; build number = UTC `YYYYMMDD.HHMM`),
@@ -179,19 +207,5 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   `embedded.mobileprovision`, so the 7-day app-expiry card/reminders stay silent there (fine). If the bundle ID
   `com.antwnakys.dash` can't be registered to the paid team, `docs/TESTFLIGHT.md` step 4 says what to change
   (including a new Google iOS OAuth client).
-- **NEXT: Mac app as a downloadable .dmg (user chose this on Nov 4, over Safari's File → Add to Dock).** Plan:
-  - Wrapper: Tauri v2 (small, uses macOS WKWebView) or Electron; GitHub Actions on `macos-latest` builds a universal
-    `dash.dmg` and publishes it on a `mac-latest` release (like `ios.yml`). Unsigned (no paid Apple account), so the user
-    approves it once (right-click → Open, or System Settings → Privacy & Security → Open Anyway); say so in the release notes.
-  - Load the live site (https://antwnakys.github.io/dash/) in the window so it's always current, with the bundled `dist/`
-    as an offline fallback; or bundle `dist/` and reuse the live-update idea.
-  - Risk to solve first: Google sign-in. Google blocks OAuth inside embedded web views ("disallowed_useragent"), and sign-in
-    is what syncs data (Drive app-data) and reads the calendar. Likely fix: open Google sign-in in the system browser with a
-    loopback/deep-link redirect (needs a "Desktop app" OAuth client in the Google Cloud project; client IDs live in
-    `src/config.ts`), or keep the page on the github.io origin and let the popup open in the default browser. Test this
-    before polishing anything else.
-  - Dock icon: use the white `assets/app-icon-light.svg` (the user prefers white icons).
-  - Native extras that would be nice later: menu bar, notifications (Tauri notification plugin) for the same reminders.
-  - Explain every step to the user simply; they prefer one question at a time and no trips through Settings.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

@@ -1,0 +1,71 @@
+name: Build Mac app
+
+# Builds dash for Mac (Tauri, src-tauri/) on a GitHub-hosted Mac and publishes dash.dmg on the
+# "mac-latest" release. The app shows the live website, so it only needs rebuilding for Mac-side
+# changes (icon, window, sign-in hand-off); it runs on Apple silicon and Intel Macs.
+on:
+  push:
+    branches: [main]
+    paths: [src-tauri/**, .github/workflows/mac.yml, package-lock.json]
+  # Pull requests only check that it builds; publishing happens from main.
+  pull_request:
+    paths: [src-tauri/**, .github/workflows/mac.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      # Not signed with a paid Apple account: "-" signs it ad hoc, which Apple silicon needs to run it at all.
+      - run: npx tauri build --target universal-apple-darwin --bundles app,dmg
+      - name: Collect dash.dmg
+        run: |
+          mkdir -p build
+          cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg build/dash.dmg
+          codesign -dv src-tauri/target/universal-apple-darwin/release/bundle/macos/dash.app 2>&1 | head -5
+          lipo -archs src-tauri/target/universal-apple-darwin/release/bundle/macos/dash.app/Contents/MacOS/dash
+          ls -lh build/dash.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dash-dmg
+          path: build/dash.dmg
+      - name: Publish to the mac-latest release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<NOTES
+          dash for Mac, build ${GITHUB_SHA::7}. It opens the live dash website, so it always has the latest version.
+
+          **Install:** open dash.dmg and drag dash into Applications.
+
+          **First open (once):** the app isn't signed with a paid Apple account, so macOS stops it the first time.
+          - Easiest: open Terminal, paste \`xattr -cr /Applications/dash.app\` and press Return. Then open dash as usual.
+          - Or: open dash, click **Done**, then go to System Settings → Privacy & Security, scroll down and click **Open Anyway**.
+
+          **Google:** Connect with Google opens your browser. Sign in, allow access, then click **Open dash** when the browser asks.
+          NOTES
+          gh release delete mac-latest --yes --cleanup-tag || true
+          gh release create mac-latest build/dash.dmg \
+            --title "dash for Mac (latest build)" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA" --prerelease

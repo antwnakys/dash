@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.antwnakys.dash',
+  appId: 'com.antwnakys.dash.app',
   appName: 'dash',
   webDir: 'dist',
   backgroundColor: '#0b0d12',

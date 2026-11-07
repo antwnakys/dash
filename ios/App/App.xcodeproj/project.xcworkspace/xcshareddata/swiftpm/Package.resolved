@@ -1,5 +1,5 @@
 {
-  "originHash" : "fd844adb8879083487479a8da8b46831c6700200ac22465ec5cc99893e094299",
+  "originHash" : "b23ceab9d3766a4e24a3360ca487988db72a2db1951e7e1cb4dc6a96cafc09a7",
   "pins" : [
     {
       "identity" : "app-check",
@@ -80,6 +80,15 @@
       "state" : {
         "revision" : "040d087ac2267d2ddd4cca36c757d1c6a05fdbfe",
         "version" : "101.0.0"
+      }
+    },
+    {
+      "identity" : "ion-ios-geolocation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ionic-team/ion-ios-geolocation.git",
+      "state" : {
+        "revision" : "37e808a624268af58bbd5a804c92fee487449de8",
+        "version" : "3.0.0"
       }
     },
     {

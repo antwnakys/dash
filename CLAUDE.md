@@ -10,7 +10,8 @@ One React codebase ships three ways:
 
 - **Website**: https://antwnakys.github.io/dash/ (GitHub Pages; every push to `main` deploys via `.github/workflows/deploy.yml`)
 - **Home-screen web app** (PWA manifest in `public/`)
-- **iOS app**: Capacitor 8 project in `ios/` (bundle id `com.antwnakys.dash`, team `WDTXV8PP35`, iOS 15+).
+- **iOS app**: Capacitor 8 project in `ios/` (bundle id `com.antwnakys.dash.app`, paid team `H739SB5FKP`, iOS 15+).
+  Installed from **TestFlight** (`.github/workflows/testflight.yml`, `docs/TESTFLIGHT.md`); builds last 90 days, no 7-day expiry.
   `.github/workflows/ios.yml` builds an unsigned `dash.ipa` on every push to `main` and publishes it on the `ios-latest` release.
 - **Mac app**: Tauri 2 project in `src-tauri/` (bundle id `com.antwnakys.dash`). `.github/workflows/mac.yml` builds a universal,
   ad-hoc signed `dash.dmg` and publishes it on the `mac-latest` release (pushes to `main` that touch `src-tauri/`, the workflow
@@ -80,6 +81,7 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   ("DashApp".info() in SceneDelegate.swift) reads ExpirationDate from the app's `embedded.mobileprovision` (free Apple ID
   profiles last 7 days). Reminders at 20:00 the evening before and 3 h before; Today card in the last 2 days with
   "Copy Mac message" (the reinstall prompt); Settings → About shows "App signed until …". Toggle `reminders.appExpiry`.
+  TestFlight builds have no `embedded.mobileprovision`, so all of this stays silent there (only Xcode installs expire).
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
@@ -166,12 +168,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 
 ## Next up
 
-- **Installed on the iPhone (Nov 3, 2026, build d1e406e)** from a local Claude session on the user's Mac (folder
-  `~/dash-xcode`): download `dash-xcode.zip` from the `ios-latest` release, unzip to `latest/`, `xcodebuild` (team WDTXV8PP35,
-  `-allowProvisioningUpdates`), `xcrun devicectl device install app` + `process launch`. Remote Control folder sharing never
-  showed up for the cloud session, so use the local Mac session. The test notification arrived, so reminders work.
-  Free Apple ID signing expires after 7 days (next around Nov 10): repeat the same install to renew.
-  Web changes reach the app by live update; only native changes need this install.
+- **On TestFlight since Nov 8, 2026** (see the TestFlight bullet below). The old Xcode route (`~/dash-xcode`, free team
+  WDTXV8PP35, `xcrun devicectl device install app`) is no longer needed; that old copy (bundle `com.antwnakys.dash`) sits
+  next to the TestFlight app on the phone until the user deletes it. Web changes reach the app by live update.
 - **Nov 2, 2026 (evening)**: the user installed from the Xcode zip but didn't see the morning changes in the app (cause unclear).
   Added live updates + version label so the app follows the website; needs one more install from Xcode to switch on.
 - **Nov 3, 2026**: GitHub's iOS build for #3 had been cancelled without a runner (GitHub capacity); re-run succeeded.
@@ -195,17 +194,17 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Mac app (Nov 4, 2026)**: built as planned (Tauri, live site, browser sign-in, `mac-latest` release). Unsigned, so the first
   open needs `xattr -cr /Applications/dash.app` in Terminal or System Settings → Privacy & Security → Open Anyway (in the release
   notes). Menu bar + reminders added the same day (user's pick). Nice later: iCal links via Tauri HTTP.
-- **TestFlight (prepared Nov 7, 2026; waiting on the user's paid Apple Developer account).** The user wants the
-  iPhone app from TestFlight so it stops expiring every 7 days. Repo side is ready: `scripts/testflight.sh` (archive +
-  `xcodebuild -exportArchive` with method app-store-connect / destination upload; build number = UTC `YYYYMMDD.HHMM`),
-  `.github/workflows/testflight.yml` (on native changes to main, monthly on the 1st since builds last 90 days, and by
-  hand; skips green until secrets `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` exist; API key must be
-  Admin for cloud signing; tries an unsigned archive cloud-signed at export, then a signed archive),
-  `ios/App/App/PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption = NO`. User steps in `docs/TESTFLIGHT.md`.
-  The user will do the setup from a Claude session on a Mac signed in to the paid account. Once it works: put the paid
-  team ID in `project.pbxproj` (still the free `WDTXV8PP35`), and note here that TestFlight builds have no
-  `embedded.mobileprovision`, so the 7-day app-expiry card/reminders stay silent there (fine). If the bundle ID
-  `com.antwnakys.dash` can't be registered to the paid team, `docs/TESTFLIGHT.md` step 4 says what to change
-  (including a new Google iOS OAuth client).
+- **TestFlight (working Nov 8, 2026).** Paid Apple Developer team **H739SB5FKP** ("NEKTARIOS SIGALAS", Individual;
+  account holder fixbids.gr@gmail.com, a family member's membership the user uses). The free team still holds
+  `com.antwnakys.dash`, so the iPhone app is now **`com.antwnakys.dash.app`** (`project.pbxproj`, `capacitor.config.ts`;
+  the Mac app keeps `com.antwnakys.dash`). App Store Connect app "dash – Antonis" (Apple ID 6832121608, SKU `dash`).
+  Google sign-in kept the existing iOS OAuth client (bundle ID isn't enforced) and works in the TestFlight build.
+  API key "GitHub" (Admin, key ID YFBR3G89D7) is in the four repo secrets (`APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`,
+  `ASC_KEY_P8`); a copy of the .p8 lives on the user's Mac in `~/.appstoreconnect/private_keys/`. The workflow uploads
+  on native changes to main, on the 1st of each month and by hand (`gh workflow run testflight.yml`); first run took 5 min,
+  cloud signed. From the Mac: `TEAM_ID=H739SB5FKP ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_KEY_PATH=… scripts/testflight.sh`.
+  Internal group "Me" (automatic distribution) with tester antonsig08@gmail.com, an App Store Connect user with the
+  Developer role limited to dash. The user installed it on the iPhone with Automatic Updates on.
+  Now possible with the paid team: the home-screen widget (App Groups), revisit if the user asks.
 - Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
   making the campus address editable in Settings.

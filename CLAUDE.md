@@ -227,6 +227,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   minute, not while a sheet is open) it reads `version.json`; a newer build → `location.replace(SITE + '?v=<sha>')`
   (the query skips the HTML the Mac cached), once per version per session.
 
+**Never use `window.confirm()`/`alert()`**: the Mac app's WKWebView (Tauri) ignores them, so `confirm()` returns false
+and the action silently never happens (course delete was broken this way). Use `components/ui/ConfirmButton.tsx` (press
+again within 4 s) and/or an Undo toast.
+
 localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`, `dash.focus.v1`, `dash.projects.v1`, `dash.goals.v1`,
 `dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1`, `dash.snapshots.v1`, `dash.focusTimer.v1`, `dash.look.v1`, `dash.calendarMode.v1` (device only).
 New fields on synced records must be optional so older app versions and existing data keep working.
@@ -292,6 +296,8 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 10, 2026**: Obsidian redesign from the user's reference image (black glass / concrete light), top bar, dashboard
   with daily goals, widgets and a daily timeline. Backup branch DASH_ORIGINAL_BACKUP created first.
 - **Nov 10, 2026**: Projects and Goals sections, task tags + Inbox, phone More menu, .ics export, calmer page transitions.
+- **Nov 10, 2026**: deleting courses didn't work in the Mac app (`confirm()` is ignored there); replaced every confirm with
+  a press-twice button, Undo for courses and exams.
 
 ## Next up
 

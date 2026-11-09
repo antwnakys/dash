@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
+import { ConfirmButton } from '@/components/ui/ConfirmButton'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { average, formatGrade, onScale, SCALE } from '@/lib/grades'
@@ -113,7 +114,7 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
   }
 
   const remove = () => {
-    if (!existing || !confirm(`Delete ${existing.name} and its deadlines?`)) return
+    if (!existing) return
     const work = assignments.items.filter((a) => a.courseId === existing.id)
     assignments.set((list) => list.filter((a) => a.courseId !== existing.id))
     courses.remove(existing.id)
@@ -205,9 +206,9 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       </Field>
       <div className="mt-1 flex items-center gap-2">
         {existing && (
-          <Button variant="danger" onClick={remove}>
+          <ConfirmButton onConfirm={remove} confirmLabel="Press again: delete course and its deadlines">
             Delete
-          </Button>
+          </ConfirmButton>
         )}
         <Button type="submit" variant="primary" className="ml-auto min-w-28">
           {existing ? 'Save course' : 'Add course'}

@@ -10,7 +10,7 @@ import { useDashboard } from '@/context/DashboardContext'
 import type { ExamWithPlan } from '@/hooks/useExams'
 import { cn } from '@/lib/cn'
 import { dayDiff, fmt, isSameDay } from '@/lib/date'
-import { planStudy, type SessionView } from '@/lib/exams'
+import { planStudy, resultTarget, type SessionView } from '@/lib/exams'
 
 /** "Today", "Tomorrow", "6 days". */
 function untilLabel(date: Date, now: Date): string {
@@ -48,6 +48,8 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
   const total = exam.sessions.length
   const pastUnticked = exam.sessions.filter((s) => !s.done && s.end < now)
   const planned = exam.sessions.length > 0 && !exam.sessions[0].fromCalendar
+  // Once it has started, the result can be added (it moves to the history).
+  const started = exam.date <= now
 
   const setDone = (list: SessionView[], done: boolean) =>
     study.set((items) => {
@@ -161,6 +163,11 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
                       Edit exam
                     </Button>
                   )}
+                  {started && (
+                    <Button size="sm" variant="primary" onClick={() => openEditor(resultTarget(exam))}>
+                      Add result
+                    </Button>
+                  )}
                 </div>
               </>
             ) : (
@@ -183,6 +190,11 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
                   {editTarget && (
                     <Button size="sm" variant="plain" onClick={() => openEditor(editTarget)}>
                       Edit exam
+                    </Button>
+                  )}
+                  {started && (
+                    <Button size="sm" variant="primary" onClick={() => openEditor(resultTarget(exam))}>
+                      Add result
                     </Button>
                   )}
                 </div>

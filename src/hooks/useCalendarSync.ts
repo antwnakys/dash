@@ -45,7 +45,7 @@ async function fetchFeed(url: string, index: number): Promise<CalendarEvent[]> {
   if (!res.ok) throw new Error(`Calendar returned ${res.status}. Check that the address is the full secret iCal link.`)
   const text = await res.text()
   if (!text.includes('BEGIN:VCALENDAR')) throw new Error('That address didn’t return a calendar. Copy the “Secret address in iCal format”.')
-  return parseIcs(text, { from: Date.now() - DAY_MS, to: Date.now() + 180 * DAY_MS, idPrefix: `cal${index}` })
+  return parseIcs(text, { from: Date.now() - 31 * DAY_MS, to: Date.now() + 180 * DAY_MS, idPrefix: `cal${index}` })
 }
 
 const feedError = (e: unknown) =>

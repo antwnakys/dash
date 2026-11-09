@@ -93,7 +93,7 @@ export function LeaveCard() {
     <button
       onClick={() => openEditor({ type: 'settings', section: 'commute' })}
       aria-label={`${headline}. ${detail} Change travel time`}
-      className="surface flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-fill/60"
+      className="surface pressable flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-fill/60"
     >
       <span
         aria-hidden

@@ -156,6 +156,18 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - **Weekly review** (`components/today/WeeklyReview.tsx`, editor target `review`): Today → This week → Review, or ⌘K.
   Tasks done, work handed in, focus time; done list; past-due tasks (Tomorrow / Monday / tick) and unsubmitted
   deadlines (Handed in); next week's deadlines and exams; "Plan next week" opens the calendar on next week.
+- **Sections (Nov 10)**: Today, Tasks, Calendar, Courses, Exams, Projects, Goals (`views/index.ts`, keys 1–7). Phones:
+  tab bar = Today, Tasks, Calendar, Courses + **More** (Exams, Projects, Goals, Focus, Settings; `phoneTabs`).
+- **Projects** (`views/ProjectsView.tsx`, `editor/ProjectForm.tsx`, synced `dash.projects.v1`): name, description,
+  deadline, colour, milestones, notes, finished. Tasks link with optional `Task.projectId` (one record; it shows in Tasks,
+  Today and the project card); progress = done tasks + done milestones. Deleting unlinks its tasks, with Undo.
+- **Goals** (`views/GoalsView.tsx`, `editor/GoalForm.tsx`, `lib/goals.ts`, synced `dash.goals.v1`): day / week / term,
+  academic or personal, counted from real data (`tasks` done in the period, optionally one category; `focus` minutes) or
+  by hand (`manual`, +/− per period key). No invented scores.
+- Tasks also have optional `tags` (quick add: any `#word` that isn't a category; search `#tag`) and an **Inbox** view (no
+  date, project or priority). Settings → Import and export → **Export my calendar (.ics)** (`lib/icsExport.ts`, own
+  deadlines/events/dated tasks; `lib/saveFile.ts` = share sheet / download / clipboard). Page changes fade with a short
+  slide and no blur.
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
 - `src/hooks/useCalendarSync.ts`: read-only calendar copy, refreshed every 15 min and on focus
 - `src/lib/liveUpdate.ts`: the iPhone app updates itself from the website (`@capgo/capacitor-updater` in manual mode, no Capgo cloud).
@@ -215,7 +227,7 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   minute, not while a sheet is open) it reads `version.json`; a newer build → `location.replace(SITE + '?v=<sha>')`
   (the query skips the HTML the Mac cached), once per version per session.
 
-localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`, `dash.focus.v1`,
+localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`, `dash.focus.v1`, `dash.projects.v1`, `dash.goals.v1`,
 `dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1`, `dash.snapshots.v1`, `dash.focusTimer.v1`, `dash.look.v1`, `dash.calendarMode.v1` (device only).
 New fields on synced records must be optional so older app versions and existing data keep working.
 
@@ -279,6 +291,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 9, 2026 (night)**: course colours, notes, resources and workload; Focus mode with synced study time; weekly review.
 - **Nov 10, 2026**: Obsidian redesign from the user's reference image (black glass / concrete light), top bar, dashboard
   with daily goals, widgets and a daily timeline. Backup branch DASH_ORIGINAL_BACKUP created first.
+- **Nov 10, 2026**: Projects and Goals sections, task tags + Inbox, phone More menu, .ics export, calmer page transitions.
 
 ## Next up
 

@@ -14,6 +14,8 @@ import { ArrowDown, ArrowUp } from 'lucide-react'
 import { DEFAULT_WIDGETS } from '@/lib/dashboard'
 import type { DashWidget, LookPreference, ThemePreference, TodaySection } from '@/types'
 import { DataSection } from './DataSection'
+import { buildIcs } from '@/lib/icsExport'
+import { saveFile } from '@/lib/saveFile'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
@@ -48,7 +50,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' | 'today' }) {
-  const { profile, setProfile, events, calendar, cloud, reminders, location, appExpires, theme, notify } = useDashboard()
+  const { profile, setProfile, events, calendar, assignments, tasks, courses, cloud, reminders, location, appExpires, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
@@ -486,7 +488,7 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
         </FormGroup>
       </div>
 
-      <FormGroup title="Import" footer="Importing the same file again updates those events instead of duplicating them.">
+      <FormGroup title="Import and export" footer="Importing the same file again updates those events instead of duplicating them. Export holds your deadlines, own events and dated tasks (not Google Calendar events, which are already in Google).">
         <p className="px-1 text-subhead text-muted">Add events from an .ics file, such as an Apple Calendar export or your school portal.</p>
         <input
           ref={fileInput}
@@ -499,9 +501,24 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
             e.target.value = ''
           }}
         />
-        <Button size="sm" onClick={() => fileInput.current?.click()} className="self-start">
-          Choose .ics file
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => fileInput.current?.click()}>
+            Choose .ics file
+          </Button>
+          <Button
+            size="sm"
+            variant="plain"
+            onClick={async () => {
+              const text = buildIcs(assignments.items, events.items, tasks.tasks, (id) => courses.items.find((c) => c.id === id)?.name)
+              const how = await saveFile('dash-calendar.ics', text, 'text/calendar').catch(() => 'failed' as const)
+              if (how === 'copied') notify('Calendar copied. Paste it into a file named dash.ics.')
+              else if (how === 'downloaded') notify('Saved dash-calendar.ics to your downloads')
+              else if (how === 'failed') notify('Couldn’t export on this device.', 'error')
+            }}
+          >
+            Export my calendar (.ics)
+          </Button>
+        </div>
       </FormGroup>
 
       <DataSection onDone={onDone} />

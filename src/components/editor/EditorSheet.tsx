@@ -7,6 +7,8 @@ import { DeadlineForm } from './DeadlineForm'
 import { EventForm } from './EventForm'
 import { ExamForm } from './ExamForm'
 import { ExamResultForm } from './ExamResultForm'
+import { GoalForm } from './GoalForm'
+import { ProjectForm } from './ProjectForm'
 import { NewChooser } from './NewChooser'
 import { SettingsForm } from './SettingsForm'
 import { Sheet } from './Sheet'
@@ -18,6 +20,8 @@ const titles = {
   deadline: ['New deadline', 'Edit deadline'],
   event: ['New event', 'Edit event'],
   exam: ['New exam', 'Edit exam'],
+  project: ['New project', 'Edit project'],
+  goal: ['New goal', 'Edit goal'],
 } as const
 
 const newKinds = [
@@ -81,6 +85,8 @@ export function EditorSheet() {
           {type === 'exam' && <ExamForm id={idOf(target)} onDone={closeEditor} />}
           {target.type === 'examResult' && <ExamResultForm target={target} onDone={closeEditor} />}
           {type === 'review' && <WeeklyReview onDone={closeEditor} />}
+          {type === 'project' && <ProjectForm id={idOf(target)} onDone={closeEditor} />}
+          {type === 'goal' && <GoalForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'settings' && (
             <SettingsForm onDone={closeEditor} section={target.type === 'settings' ? target.section : undefined} />
           )}

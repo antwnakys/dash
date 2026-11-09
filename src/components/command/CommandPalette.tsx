@@ -48,7 +48,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['N', 'New…'],
   ['T', 'Add a task'],
   ['F', 'Focus timer'],
-  ['1–5', 'Today, Courses, Exams, Tasks, Calendar'],
+  ['1–7', 'Sections'],
   ['/', 'Search'],
   ['Esc', 'Close'],
 ]
@@ -110,6 +110,8 @@ export function CommandPalette() {
       ['New deadline', FileText, { type: 'deadline' }],
       ['New event', CalendarPlus, { type: 'event' }],
       ['New course', GraduationCap, { type: 'course' }],
+      ['New project', NotebookPen, { type: 'project' }],
+      ['New goal', Timer, { type: 'goal' }],
     ]
     for (const [label, icon, target] of create)
       if (matches(q, label, 'add create')) out.push({ id: label, group: 'Create', label, icon, run: () => open(target) })

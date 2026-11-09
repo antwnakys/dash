@@ -81,3 +81,31 @@ export async function searchPlace(query: string): Promise<Place | null> {
   const hit = (await res.json()).results?.[0]
   return hit ? { name: hit.name, latitude: hit.latitude, longitude: hit.longitude } : null
 }
+
+/**
+ * Look up a street address (the campus) with OpenStreetMap; the area name comes back as the place name
+ * ("Patision 76, Athens" → Exarcheia). Falls back to the city search on the parts after the street.
+ */
+export async function searchAddress(query: string): Promise<Place | null> {
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/search')
+    url.search = new URLSearchParams({ q: query, format: 'jsonv2', limit: '1', addressdetails: '1', 'accept-language': navigator.language || 'en' }).toString()
+    const res = await fetch(url)
+    if (res.ok) {
+      const hit = (await res.json())[0] as { lat: string; lon: string; name?: string; address?: Record<string, string | undefined> } | undefined
+      if (hit) {
+        const a = hit.address ?? {}
+        const name = a.suburb ?? a.neighbourhood ?? a.quarter ?? a.town ?? a.city_district ?? a.village ?? a.city ?? a.municipality ?? hit.name ?? query
+        return { name, latitude: Number(hit.lat), longitude: Number(hit.lon) }
+      }
+    }
+  } catch {
+    // Try the city search below.
+  }
+  const parts = query.split(',').map((p) => p.replace(/\d+/g, '').trim()).filter(Boolean)
+  for (const part of [...parts].reverse()) {
+    const found = await searchPlace(part).catch(() => null)
+    if (found) return found
+  }
+  return null
+}

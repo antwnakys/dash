@@ -1,5 +1,4 @@
-import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { sampleData } from '@/data/sample'
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
@@ -13,7 +12,8 @@ import { useWeather, type WeatherState } from '@/hooks/useWeather'
 import { isClass, isExamTitle, matchCourse } from '@/lib/campus'
 import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
-import { startLiveUpdates } from '@/lib/liveUpdate'
+import { startLiveUpdates, startMacUpdates } from '@/lib/liveUpdate'
+import { dailySnapshot, takeSnapshot } from '@/sync/backup'
 import type { ViewId } from '@/views'
 import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
@@ -52,7 +52,6 @@ interface DashboardValue {
   editor: EditorTarget | null
   openEditor: (target: EditorTarget) => void
   closeEditor: () => void
-  loadSample: () => void
   clearAll: () => void
   theme: { preference: ThemePreference; resolved: 'light' | 'dark'; setPreference: (p: ThemePreference) => void }
   toast: Toast | null
@@ -71,11 +70,12 @@ function buildAgenda(
   events: CalendarEvent[],
   synced: CalendarEvent[],
   tasks: Task[],
+  campus: Profile['campus'],
 ): AgendaItem[] {
   const courseCode = new Map(courses.map((c) => [c.id, c.code]))
-  // Events at campus (Sorou 74, Marousi) are classes: marked as a course and linked to one when the title matches.
+  // Events at the campus address from Settings are classes: marked as a course and linked to one when the title matches.
   const asClass = (e: CalendarEvent): Partial<AgendaItem> | null => {
-    if (!isClass(e)) return null
+    if (!isClass(e, campus)) return null
     const course = matchCourse(e.title, courses)
     const link = e.link ?? course?.links.find((l) => l.kind === 'meeting')?.url
     const online = e.online || looksOnline(e.link, e.title) || undefined
@@ -163,6 +163,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // iPhone app: follow the website's version; tell the user once a newer one is downloaded.
   useEffect(() => startLiveUpdates(() => notify('Update downloaded. It applies when you next open dash.')), [notify])
+  const editorOpen = useRef(false)
+  useEffect(() => {
+    editorOpen.current = editor !== null
+  }, [editor])
+  useEffect(() => startMacUpdates(() => editorOpen.current), [])
+  useEffect(() => dailySnapshot(), [])
 
   const setProfile = useCallback(
     (patch: Partial<Profile>) => setStoredProfile((p) => ({ name: '', ...p, ...patch, updatedAt: Date.now() })),
@@ -170,22 +176,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   )
 
   const agenda = useMemo(
-    () => buildAgenda(courses.items, assignments.items, events.items, calendar.events, tasks.tasks),
-    [courses.items, assignments.items, events.items, calendar.events, tasks.tasks],
+    () => buildAgenda(courses.items, assignments.items, events.items, calendar.events, tasks.tasks, profile.campus),
+    [courses.items, assignments.items, events.items, calendar.events, tasks.tasks, profile.campus],
   )
 
   const appExpires = useAppExpiry()
   const reminders = useReminders(agenda, courses.items, profile, appExpires)
 
-  const loadSample = useCallback(() => {
-    const s = sampleData()
-    courses.set(() => s.courses)
-    assignments.set(() => s.assignments)
-    events.set(() => s.events)
-    tasks.replaceAll(s.tasks)
-  }, [courses, assignments, events, tasks])
-
+  // Deleting everything syncs to every device, so a copy is kept on this one first (Settings → Data → Restore).
   const clearAll = useCallback(() => {
+    takeSnapshot('before-delete')
     courses.set(() => [])
     assignments.set(() => [])
     events.set(() => [])
@@ -213,7 +213,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     editor,
     openEditor: setEditor,
     closeEditor: () => setEditor(null),
-    loadSample,
     clearAll,
     theme,
     toast,

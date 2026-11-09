@@ -2,14 +2,16 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Segmented } from '@/components/ui/Segmented'
 import { useDashboard } from '@/context/DashboardContext'
-import { searchPlace } from '@/data/weather'
+import { searchAddress, searchPlace } from '@/data/weather'
+import { frequentLocations } from '@/lib/campus'
 import { countdown } from '@/lib/date'
 import { parseIcs } from '@/lib/ics'
-import { COMMUTE_ROUTE, DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
+import { DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
 import type { ThemePreference } from '@/types'
+import { DataSection } from './DataSection'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
@@ -21,11 +23,15 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
 ]
 
 export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
-  const { profile, setProfile, events, courses, calendar, cloud, reminders, location, appExpires, loadSample, clearAll, theme, notify } = useDashboard()
+  const { profile, setProfile, events, calendar, cloud, reminders, location, appExpires, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
   const [city, setCity] = useState(profile.place?.name ?? '')
   const [busy, setBusy] = useState(false)
+  const [campusText, setCampusText] = useState(profile.campus?.address ?? '')
+  const [homeText, setHomeText] = useState(profile.home?.name ?? '')
+  const [savingPlaces, setSavingPlaces] = useState(false)
+  const suggestions = frequentLocations([...calendar.events, ...events.items]).filter((l) => l !== campusText.trim())
   const fileInput = useRef<HTMLInputElement>(null)
   const calendarSection = useRef<HTMLDivElement>(null)
   const commuteSection = useRef<HTMLDivElement>(null)
@@ -80,6 +86,36 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
     }
   }
 
+  /** Campus address (classes are recognised by it; its area is looked up for the weather) and home area. */
+  const savePlaces = async (e: FormEvent) => {
+    e.preventDefault()
+    setSavingPlaces(true)
+    try {
+      const address = campusText.trim()
+      const homeName = homeText.trim()
+      let campus = profile.campus
+      let home = profile.home
+      let notes: string[] = []
+      if (!address) campus = undefined
+      else if (address !== profile.campus?.address || !profile.campus?.place) {
+        const place = await searchAddress(address).catch(() => null)
+        campus = { address, place: place ?? undefined }
+        if (!place) notes.push('couldn’t find the campus on the map, so the trip weather leaves it out')
+      }
+      if (!homeName) home = undefined
+      else if (homeName !== profile.home?.name) {
+        const found = await searchPlace(homeName).catch(() => null)
+        if (found) home = { ...found, name: homeName }
+        else notes.push(`no place called “${homeName}” was found`)
+      }
+      setProfile({ campus, home })
+      setCampusText(campus?.address ?? '')
+      notes = notes.map((n, i) => (i === 0 ? n[0].toUpperCase() + n.slice(1) : n))
+      notify(notes.length ? `Saved. ${notes.join('; ')}.` : 'Places saved', notes.length ? 'error' : undefined)
+    } finally {
+      setSavingPlaces(false)
+    }
+  }
 
   const importIcs = async (file: File) => {
     const imported = parseIcs(await file.text())
@@ -131,12 +167,41 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
       <div ref={commuteSection} className="scroll-mt-4">
         <FormGroup
           title="Getting to campus"
-          footer={`${COMMUTE_ROUTE}. Today shows when to leave for your first class; in the evening, for tomorrow's.`}
+          footer="Today shows when to leave for your first class; in the evening, for tomorrow's. These places sync to your devices through your Google Drive and aren't part of dash's code."
         >
-          <Field
-            label="Suburban trains you take"
-            hint="From Doukissis Plakentias to Pentelis. dash picks the latest one that gets you to class on time."
-          >
+          <form onSubmit={savePlaces} className="flex flex-col gap-4">
+            <Field label="Campus address" hint="Calendar events at this address count as classes, in any spelling (Greek or English).">
+              <TextInput value={campusText} onChange={(e) => setCampusText(e.target.value)} placeholder="Street and number, area" autoComplete="off" />
+            </Field>
+            {suggestions.length > 0 && (
+              <div className="-mt-2 flex flex-wrap items-center gap-1.5 px-1">
+                <span className="text-caption text-faint">From your calendar:</span>
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setCampusText(s)}
+                    className="max-w-full truncate rounded-full bg-fill px-2.5 py-1 text-caption font-medium text-ink hover:bg-fill-strong"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            <Field label="Where you live" hint="Your area or city, for the weather on the way.">
+              <TextInput value={homeText} onChange={(e) => setHomeText(e.target.value)} placeholder="Area or city" autoComplete="off" />
+            </Field>
+            <Button
+              type="submit"
+              size="sm"
+              variant="primary"
+              className="self-end"
+              disabled={savingPlaces || (campusText.trim() === (profile.campus?.address ?? '') && homeText.trim() === (profile.home?.name ?? '') && (!campusText.trim() || !!profile.campus?.place))}
+            >
+              {savingPlaces ? 'Saving…' : 'Save places'}
+            </Button>
+          </form>
+          <Field label="Train times you take" hint="dash picks the latest one that gets you to class on time.">
             <TextInput
               defaultValue={(profile.suburbanTrains ?? DEFAULT_TRAINS).join(', ')}
               inputMode="numeric"
@@ -371,33 +436,7 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
         </Button>
       </FormGroup>
 
-      <FormGroup title="Data" footer="Everything is stored on this device only.">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            onClick={() => {
-              if (courses.items.length && !confirm('Replace your courses, deadlines, events and tasks with sample data?')) return
-              loadSample()
-              notify('Sample data loaded')
-              onDone()
-            }}
-          >
-            Load sample data
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => {
-              if (!confirm('Delete all courses, deadlines, events and tasks on this device?')) return
-              clearAll()
-              notify('All data deleted')
-              onDone()
-            }}
-          >
-            Delete all data
-          </Button>
-        </div>
-      </FormGroup>
+      <DataSection onDone={onDone} />
 
       <FormGroup
         title="About"

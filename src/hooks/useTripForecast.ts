@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchHourly, type HourlyPoint } from '@/data/weather'
-import { CAMPUS_PLACE, HOME_PLACE } from '@/lib/commute'
+import type { Place } from '@/types'
 
 const KEY = 'dash.tripweather.v1'
 const MAX_AGE = 30 * 60_000
@@ -10,32 +10,38 @@ interface Forecast {
   campus: HourlyPoint[]
 }
 
-function cached(): Forecast | undefined {
+const placesKey = (home?: Place, campus?: Place) => [home, campus].map((p) => (p ? `${p.latitude},${p.longitude}` : '')).join('|')
+
+function cached(places: string): Forecast | undefined {
   try {
-    const c = JSON.parse(localStorage.getItem(KEY) ?? 'null') as { at: number; data: Forecast } | null
-    return c && Date.now() - c.at < MAX_AGE ? c.data : undefined
+    const c = JSON.parse(localStorage.getItem(KEY) ?? 'null') as { at: number; places?: string; data: Forecast } | null
+    return c && c.places === places && Date.now() - c.at < MAX_AGE ? c.data : undefined
   } catch {
     return undefined
   }
 }
 
-/** Hourly forecast for home and campus, fetched only while a trip is coming up; cached for 30 minutes. */
-export function useTripForecast(active: boolean): Forecast | undefined {
-  const [data, setData] = useState<Forecast | undefined>(cached)
+/**
+ * Hourly forecast for home and campus (the places saved in Settings), fetched only while a trip is coming up;
+ * cached for 30 minutes. Nothing until both places are set.
+ */
+export function useTripForecast(active: boolean, home?: Place, campus?: Place): Forecast | undefined {
+  const places = placesKey(home, campus)
+  const [fetched, setFetched] = useState<{ places: string; data: Forecast }>()
 
   useEffect(() => {
-    if (!active || cached()) return
+    if (!active || !home || !campus || cached(places)) return
     let cancelled = false
-    fetchHourly([HOME_PLACE, CAMPUS_PLACE])
-      .then(([home, campus]) => {
-        if (cancelled || !home || !campus) return
-        const fresh = { home, campus }
+    fetchHourly([home, campus])
+      .then(([h, c]) => {
+        if (cancelled || !h || !c) return
+        const data = { home: h, campus: c }
         try {
-          localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), data: fresh }))
+          localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), places, data }))
         } catch {
           // Cache is optional.
         }
-        setData(fresh)
+        setFetched({ places, data })
       })
       .catch(() => {
         // No hint when offline; the card works without it.
@@ -43,7 +49,8 @@ export function useTripForecast(active: boolean): Forecast | undefined {
     return () => {
       cancelled = true
     }
-  }, [active])
+  }, [active, home, campus, places])
 
-  return active ? data : undefined
+  if (!active || !home || !campus) return undefined
+  return fetched?.places === places ? fetched.data : cached(places)
 }

@@ -13,7 +13,7 @@ import { useNow } from '@/hooks/useNow'
 import { average, formatGrade, SCALE } from '@/lib/grades'
 
 export function CoursesView() {
-  const { courses, assignments, openEditor, loadSample } = useDashboard()
+  const { courses, assignments, openEditor } = useDashboard()
   const grades = average(assignments.items)
   const now = useNow(60_000)
   const pending = usePendingByCourse(now)
@@ -50,9 +50,6 @@ export function CoursesView() {
           <EmptyState message="Add your courses to follow syllabus progress, deadlines and exams in one place.">
             <Button variant="primary" size="sm" onClick={() => openEditor({ type: 'course' })}>
               Add course
-            </Button>
-            <Button size="sm" onClick={loadSample}>
-              Try sample data
             </Button>
           </EmptyState>
         </Card>

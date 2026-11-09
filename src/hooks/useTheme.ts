@@ -9,8 +9,6 @@ import { useLocalStorage } from './useLocalStorage'
 const DashTheme = registerPlugin<{ set(options: { style: ThemePreference }): Promise<void> }>('DashTheme')
 
 const media = () => window.matchMedia('(prefers-color-scheme: dark)')
-/** Computers (a mouse or trackpad that can hover): the Mac app and desktop browsers. Same test as index.html. */
-const isComputer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
 /**
  * Light/dark preference: applied to <html data-theme> and the iOS status bar. Plus the design (`look`): Graphite or
@@ -19,10 +17,11 @@ const isComputer = () => window.matchMedia('(hover: hover) and (pointer: fine)')
 export function useTheme() {
   const [storedLook, setStoredLook] = useLocalStorage<LookPreference>('dash.look.v1')
   const lookPreference = storedLook ?? 'auto'
-  const look: 'graphite' | 'classic' = lookPreference === 'auto' ? (isComputer() ? 'graphite' : 'classic') : lookPreference
+  // Automatic = Obsidian everywhere (Mac, iPhone, browsers). Graphite and Classic stay as manual choices.
+  const look: Exclude<LookPreference, 'auto'> = lookPreference === 'auto' ? 'obsidian' : lookPreference
   useEffect(() => {
-    if (look === 'graphite') document.documentElement.dataset.look = 'graphite'
-    else delete document.documentElement.dataset.look
+    if (look === 'classic') delete document.documentElement.dataset.look
+    else document.documentElement.dataset.look = look
   }, [look])
 
   const [stored, setStored] = useLocalStorage<ThemePreference>('dash.theme.v1')

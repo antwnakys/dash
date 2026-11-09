@@ -10,25 +10,36 @@ import { DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
-import type { LookPreference, ThemePreference, TodaySection } from '@/types'
+import { ArrowDown, ArrowUp } from 'lucide-react'
+import { DEFAULT_WIDGETS } from '@/lib/dashboard'
+import type { DashWidget, LookPreference, ThemePreference, TodaySection } from '@/types'
 import { DataSection } from './DataSection'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
 
 const looks: Array<{ value: LookPreference; label: string }> = [
-  { value: 'auto', label: 'Automatic' },
+  { value: 'auto', label: 'Obsidian' },
   { value: 'graphite', label: 'Graphite' },
   { value: 'classic', label: 'Classic' },
 ]
 
-const todaySections: Array<[TodaySection, string]> = [
+const classicSections: Array<[TodaySection, string]> = [
   ['focus', 'Focus today'],
   ['upnext', 'Up next'],
   ['week', 'This week'],
   ['calendar', 'Calendar'],
   ['courses', 'Courses'],
 ]
+const dashSections: Array<[TodaySection, string]> = [
+  ['goals', 'Daily goals'],
+  ['timeline', 'Daily timeline'],
+  ['focus', 'Focus today'],
+  ['upnext', 'Up next'],
+  ['academic', 'Academic progress'],
+  ['calendar', 'Calendar'],
+]
+const widgetNames: Record<DashWidget, string> = { study: 'Study time', completion: 'Task completion', weekfocus: 'Focus this week', deadlines: 'Deadlines' }
 
 const themes: Array<{ value: ThemePreference; label: string }> = [
   { value: 'system', label: 'Automatic' },
@@ -36,7 +47,7 @@ const themes: Array<{ value: ThemePreference; label: string }> = [
   { value: 'dark', label: 'Dark' },
 ]
 
-export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' }) {
+export function SettingsForm({ onDone, section }: { onDone: () => void; section?: 'calendar' | 'commute' | 'today' }) {
   const { profile, setProfile, events, calendar, cloud, reminders, location, appExpires, theme, notify } = useDashboard()
   const [calendarText, setCalendarText] = useState((profile.calendarUrls ?? []).join('\n'))
   const [name, setName] = useState(profile.name)
@@ -45,13 +56,22 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
   const [campusText, setCampusText] = useState(profile.campus?.address ?? '')
   const [homeText, setHomeText] = useState(profile.home?.name ?? '')
   const [savingPlaces, setSavingPlaces] = useState(false)
+  const widgetOrder = [...(profile.widgetOrder ?? []), ...DEFAULT_WIDGETS].filter((w, i, a) => a.indexOf(w) === i && DEFAULT_WIDGETS.includes(w))
+  const toggleSection = (id: TodaySection, on: boolean) =>
+    setProfile({ todayHidden: on ? (profile.todayHidden ?? []).filter((s) => s !== id) : [...(profile.todayHidden ?? []), id] })
+  const moveWidget = (i: number, dir: -1 | 1) => {
+    const next = [...widgetOrder]
+    ;[next[i], next[i + dir]] = [next[i + dir], next[i]]
+    setProfile({ widgetOrder: next })
+  }
   const suggestions = frequentLocations([...calendar.events, ...events.items]).filter((l) => l !== campusText.trim())
   const fileInput = useRef<HTMLInputElement>(null)
   const calendarSection = useRef<HTMLDivElement>(null)
   const commuteSection = useRef<HTMLDivElement>(null)
+  const todaySection = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const target = section === 'calendar' ? calendarSection : section === 'commute' ? commuteSection : null
+    const target = section === 'calendar' ? calendarSection : section === 'commute' ? commuteSection : section === 'today' ? todaySection : null
     target?.current?.scrollIntoView({ block: 'start' })
   }, [section])
 
@@ -144,7 +164,7 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
 
   return (
     <div className="flex flex-col gap-8">
-      <FormGroup title="Appearance" footer="Design is set per device. Automatic uses Graphite on computers and Classic on phones.">
+      <FormGroup title="Appearance" footer="Design is set per device. Obsidian is the new look; Classic is the original. Theme Automatic follows your Mac or iPhone.">
         <div className="flex flex-col gap-1.5">
           <span className="px-1 text-subhead font-medium text-muted">Theme</span>
           <Segmented label="Theme" options={themes} value={theme.preference} onChange={theme.setPreference} block />
@@ -155,20 +175,32 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
         </div>
       </FormGroup>
 
-      <FormGroup title="Today page" footer="The cards above them (leave time, exams, reminders) show when they're relevant.">
-        <div className="flex flex-col gap-1">
-          {todaySections.map(([id, label]) => (
-            <Toggle
-              key={id}
-              label={label}
-              checked={!profile.todayHidden?.includes(id)}
-              onChange={(on) =>
-                setProfile({ todayHidden: on ? (profile.todayHidden ?? []).filter((s) => s !== id) : [...(profile.todayHidden ?? []), id] })
-              }
-            />
-          ))}
-        </div>
-      </FormGroup>
+      <div ref={todaySection} className="scroll-mt-4">
+        <FormGroup title="Today page" footer="The cards on top (leave time, exams, reminders) show when they're relevant. Arrows change the order of the widgets.">
+          {theme.look.resolved !== 'classic' && (
+            <ul className="separated overflow-hidden rounded-[var(--radius-control)] bg-fill/60">
+              {widgetOrder.map((w, i) => (
+                <li key={w} className="flex items-center gap-1 py-1 pr-1 pl-3">
+                  <div className="min-w-0 flex-1">
+                    <Toggle label={widgetNames[w]} checked={!profile.todayHidden?.includes(w)} onChange={(on) => toggleSection(w, on)} />
+                  </div>
+                  <button type="button" aria-label={`Move ${widgetNames[w]} earlier`} disabled={i === 0} onClick={() => moveWidget(i, -1)} className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-fill disabled:opacity-30">
+                    <ArrowUp aria-hidden className="size-4" />
+                  </button>
+                  <button type="button" aria-label={`Move ${widgetNames[w]} later`} disabled={i === widgetOrder.length - 1} onClick={() => moveWidget(i, 1)} className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-fill disabled:opacity-30">
+                    <ArrowDown aria-hidden className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex flex-col gap-1">
+            {(theme.look.resolved === 'classic' ? classicSections : dashSections).map(([id, label]) => (
+              <Toggle key={id} label={label} checked={!profile.todayHidden?.includes(id)} onChange={(on) => toggleSection(id, on)} />
+            ))}
+          </div>
+        </FormGroup>
+      </div>
 
       <form onSubmit={save}>
         <FormGroup title="You">

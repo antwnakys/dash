@@ -217,7 +217,7 @@ export function FocusPill() {
   return (
     <button
       onClick={() => setFocusOpen(true)}
-      className="material fixed right-4 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] z-30 flex h-10 items-center gap-2 rounded-[var(--radius-bar)] px-3.5 text-subhead font-medium text-ink tabular-nums lg:right-6 lg:bottom-6"
+      className="focus-pill material fixed right-4 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] z-30 flex h-10 items-center gap-2 rounded-[var(--radius-bar)] px-3.5 text-subhead font-medium text-ink tabular-nums lg:right-6 lg:bottom-6"
       aria-label="Open focus timer"
     >
       <span className={cn('size-2 rounded-full', focus.running ? (focus.state.phase === 'focus' ? 'bg-accent' : 'bg-course') : 'bg-faint')} />

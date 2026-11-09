@@ -66,7 +66,7 @@ interface DashboardValue {
     resolved: 'light' | 'dark'
     setPreference: (p: ThemePreference) => void
     /** The design on this device. */
-    look: { preference: LookPreference; resolved: 'graphite' | 'classic'; setPreference: (p: LookPreference) => void }
+    look: { preference: LookPreference; resolved: Exclude<LookPreference, 'auto'>; setPreference: (p: LookPreference) => void }
   }
   toast: Toast | null
   /** Brief confirmation or error shown above the navigation. */

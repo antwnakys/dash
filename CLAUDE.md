@@ -151,6 +151,13 @@ which only dash's OAuth client can open. Ask for a screenshot or paste.
 Apple-inspired, light and dark (tokens on `:root` in `src/index.css`; `--accent` blue, `--danger`,
 `--course` green). Glass only on floating chrome. SF Pro on Apple devices, Inter elsewhere.
 16px inputs on phones (no iOS zoom). Keep motion calm: entrances play once per session.
+Motion (ported from antwnakys/dash_public on Nov 9): shared springs in `src/lib/motion.ts` (`snappy`, `smooth`, `gentle`,
+`bouncy`; `blur()` only on pointer devices; `press`) and CSS twins `--spring-snappy/--spring-smooth` in `index.css`
+(switch knob, `.pressable` cards). Tabs slide towards the picked tab (AppShell, `popLayout`); **don't put
+`initial={false}` on that AnimatePresence**, it silently blocked every entrance on the first screen (the bug this fixed).
+`lib/intro.ts`: the launch logo plays once per session and `Reveal` waits for it, so the page rises in as the logo lifts
+away. Sheets rise on phones and grow from the centre on wider screens; checkbox fill springs and the tick draws; tasks
+slide in/out; toasts bounce in and can be swiped away.
 Dates and times use the device locale through `Intl` (the user is in Greece: 24-hour, Monday-first weeks).
 
 ## History
@@ -165,6 +172,9 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   1. Course times picked with iOS-style day buttons and native time/date pickers (first/last class), several times per course, next class on cards.
   2. Everything at Sorou 74, Marousi is marked as a course: green Course badge and calendar dot, links to the matching course,
      and Courses → "From your calendar" offers to add those classes. Calendar events now keep end times.
+
+- **Nov 9, 2026**: animations and the first-screen entrance fix copied over from unidash (antwnakys/dash_public); web only,
+  so the iPhone app gets it by live update and the Mac app by reopening (no TestFlight build or new .dmg needed).
 
 ## Next up
 

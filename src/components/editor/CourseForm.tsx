@@ -4,8 +4,10 @@ import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { average, formatGrade, onScale, SCALE } from '@/lib/grades'
 import { formatMeetings, newMeeting, parseSchedule } from '@/lib/schedule'
-import type { Assignment, Course, CourseLink, CourseMeeting } from '@/types'
-import { Field, TextInput } from './fields'
+import { Plus, X } from 'lucide-react'
+import { courseColorNames, courseColors } from '@/lib/courseColor'
+import type { Assignment, Course, CourseColor, CourseLink, CourseMeeting } from '@/types'
+import { Field, TextArea, TextInput } from './fields'
 import { ScheduleEditor } from './ScheduleEditor'
 
 /** Saved times, or ones read from an older free-text schedule, or one empty time to fill in. */
@@ -72,6 +74,11 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
   const [portal, setPortal] = useState(linkUrl(existing, 'portal'))
   const [materials, setMaterials] = useState(linkUrl(existing, 'materials'))
   const [meeting, setMeeting] = useState(linkUrl(existing, 'meeting'))
+  const [color, setColor] = useState<CourseColor | undefined>(existing?.color)
+  const [notes, setNotes] = useState(existing?.notes ?? '')
+  const [resources, setResources] = useState<Array<{ label: string; url: string }>>(
+    () => existing?.links.filter((l) => l.kind === 'other').map((l) => ({ label: l.label, url: l.url })) ?? [],
+  )
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -81,6 +88,10 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
     if (meeting.trim()) links.push({ label: 'Online lesson', url: meeting.trim(), kind: 'meeting' })
     // Keep links of other kinds (e.g. recorded lectures) that this form doesn't edit.
     links.push(...(existing?.links ?? []).filter((l) => l.kind === 'video'))
+    for (const r of resources) {
+      const url = r.url.trim()
+      if (url) links.push({ label: r.label.trim() || url.replace(/^https?:\/\//, '').split('/')[0], url: /^[a-z]+:/i.test(url) ? url : `https://${url}`, kind: 'other' })
+    }
     const set = meetings.filter((m) => m.days.length)
     const data = {
       code: code.trim(),
@@ -92,6 +103,8 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       term: term.start || term.end ? term : undefined,
       progress: progress / 100,
       links,
+      color,
+      notes: notes.trim() || undefined,
     }
     if (existing) courses.update(existing.id, data)
     else courses.add(data)
@@ -101,9 +114,16 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
 
   const remove = () => {
     if (!existing || !confirm(`Delete ${existing.name} and its deadlines?`)) return
+    const work = assignments.items.filter((a) => a.courseId === existing.id)
     assignments.set((list) => list.filter((a) => a.courseId !== existing.id))
     courses.remove(existing.id)
-    notify('Course deleted')
+    notify('Course deleted', 'default', {
+      label: 'Undo',
+      run: () => {
+        courses.set((list) => (list.some((c) => c.id === existing.id) ? list : [...list, existing]))
+        assignments.set((list) => [...list, ...work.filter((w) => !list.some((a) => a.id === w.id))])
+      },
+    })
     onDone()
   }
 
@@ -120,6 +140,25 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       <Field label="Instructor">
         <TextInput value={instructor} onChange={(e) => setInstructor(e.target.value)} />
       </Field>
+      <div className="flex flex-col gap-1.5">
+        <span className="px-1 text-subhead font-medium text-muted">Colour</span>
+        <div className="flex flex-wrap gap-2 px-1" role="radiogroup" aria-label="Colour">
+          {(Object.keys(courseColors) as CourseColor[]).map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={color === c}
+              aria-label={courseColorNames[c]}
+              title={courseColorNames[c]}
+              onClick={() => setColor(color === c ? undefined : c)}
+              className="flex size-8 items-center justify-center rounded-full ring-offset-2 ring-offset-[var(--surface)] transition-shadow aria-checked:ring-2 aria-checked:ring-ink"
+            >
+              <span className="size-6 rounded-full" style={{ background: courseColors[c] }} />
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-col gap-1.5">
         <span className="px-1 text-subhead font-medium text-muted">Class times</span>
         <ScheduleEditor meetings={meetings} onMeetings={setMeetings} term={term} onTerm={setTerm} />
@@ -144,6 +183,25 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       </Field>
       <Field label="Materials link">
         <TextInput type="url" inputMode="url" value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder="https://" />
+      </Field>
+      <div className="flex flex-col gap-1.5">
+        <span className="px-1 text-subhead font-medium text-muted">Resources</span>
+        {resources.map((r, i) => (
+          <div key={i} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-2">
+            <TextInput value={r.label} onChange={(e) => setResources((l) => l.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} placeholder="Name" aria-label="Resource name" />
+            <TextInput inputMode="url" autoCapitalize="off" autoCorrect="off" value={r.url} onChange={(e) => setResources((l) => l.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))} placeholder="https://" aria-label="Resource link" />
+            <button type="button" onClick={() => setResources((l) => l.filter((_, j) => j !== i))} aria-label="Remove resource" className="flex size-9 items-center justify-center rounded-full text-faint hover:bg-fill hover:text-ink">
+              <X aria-hidden className="size-4" />
+            </button>
+          </div>
+        ))}
+        <Button size="sm" variant="plain" className="self-start" onClick={() => setResources((l) => [...l, { label: '', url: '' }])}>
+          <Plus aria-hidden className="size-3.5" strokeWidth={2.4} />
+          Add a resource
+        </Button>
+      </div>
+      <Field label="Notes">
+        <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Exam format, office hours, what to remember…" />
       </Field>
       <div className="mt-1 flex items-center gap-2">
         {existing && (

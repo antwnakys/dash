@@ -32,8 +32,12 @@ export interface Task {
 export interface CourseLink {
   label: string
   url: string
-  kind: 'portal' | 'materials' | 'video' | 'meeting'
+  /** `other`: a resource the user named (slides, reading list, drive folder…). */
+  kind: 'portal' | 'materials' | 'video' | 'meeting' | 'other'
 }
+
+/** A course's identifying colour (a dot on cards, lists and the calendar). */
+export type CourseColor = 'slate' | 'blue' | 'green' | 'amber' | 'red' | 'violet'
 
 /** One recurring class time: the weekdays it meets (0 = Sunday … 6 = Saturday) and its local times. */
 export interface CourseMeeting {
@@ -57,6 +61,10 @@ export interface Course {
   /** First and last day of classes, "YYYY-MM-DD". */
   term?: { start?: string; end?: string }
   links: CourseLink[]
+  // Optional, so older versions keep syncing courses.
+  color?: CourseColor
+  /** Free notes: exam format, what the teacher said, office hours… */
+  notes?: string
 }
 
 export interface Assignment {
@@ -100,6 +108,16 @@ export interface ExamResult {
   outOf?: number
   /** Missing: not said (e.g. skipped without a result). */
   passed?: boolean
+  courseId?: string
+}
+
+/** A finished focus session (Focus mode), synced so study time adds up across devices. */
+export interface FocusSession {
+  id: string
+  /** ISO timestamp of the start. */
+  start: string
+  minutes: number
+  taskId?: string
   courseId?: string
 }
 
@@ -193,6 +211,7 @@ export type EditorTarget =
   | { type: 'examResult'; id: string; subject: string; date: string; allDay?: boolean; courseId?: string; source?: 'assignment' | 'event' | 'calendar' | 'task' }
   | { type: 'task'; id?: string }
   | { type: 'new' }
+  | { type: 'review' }
   | { type: 'settings'; section?: 'calendar' | 'commute' }
 
 export type TodaySection = 'focus' | 'upnext' | 'week' | 'calendar' | 'courses'

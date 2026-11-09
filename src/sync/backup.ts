@@ -36,6 +36,7 @@ const LABELS: Record<string, string> = {
   'dash.events.v1': 'events',
   'dash.study.v1': 'study sessions',
   'dash.examResults.v1': 'exam results',
+  'dash.focus.v1': 'focus sessions',
 }
 
 /** "12 tasks, 4 courses, 9 deadlines". Empty collections are left out. */

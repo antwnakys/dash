@@ -2,6 +2,7 @@ import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, 
 import { useCalendarSync, type CalendarSync } from '@/hooks/useCalendarSync'
 import { useCloudSync, type CloudSync } from '@/hooks/useCloudSync'
 import { useCollection, type Collection } from '@/hooks/useCollection'
+import { useFocusTimer, type FocusTimer } from '@/hooks/useFocusTimer'
 import { useAppExpiry } from '@/hooks/useAppExpiry'
 import { useHereLocation } from '@/hooks/useHereLocation'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
@@ -15,7 +16,7 @@ import { startOfDay } from '@/lib/date'
 import { startLiveUpdates, startMacUpdates } from '@/lib/liveUpdate'
 import { dailySnapshot, takeSnapshot } from '@/sync/backup'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, LookPreference, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, FocusSession, LookPreference, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
@@ -36,6 +37,11 @@ interface DashboardValue {
   study: Collection<StudySession>
   /** Scores and pass/fail for exams that are over: the exam history. */
   examResults: Collection<ExamResult>
+  /** Finished focus sessions (synced) and the timer (this device). */
+  focusSessions: Collection<FocusSession>
+  focus: FocusTimer
+  focusOpen: boolean
+  setFocusOpen: (open: boolean) => void
   tasks: TasksApi
   calendar: CalendarSync
   /** Syncs this device's data with every other device signed in to the same Google account. */
@@ -159,6 +165,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const events = useCollection<CalendarEvent>('dash.events.v1')
   const study = useCollection<StudySession>('dash.study.v1')
   const examResults = useCollection<ExamResult>('dash.examResults.v1')
+  const focusSessions = useCollection<FocusSession>('dash.focus.v1')
   const tasks = useTasks()
   const location = useHereLocation(profile.autoLocation !== false)
   const weather = useWeather(location.here ?? profile.place)
@@ -169,12 +176,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const theme = useTheme()
   const [view, setView] = useState<ViewId>('today')
   const [palette, setPalette] = useState(false)
+  const [focusOpen, setFocusOpen] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
   const notify = useCallback(
     (message: string, tone: Toast['tone'] = 'default', action?: Toast['action']) => setToast({ id: Date.now(), message, tone, action }),
     [],
   )
+  const focus = useFocusTimer(focusSessions, notify)
 
   // iPhone app: follow the website's version; tell the user once a newer one is downloaded.
   useEffect(() => startLiveUpdates(() => notify('Update downloaded. It applies when you next open dash.')), [notify])
@@ -215,6 +224,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     events,
     study,
     examResults,
+    focusSessions,
+    focus,
+    focusOpen,
+    setFocusOpen,
     tasks,
     calendar,
     cloud,

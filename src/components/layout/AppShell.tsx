@@ -8,6 +8,7 @@ import { blur, ease, spring } from '@/lib/motion'
 import { isNative } from '@/lib/native'
 import { views } from '@/views'
 import { CommandPalette } from '@/components/command/CommandPalette'
+import { FocusMode, FocusPill } from '@/components/focus/FocusMode'
 import { AmbientBackground } from './AmbientBackground'
 import { Intro } from './Intro'
 import { PullToRefresh } from './PullToRefresh'
@@ -36,7 +37,7 @@ const pageVariants = {
 }
 
 export function AppShell() {
-  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette } = useDashboard()
+  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette, focusOpen, setFocusOpen } = useDashboard()
   const reduce = useReducedMotion()
   const phone = usePhone()
   // Scale around the middle of what's on screen, not the top of the page.
@@ -74,7 +75,7 @@ export function AppShell() {
     [openEditor, setView],
   )
 
-  // Keyboard: ⌘K (or Ctrl+K) the command palette, / search, N New, T add a task, 1–5 switch sections.
+  // Keyboard: ⌘K (or Ctrl+K) the command palette, / search, N New, T add a task, F focus, 1–5 switch sections.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -83,11 +84,14 @@ export function AppShell() {
         setPalette(!palette)
         return
       }
-      if (palette || editor || e.metaKey || e.ctrlKey || e.altKey || typing(e.target)) return
+      if (palette || focusOpen || editor || e.metaKey || e.ctrlKey || e.altKey || typing(e.target)) return
       const key = e.key.toLowerCase()
       if (key === 'n') {
         e.preventDefault()
         openEditor({ type: 'new' })
+      } else if (key === 'f') {
+        e.preventDefault()
+        setFocusOpen(true)
       } else if (key === '/') {
         e.preventDefault()
         setPalette(true)
@@ -104,7 +108,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [editor, openEditor, setView, palette, setPalette, view])
+  }, [editor, openEditor, setView, palette, setPalette, view, focusOpen, setFocusOpen])
 
   const { scrollY } = useScroll()
   const statusFade = useTransform(scrollY, [0, 28], [0, 1])
@@ -161,6 +165,8 @@ export function AppShell() {
       <TabBar />
       <EditorSheet />
       <CommandPalette />
+      <FocusMode />
+      <FocusPill />
       <ToastHost onDismiss={dismissToast} />
       <Intro />
     </div>

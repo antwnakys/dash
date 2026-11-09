@@ -176,3 +176,5 @@ export type EditorTarget =
   | { type: 'settings'; section?: 'calendar' | 'commute' }
 
 export type ThemePreference = 'system' | 'light' | 'dark'
+/** The design: `auto` = Graphite on computers, Classic on phones. */
+export type LookPreference = 'auto' | 'graphite' | 'classic'

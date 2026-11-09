@@ -183,6 +183,14 @@ Motion (ported from antwnakys/dash_public on Nov 9): shared springs in `src/lib/
 `lib/intro.ts`: the launch logo plays once per session and `Reveal` waits for it, so the page rises in as the logo lifts
 away. Sheets rise on phones and grow from the centre on wider screens; checkbox fill springs and the tick draws; tasks
 slide in/out; toasts bounce in and can be swiped away.
+**Two designs** (Nov 9), picked per device in Settings → Appearance → Design (`dash.look.v1`: auto/graphite/classic,
+not synced; `useTheme` → `theme.look`; applied as `<html data-look="graphite">`, also before first paint in index.html).
+Automatic = Graphite on computers (`(hover: hover) and (pointer: fine)`: the Mac app, desktop browsers), Classic on
+phones; the user wanted the new look on the Mac only for now. Graphite = token overrides in `index.css`
+(`:root[data-look='graphite']` + dark twins): concrete/graphite/near-black neutrals, white, one restrained blue for
+information, ink-on-paper primary buttons (`--accent-fill` is ink), hairline borders instead of shadows, squarer
+shapes (`--radius-card/control/button/chrome/bar`), uppercase section labels, no ambient light (`.ambient`), sidebar as
+a flat column against the window edge (`.sidebar`). Components use the shape variables, so both designs share code.
 Dates and times use the device locale through `Intl` (the user is in Greece: 24-hour, Monday-first weeks).
 
 ## History
@@ -204,6 +212,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   exams leave the upcoming list. Web only again (live update).
 - **Nov 9, 2026 (night)**: safety pass: personal details out of the public code (campus address + home are settings now),
   backups and restore, daily copies on each device, sample data removed, the Mac app updates itself on focus.
+- **Nov 9, 2026 (night)**: Graphite design (Mac/computers only by default; Classic stays on the iPhone).
 
 ## Next up
 

@@ -18,6 +18,12 @@
         var t = JSON.parse(localStorage.getItem('dash.theme.v1'))
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
       } catch (e) {}
+      // The design (Settings → Appearance), per device: Graphite on computers unless chosen otherwise.
+      try {
+        var l = JSON.parse(localStorage.getItem('dash.look.v1'))
+        if (l === 'graphite' || (l !== 'classic' && matchMedia('(hover: hover) and (pointer: fine)').matches))
+          document.documentElement.dataset.look = 'graphite'
+      } catch (e) {}
     </script>
     <title>dash</title>
   </head>

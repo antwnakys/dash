@@ -15,7 +15,7 @@ import { looksOnline } from '@/lib/meeting'
 import { startOfDay } from '@/lib/date'
 import { startLiveUpdates } from '@/lib/liveUpdate'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
@@ -32,6 +32,8 @@ interface DashboardValue {
   events: Collection<CalendarEvent>
   /** Study sessions planned by dash, and ticks on study events from the calendar. */
   study: Collection<StudySession>
+  /** Scores and pass/fail for exams that are over: the exam history. */
+  examResults: Collection<ExamResult>
   tasks: TasksApi
   calendar: CalendarSync
   /** Syncs this device's data with every other device signed in to the same Google account. */
@@ -145,6 +147,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const assignments = useCollection<Assignment>('dash.assignments.v1')
   const events = useCollection<CalendarEvent>('dash.events.v1')
   const study = useCollection<StudySession>('dash.study.v1')
+  const examResults = useCollection<ExamResult>('dash.examResults.v1')
   const tasks = useTasks()
   const location = useHereLocation(profile.autoLocation !== false)
   const weather = useWeather(location.here ?? profile.place)
@@ -196,6 +199,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     assignments,
     events,
     study,
+    examResults,
     tasks,
     calendar,
     cloud,

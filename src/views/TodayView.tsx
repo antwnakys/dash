@@ -2,6 +2,7 @@ import { Agenda } from '@/components/calendar/Agenda'
 import { MiniCalendar } from '@/components/calendar/MiniCalendar'
 import { AppExpiryCard } from '@/components/commute/AppExpiryCard'
 import { LeaveCard, OnlineCard } from '@/components/commute/LeaveCard'
+import { ExamResultPrompt } from '@/components/exams/ExamResultPrompt'
 import { NextExamCard } from '@/components/exams/NextExamCard'
 import { MetroCardCard } from '@/components/commute/MetroCardCard'
 import { RemindersPrompt } from '@/components/commute/RemindersPrompt'
@@ -75,6 +76,7 @@ export function TodayView() {
             <MetroCardCard />
             <OnlineCard />
             <LeaveCard />
+            <ExamResultPrompt />
             <NextExamCard />
           </RevealItem>
           <RevealItem className="order-1">

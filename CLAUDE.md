@@ -74,6 +74,13 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   Exam links: any non-meeting web link in an event's notes/location (`findOtherLink` in meeting.ts → `CalendarEvent.url`) or
   the ExamForm "Link" field shows as a blue `LinkButton` ("Practice ↗" for practice/test sites) on the exam card, the Today
   exam card and the exam in Up next. ΣΗΜΑΤΑ's practice site was added to the Google exam event's notes ("Practice: …") on Nov 3.
+  Exam results (from unidash, Nov 9): synced collection `dash.examResults.v1` (`ExamResult`: subject + date copied in so the
+  history survives the calendar event going away; optional score/outOf/passed). An exam is over once its day has passed
+  (all-day) or 2 h after the start (`isOver`); `upcomingExams` hides exams that are over or have a result,
+  `examsAwaitingResult` = over in the last 30 days with no result. Exams tab: "How did it go?" (Add result / Skip) →
+  upcoming (empty state only when both are empty) → History (passed · failed). Today shows `ExamResultPrompt` for 3 days.
+  `editor/ExamResultForm.tsx` guesses Passed at ≥ half marks until picked by hand; for an Exam-type deadline it also writes the
+  grade to the deadline. Google Calendar and iCal links are read 31 days back so recent exams can still be graded.
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).
@@ -175,6 +182,8 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 
 - **Nov 9, 2026**: animations and the first-screen entrance fix copied over from unidash (antwnakys/dash_public); web only,
   so the iPhone app gets it by live update and the Mac app by reopening (no TestFlight build or new .dmg needed).
+- **Nov 9, 2026 (later)**: exam results copied from unidash: score + passed/failed after an exam, a history, and finished
+  exams leave the upcoming list. Web only again (live update).
 
 ## Next up
 

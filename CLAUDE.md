@@ -127,6 +127,13 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   Teams) from 3 h before; Join buttons on Up next, timetable and the course card. Courses can also store a `meeting` link.
 - `src/lib/schedule.ts`: course meeting helpers (format, parse old text, next class, infer from calendar events)
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
+- **Calendar tab** (`views/CalendarView.tsx`): Day / Week / Month (choice kept per device in `dash.calendarMode.v1`,
+  default Week); ← → move by a day/week; Today button. Week = `components/calendar/WeekGrid.tsx` (7 columns on md+,
+  stacked days on phones); Day = `DayTimeline.tsx` (due/all-day items on top, hour timeline with overlap lanes and a
+  red now-line); Month = the old mini calendar + Schedule list. Both use `dayEntries` (`lib/calendarDay.ts`: classes
+  from `classesOn` + other agenda items). **Moving**: drag an own deadline, event, exam or task to another day in Week
+  (HTML5 drag, computers) → `hooks/useMoveItem.ts` keeps the time of day, toast with Undo; Google Calendar events
+  can't move (toast says so). `editTarget`/`isMovable` in `lib/agenda.ts`.
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
 - `src/hooks/useCalendarSync.ts`: read-only calendar copy, refreshed every 15 min and on focus
 - `src/lib/liveUpdate.ts`: the iPhone app updates itself from the website (`@capgo/capacitor-updater` in manual mode, no Capgo cloud).
@@ -237,6 +244,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 9, 2026 (night)**: Graphite design (Mac/computers only by default; Classic stays on the iPhone).
 - **Nov 9, 2026 (night)**: tasks overhaul: quick add with dates, priority, steps, notes, repeats, views, search, Undo.
 - **Nov 9, 2026 (night)**: ⌘K command palette + shortcuts; Today as a command centre (Focus today, This week, sections).
+- **Nov 9, 2026 (night)**: calendar Day / Week / Month, drag to move with Undo.
 
 ## Next up
 

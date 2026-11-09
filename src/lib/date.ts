@@ -61,6 +61,7 @@ export const fmt = {
   longDate: new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long' }),
   shortDate: new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' }),
   monthYear: new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }),
+  dayMonth: new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }),
 }
 
 export function greeting(d: Date): string {

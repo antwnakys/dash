@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { ConfirmButton } from '@/components/ui/ConfirmButton'
 import { useDashboard } from '@/context/DashboardContext'
 import { isMacApp } from '@/lib/macApp'
 import { backupName, backupText, BackupFormatError, describe, itemCount, parseBackup, readSnapshots, restore, type Snapshot } from '@/sync/backup'
@@ -72,10 +73,6 @@ export function DataSection({ onDone }: { onDone: () => void }) {
       notify(`Nothing to restore: everything in ${from} is already here.`)
       return
     }
-    const ok = confirm(
-      `${from} has ${describe(doc)}.\n\n${missing} ${missing === 1 ? 'item isn’t' : 'items aren’t'} on this device and will be added back${synced ? ' (and synced to your other devices)' : ''}. Nothing here is deleted or changed.`,
-    )
-    if (!ok) return
     const added = restore(doc)
     setSnapshots(readSnapshots())
     notify(`Restored ${added} ${added === 1 ? 'item' : 'items'}`)
@@ -90,9 +87,6 @@ export function DataSection({ onDone }: { onDone: () => void }) {
   }
 
   const deleteAll = () => {
-    const where = synced ? 'on this device and on every device signed in to your Google account' : 'on this device'
-    if (!confirm(`Delete all courses, deadlines, events, tasks and exam results ${where}?\n\nA copy is kept on this device, so you can bring it back from Settings → Data.`))
-      return
     clearAll()
     setSnapshots(readSnapshots())
     notify('All data deleted. A copy is kept under Settings → Data.')
@@ -165,9 +159,14 @@ export function DataSection({ onDone }: { onDone: () => void }) {
         </div>
       )}
 
-      <Button size="sm" variant="danger" className="self-start" onClick={deleteAll}>
-        Delete all data
-      </Button>
+      <div className="flex flex-col gap-1">
+        <ConfirmButton size="sm" className="self-start" onConfirm={deleteAll} confirmLabel="Press again: delete everything">
+          Delete all data
+        </ConfirmButton>
+        <p className="px-1 text-caption text-faint">
+          {synced ? 'Deletes on this device and every device signed in to your Google account. ' : 'Deletes on this device. '}A copy is kept here, so you can restore it above.
+        </p>
+      </div>
     </FormGroup>
   )
 }

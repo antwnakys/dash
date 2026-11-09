@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
+import { ConfirmButton } from '@/components/ui/ConfirmButton'
 import { useDashboard } from '@/context/DashboardContext'
 import { formatDate, formatTime, hhmm, ymd } from '@/lib/schedule'
 import { Field, PickerPill, TextInput } from './fields'
@@ -40,9 +41,9 @@ export function ExamForm({ id, onDone }: { id?: string; onDone: () => void }) {
   }
 
   const remove = () => {
-    if (!existing || !confirm(`Delete the ${existing.title} exam?`)) return
+    if (!existing) return
     events.remove(existing.id)
-    notify('Exam deleted')
+    notify('Exam deleted', 'default', { label: 'Undo', run: () => events.set((l) => (l.some((e) => e.id === existing.id) ? l : [...l, existing])) })
     onDone()
   }
 
@@ -69,9 +70,7 @@ export function ExamForm({ id, onDone }: { id?: string; onDone: () => void }) {
       </Field>
       <div className="flex items-center gap-2">
         {existing && (
-          <Button variant="danger" onClick={remove}>
-            Delete
-          </Button>
+          <ConfirmButton onConfirm={remove}>Delete</ConfirmButton>
         )}
         <Button type="submit" variant="primary" className={existing ? 'ml-auto min-w-28' : 'w-full'}>
           {existing ? 'Save exam' : 'Add exam'}

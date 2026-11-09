@@ -9,12 +9,14 @@ import { RemindersPrompt } from '@/components/commute/RemindersPrompt'
 import { CourseList } from '@/components/courses/CourseList'
 import { WeatherChip } from '@/components/header/WeatherChip'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { TaskList } from '@/components/tasks/TaskList'
+import { TodayFocus } from '@/components/today/TodayFocus'
+import { WeekCard } from '@/components/today/WeekCard'
 import { Reveal, RevealItem } from '@/components/ui/Reveal'
 import { RollingTime } from '@/components/ui/RollingTime'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { countdown, fmt, greeting, isSameDay } from '@/lib/date'
+import type { TodaySection } from '@/types'
 
 /** One calm sentence about the day, built from what's actually scheduled. */
 function useSummary(now: Date) {
@@ -50,6 +52,8 @@ export function TodayView() {
   const { profile } = useDashboard()
   const now = useNow(1000)
   const summary = useSummary(now)
+  // Settings → Today page hides sections; everything shows by default.
+  const show = (s: TodaySection) => !profile.todayHidden?.includes(s)
 
   return (
     <Reveal id="today">
@@ -79,20 +83,33 @@ export function TodayView() {
             <ExamResultPrompt />
             <NextExamCard />
           </RevealItem>
-          <RevealItem className="order-1">
-            <Agenda limit={6} />
-          </RevealItem>
-          <RevealItem className="order-2">
-            <TaskList />
-          </RevealItem>
+          {show('focus') && (
+            <RevealItem className="order-1">
+              <TodayFocus now={now} />
+            </RevealItem>
+          )}
+          {show('upnext') && (
+            <RevealItem className="order-2">
+              <Agenda limit={6} />
+            </RevealItem>
+          )}
         </div>
         <div className="contents xl:flex xl:flex-col xl:gap-8">
-          <RevealItem className="order-4 xl:order-none">
-            <MiniCalendar />
-          </RevealItem>
-          <RevealItem className="order-3 xl:order-none">
-            <CourseList />
-          </RevealItem>
+          {show('week') && (
+            <RevealItem className="order-3 xl:order-none">
+              <WeekCard now={now} />
+            </RevealItem>
+          )}
+          {show('calendar') && (
+            <RevealItem className="order-5 xl:order-none">
+              <MiniCalendar />
+            </RevealItem>
+          )}
+          {show('courses') && (
+            <RevealItem className="order-4 xl:order-none">
+              <CourseList />
+            </RevealItem>
+          )}
         </div>
       </div>
     </Reveal>

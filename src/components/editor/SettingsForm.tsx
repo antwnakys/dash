@@ -10,7 +10,7 @@ import { DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
-import type { LookPreference, ThemePreference } from '@/types'
+import type { LookPreference, ThemePreference, TodaySection } from '@/types'
 import { DataSection } from './DataSection'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
@@ -20,6 +20,14 @@ const looks: Array<{ value: LookPreference; label: string }> = [
   { value: 'auto', label: 'Automatic' },
   { value: 'graphite', label: 'Graphite' },
   { value: 'classic', label: 'Classic' },
+]
+
+const todaySections: Array<[TodaySection, string]> = [
+  ['focus', 'Focus today'],
+  ['upnext', 'Up next'],
+  ['week', 'This week'],
+  ['calendar', 'Calendar'],
+  ['courses', 'Courses'],
 ]
 
 const themes: Array<{ value: ThemePreference; label: string }> = [
@@ -144,6 +152,21 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
         <div className="flex flex-col gap-1.5">
           <span className="px-1 text-subhead font-medium text-muted">Design</span>
           <Segmented label="Design" options={looks} value={theme.look.preference} onChange={theme.look.setPreference} block />
+        </div>
+      </FormGroup>
+
+      <FormGroup title="Today page" footer="The cards above them (leave time, exams, reminders) show when they're relevant.">
+        <div className="flex flex-col gap-1">
+          {todaySections.map(([id, label]) => (
+            <Toggle
+              key={id}
+              label={label}
+              checked={!profile.todayHidden?.includes(id)}
+              onChange={(on) =>
+                setProfile({ todayHidden: on ? (profile.todayHidden ?? []).filter((s) => s !== id) : [...(profile.todayHidden ?? []), id] })
+              }
+            />
+          ))}
         </div>
       </FormGroup>
 

@@ -67,6 +67,9 @@ interface DashboardValue {
   notify: (message: string, tone?: Toast['tone'], action?: Toast['action']) => void
   dismissToast: () => void
   view: ViewId
+  /** The ⌘K command palette. */
+  palette: boolean
+  setPalette: (open: boolean) => void
   setView: (v: ViewId) => void
 }
 
@@ -165,6 +168,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [editor, setEditor] = useState<EditorTarget | null>(null)
   const theme = useTheme()
   const [view, setView] = useState<ViewId>('today')
+  const [palette, setPalette] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
   const notify = useCallback(
@@ -230,6 +234,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     notify,
     dismissToast,
     view,
+    palette,
+    setPalette,
     setView,
   }
 

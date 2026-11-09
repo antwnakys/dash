@@ -218,4 +218,4 @@ export type TodaySection = 'focus' | 'upnext' | 'week' | 'calendar' | 'courses'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 /** The design: `auto` = Graphite on computers, Classic on phones. */
-export type LookPreference = 'auto' | 'graphite' | 'classic'
+export type LookPreference = 'auto' | 'graphite' | 'classic' | 'paper' | 'mono' | 'soft' | 'swiss'

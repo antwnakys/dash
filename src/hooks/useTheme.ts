@@ -19,9 +19,9 @@ const isComputer = () => window.matchMedia('(hover: hover) and (pointer: fine)')
 export function useTheme() {
   const [storedLook, setStoredLook] = useLocalStorage<LookPreference>('dash.look.v1')
   const lookPreference = storedLook ?? 'auto'
-  const look: 'graphite' | 'classic' = lookPreference === 'auto' ? (isComputer() ? 'graphite' : 'classic') : lookPreference
+  const look = lookPreference === 'auto' ? (isComputer() ? 'graphite' : 'classic') : lookPreference
   useEffect(() => {
-    if (look === 'graphite') document.documentElement.dataset.look = 'graphite'
+    if (look !== 'classic') document.documentElement.dataset.look = look
     else delete document.documentElement.dataset.look
   }, [look])
 
@@ -53,6 +53,6 @@ export function useTheme() {
     preference,
     resolved,
     setPreference: (p: ThemePreference) => setStored(p),
-    look: { preference: lookPreference, resolved: look, setPreference: (p: LookPreference) => setStoredLook(p) },
+    look: { preference: lookPreference, resolved: look as 'graphite' | 'classic', setPreference: (p: LookPreference) => setStoredLook(p) },
   }
 }

@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Button } from '@/components/ui/Button'
+import { hoursLabel, weekMinutes } from '@/lib/focusStats'
 import { Card, Section } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
 import { useExams } from '@/hooks/useExams'
@@ -13,7 +15,8 @@ const DUE_KINDS = new Set<AgendaItem['kind']>(['assignment', 'exam', 'quiz', 'ta
  * Monday–Sunday strip showing which days are heavy (deadlines, exams and dated tasks per day).
  */
 export function WeekCard({ now }: { now: Date }) {
-  const { agenda, tasks, setView } = useDashboard()
+  const { agenda, tasks, setView, focusSessions, setFocusOpen, openEditor } = useDashboard()
+  const focusWeek = weekMinutes(focusSessions.items, now).total
   const exams = useExams(now)
   const days = weekOf(now)
   const end = addDays(days[0], 7)
@@ -33,9 +36,16 @@ export function WeekCard({ now }: { now: Date }) {
   const next = exams[0]
 
   return (
-    <Section title="This week">
+    <Section
+      title="This week"
+      action={
+        <Button size="sm" variant="plain" onClick={() => openEditor({ type: 'review' })}>
+          Review
+        </Button>
+      }
+    >
       <Card className="px-4 py-4">
-        <dl className="grid grid-cols-3 gap-3">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-caption text-muted">Done</dt>
             <dd className="text-title tabular-nums text-ink">{doneThisWeek}</dd>
@@ -44,6 +54,10 @@ export function WeekCard({ now }: { now: Date }) {
             <dt className="text-caption text-muted">Due by Sunday</dt>
             <dd className={cn('text-title tabular-nums', dueLeft > 5 ? 'text-danger' : 'text-ink')}>{dueLeft}</dd>
           </div>
+          <button onClick={() => setFocusOpen(true)} className="min-w-0 text-left">
+            <dt className="text-caption text-muted">Focus</dt>
+            <dd className="text-title tabular-nums text-ink">{hoursLabel(focusWeek)}</dd>
+          </button>
           <button onClick={() => setView('exams')} className="min-w-0 text-left">
             <dt className="text-caption text-muted">Next exam</dt>
             <dd className="truncate text-headline text-ink">{next ? next.subject : '—'}</dd>

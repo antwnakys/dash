@@ -11,6 +11,7 @@ import { NewChooser } from './NewChooser'
 import { SettingsForm } from './SettingsForm'
 import { Sheet } from './Sheet'
 import { TaskForm } from './TaskForm'
+import { WeeklyReview } from '@/components/today/WeeklyReview'
 
 const titles = {
   course: ['New course', 'Edit course'],
@@ -52,6 +53,8 @@ export function EditorSheet() {
           ? target && idOf(target) ? 'Edit task' : 'New task'
           : type === 'examResult'
             ? 'Exam result'
+            : type === 'review'
+              ? 'Weekly review'
             : type
               ? titles[type][target && idOf(target) ? 1 : 0]
               : ''
@@ -77,6 +80,7 @@ export function EditorSheet() {
           {type === 'event' && <EventForm key={newKind} id={idOf(target)} onDone={closeEditor} />}
           {type === 'exam' && <ExamForm id={idOf(target)} onDone={closeEditor} />}
           {target.type === 'examResult' && <ExamResultForm target={target} onDone={closeEditor} />}
+          {type === 'review' && <WeeklyReview onDone={closeEditor} />}
           {type === 'settings' && (
             <SettingsForm onDone={closeEditor} section={target.type === 'settings' ? target.section : undefined} />
           )}

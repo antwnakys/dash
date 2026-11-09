@@ -10,6 +10,8 @@ import {
   Plus,
   Search,
   Settings,
+  Timer,
+  NotebookPen,
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -45,6 +47,7 @@ const SHORTCUTS: Array<[string, string]> = [
   ['⌘K', 'Command palette'],
   ['N', 'New…'],
   ['T', 'Add a task'],
+  ['F', 'Focus timer'],
   ['1–5', 'Today, Courses, Exams, Tasks, Calendar'],
   ['/', 'Search'],
   ['Esc', 'Close'],
@@ -55,7 +58,7 @@ const SHORTCUTS: Array<[string, string]> = [
  * or add a task straight from what you typed (read with quick add, shown before Enter).
  */
 export function CommandPalette() {
-  const { palette, setPalette, tasks, courses, agenda, setView, openEditor, notify } = useDashboard()
+  const { palette, setPalette, tasks, courses, agenda, setView, openEditor, notify, setFocusOpen } = useDashboard()
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const input = useRef<HTMLInputElement>(null)
@@ -113,6 +116,10 @@ export function CommandPalette() {
     views.forEach((v, i) => {
       if (matches(q, v.label, 'go open show')) out.push({ id: `go-${v.id}`, group: 'Go to', label: v.label, icon: v.icon, keys: String(i + 1), run: () => go(v.id) })
     })
+    if (matches(q, 'focus timer pomodoro study start'))
+      out.push({ id: 'focus', group: 'Go to', label: 'Focus timer', icon: Timer, keys: 'F', run: () => (close(), setFocusOpen(true)) })
+    if (matches(q, 'weekly review week plan'))
+      out.push({ id: 'review', group: 'Go to', label: 'Weekly review', icon: NotebookPen, run: () => open({ type: 'review' }) })
     if (matches(q, 'settings preferences backup appearance design theme'))
       out.push({ id: 'settings', group: 'Go to', label: 'Settings', icon: Settings, run: () => open({ type: 'settings' }) })
     if (q) {

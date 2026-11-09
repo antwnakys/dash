@@ -134,6 +134,21 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   from `classesOn` + other agenda items). **Moving**: drag an own deadline, event, exam or task to another day in Week
   (HTML5 drag, computers) → `hooks/useMoveItem.ts` keeps the time of day, toast with Undo; Google Calendar events
   can't move (toast says so). `editTarget`/`isMovable` in `lib/agenda.ts`.
+- **Courses (Nov 9)**: optional `color` (`lib/courseColor.ts`: graphite, blue, green, amber, red, violet), `notes`, and
+  extra resources as links of kind `other` (name + URL; a missing https:// is added). Card: colour dot, "N overdue" /
+  "N due soon" (≤3 days) tag, notes preview, "N open tasks for this course" (tasks whose title names it, `matchCourse`).
+  Courses → **Workload** (`components/courses/CourseWorkload.tsx`): deadlines, exams and related tasks per course in the
+  next 14 days as bars, heaviest first. Deleting a course offers Undo (course + its deadlines).
+- **Focus mode** (`components/focus/FocusMode.tsx`, `hooks/useFocusTimer.ts`): full-screen timer (25/5, 50/10, 90/15 or
+  custom), optional task and course; F key, sidebar Focus, ⌘K, Today → Focus today → Start timer, This week → Focus.
+  Timer state per device (`dash.focusTimer.v1`, survives reloads); finished focus time (≥5 min, also when stopped early)
+  goes to the synced `dash.focus.v1` collection (`FocusSession`). End of a phase: chime (Web Audio), toast, Mac banner
+  (`invoke('notify')`), iPhone local notification scheduled for the end time when notifications are allowed
+  (`lib/focusNotify.ts`); the break starts by itself, the next round waits. `FocusPill` shows the time while closed;
+  the tab title counts down. Stats (`lib/focusStats.ts`): today, this week, Mon–Sun bars; This week card shows the week.
+- **Weekly review** (`components/today/WeeklyReview.tsx`, editor target `review`): Today → This week → Review, or ⌘K.
+  Tasks done, work handed in, focus time; done list; past-due tasks (Tomorrow / Monday / tick) and unsubmitted
+  deadlines (Handed in); next week's deadlines and exams; "Plan next week" opens the calendar on next week.
 - `src/lib/ics.ts`: iCal parser (recurrence, time zones, DTEND)
 - `src/hooks/useCalendarSync.ts`: read-only calendar copy, refreshed every 15 min and on focus
 - `src/lib/liveUpdate.ts`: the iPhone app updates itself from the website (`@capgo/capacitor-updater` in manual mode, no Capgo cloud).
@@ -193,8 +208,8 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   minute, not while a sheet is open) it reads `version.json`; a newer build → `location.replace(SITE + '?v=<sha>')`
   (the query skips the HTML the Mac cached), once per version per session.
 
-localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`,
-`dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1`, `dash.snapshots.v1` (device only).
+localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`, `dash.focus.v1`,
+`dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1`, `dash.snapshots.v1`, `dash.focusTimer.v1`, `dash.look.v1`, `dash.calendarMode.v1` (device only).
 New fields on synced records must be optional so older app versions and existing data keep working.
 
 Claude cannot read the user's own data: it lives on their devices and in the Drive app-data folder,
@@ -245,6 +260,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 9, 2026 (night)**: tasks overhaul: quick add with dates, priority, steps, notes, repeats, views, search, Undo.
 - **Nov 9, 2026 (night)**: ⌘K command palette + shortcuts; Today as a command centre (Focus today, This week, sections).
 - **Nov 9, 2026 (night)**: calendar Day / Week / Month, drag to move with Undo.
+- **Nov 9, 2026 (night)**: course colours, notes, resources and workload; Focus mode with synced study time; weekly review.
 
 ## Next up
 

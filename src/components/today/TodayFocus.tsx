@@ -1,5 +1,6 @@
 import { AnimatePresence, Reorder } from 'framer-motion'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Timer } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { AddTask } from '@/components/tasks/AddTask'
 import { TaskItem } from '@/components/tasks/TaskItem'
 import { Card, Section } from '@/components/ui/Section'
@@ -14,7 +15,7 @@ const MAX = 7
 
 /** Today page: the short list to get through today, with a quick add that defaults to today. */
 export function TodayFocus({ now }: { now: Date }) {
-  const { tasks, notify, setView } = useDashboard()
+  const { tasks, notify, setView, setFocusOpen, focus } = useDashboard()
   const actions = useTaskActions()
   const all = focusTasks(tasks.tasks, now)
   const shown = all.slice(0, MAX)
@@ -29,7 +30,15 @@ export function TodayFocus({ now }: { now: Date }) {
   }
 
   return (
-    <Section title="Focus today" meta={(doneToday > 0 || all.length > 0) && `${doneToday} done${all.length ? ` · ${all.length} to go` : ''}`}>
+    <Section
+      title="Focus today"
+      action={
+        <Button size="sm" variant="plain" onClick={() => setFocusOpen(true)} title="Focus timer (F)">
+          <Timer aria-hidden className="size-4" strokeWidth={2.2} />
+          {focus.running ? 'Timer running' : 'Start timer'}
+        </Button>
+      }
+      meta={(doneToday > 0 || all.length > 0) && `${doneToday} done${all.length ? ` · ${all.length} to go` : ''}`}>
       <Card>
         <AddTask defaultCategory="college" onAdd={add} />
         <Reorder.Group axis="y" values={shown} onReorder={() => {}} className="separated border-t border-line">

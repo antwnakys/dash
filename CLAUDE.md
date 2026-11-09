@@ -89,6 +89,17 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   upcoming (empty state only when both are empty) → History (passed · failed). Today shows `ExamResultPrompt` for 3 days.
   `editor/ExamResultForm.tsx` guesses Passed at ≥ half marks until picked by hand; for an Exam-type deadline it also writes the
   grade to the deadline. Google Calendar and iCal links are read 31 days back so recent exams can still be graded.
+- Tasks (Nov 9 overhaul). Optional fields on `Task`: `priority` (1 high, 2 medium, 3 low), `notes`, `subtasks` (steps),
+  `repeat` (daily/weekdays/weekly/monthly), `completedAt`. **Quick add** (`lib/quickAdd.ts` `parseQuickAdd`, box in
+  `components/tasks/AddTask.tsx`): reads dates/times/priority/#category/repeats from the typed line (English + Greek day
+  words; day-first dates; "18.05" is a time, dotted dates need a year; "sat"/"sun" must be written out; a weekday whose
+  time has passed means next week). What it understood shows as chips under the box before Enter; × on a chip keeps
+  that phrase in the title (`ignore`). Ticking a repeating task files it done and inserts the next copy
+  (`nextOccurrence` in `hooks/useTasks.ts`, never in the past). Tasks tab (`TaskList full`): views Open / Today (due
+  today, overdue, or high priority) / Upcoming (dated, by date) / Done (by `completedAt`), search over title, notes and
+  steps, category filter, sort My order / Due / Priority (`lib/taskViews.ts`); drag to reorder only in Open + My order.
+  Deleting shows a toast with **Undo** (`notify(msg, tone, action)`; `tasks.restore`). `hooks/useTaskActions.ts`.
+  The leftover category label "Gaming & projects" is now "Projects".
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).
@@ -213,6 +224,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 9, 2026 (night)**: safety pass: personal details out of the public code (campus address + home are settings now),
   backups and restore, daily copies on each device, sample data removed, the Mac app updates itself on focus.
 - **Nov 9, 2026 (night)**: Graphite design (Mac/computers only by default; Classic stays on the iPhone).
+- **Nov 9, 2026 (night)**: tasks overhaul: quick add with dates, priority, steps, notes, repeats, views, search, Undo.
 
 ## Next up
 

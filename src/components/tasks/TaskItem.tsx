@@ -1,5 +1,5 @@
 import { motion, Reorder, useDragControls } from 'framer-motion'
-import { CalendarClock, GripVertical, X } from 'lucide-react'
+import { CalendarClock, Flag, GripVertical, ListChecks, Repeat, StickyNote, X } from 'lucide-react'
 import { useDashboard } from '@/context/DashboardContext'
 import { cn } from '@/lib/cn'
 import { ease, spring } from '@/lib/motion'
@@ -12,6 +12,8 @@ interface TaskItemProps {
   task: Task
   showCategory: boolean
   due?: { state: DueState; label: string }
+  /** Show the drag handle (only where the list is in your own order). */
+  reorderable?: boolean
   onToggle: () => void
   onRemove: () => void
 }
@@ -23,7 +25,12 @@ const dueTone: Record<DueState, string> = {
   later: 'text-muted',
 }
 
-export function TaskItem({ task, showCategory, due, onToggle, onRemove }: TaskItemProps) {
+const priorityTone = { 1: 'text-danger', 2: 'text-accent', 3: 'text-faint' } as const
+const priorityName = { 1: 'High', 2: 'Medium', 3: 'Low' } as const
+
+export function TaskItem({ task, showCategory, due, reorderable = true, onToggle, onRemove }: TaskItemProps) {
+  const steps = task.subtasks?.length ? `${task.subtasks.filter((s) => s.done).length}/${task.subtasks.length}` : undefined
+  const meta = (showCategory || (due && !task.done) || steps || task.repeat || task.notes) && !task.done
   const controls = useDragControls()
   const { openEditor } = useDashboard()
 
@@ -44,6 +51,9 @@ export function TaskItem({ task, showCategory, due, onToggle, onRemove }: TaskIt
       <div className="flex min-h-[3.25rem] items-center gap-3 py-2 pr-2 pl-1">
         <button
           type="button"
+          tabIndex={reorderable ? undefined : -1}
+          aria-hidden={!reorderable || undefined}
+          style={reorderable ? undefined : { visibility: 'hidden' }}
           aria-label={`Reorder “${task.title}”`}
           onPointerDown={(e) => controls.start(e)}
           className="flex h-9 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-faint opacity-50 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing lg:opacity-0"
@@ -59,7 +69,10 @@ export function TaskItem({ task, showCategory, due, onToggle, onRemove }: TaskIt
           aria-label={`Edit “${task.title}”`}
           className="ml-2 flex min-w-0 flex-1 flex-col text-left"
         >
-          <span className="relative w-fit max-w-full">
+          <span className="relative flex w-fit max-w-full items-center gap-1.5">
+            {task.priority && !task.done && (
+              <Flag aria-label={`${priorityName[task.priority]} priority`} className={cn('size-3.5 shrink-0 fill-current', priorityTone[task.priority])} strokeWidth={2.2} />
+            )}
             <span className={`block truncate text-body transition-colors duration-300 ${task.done ? 'text-faint' : 'text-ink'}`}>
               {task.title}
             </span>
@@ -71,15 +84,22 @@ export function TaskItem({ task, showCategory, due, onToggle, onRemove }: TaskIt
               transition={{ duration: 0.32, delay: task.done ? 0.12 : 0, ease: ease.out }}
             />
           </span>
-          {(showCategory || (due && !task.done)) && (
-            <span className="flex min-w-0 items-center gap-1.5 text-subhead text-muted">
-              {due && !task.done && (
+          {meta && (
+            <span className="flex min-w-0 items-center gap-2.5 text-subhead text-muted">
+              {due && (
                 <span className={cn('inline-flex shrink-0 items-center gap-1 tabular-nums', dueTone[due.state])}>
                   <CalendarClock aria-hidden className="size-3.5" strokeWidth={2.2} />
                   {due.label}
                 </span>
               )}
-              {due && !task.done && showCategory && <span aria-hidden>·</span>}
+              {task.repeat && <Repeat aria-label="Repeats" className="size-3.5 shrink-0" strokeWidth={2.2} />}
+              {steps && (
+                <span className="inline-flex shrink-0 items-center gap-1 tabular-nums" aria-label={`${steps} steps done`}>
+                  <ListChecks aria-hidden className="size-3.5" strokeWidth={2.2} />
+                  {steps}
+                </span>
+              )}
+              {task.notes && <StickyNote aria-label="Has notes" className="size-3.5 shrink-0" strokeWidth={2.2} />}
               {showCategory && <span className="truncate">{categoryLabel[task.category]}</span>}
             </span>
           )}

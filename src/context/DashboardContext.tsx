@@ -22,6 +22,8 @@ export interface Toast {
   id: number
   message: string
   tone?: 'default' | 'error'
+  /** One button on the toast, e.g. Undo. */
+  action?: { label: string; run: () => void }
 }
 
 interface DashboardValue {
@@ -62,7 +64,7 @@ interface DashboardValue {
   }
   toast: Toast | null
   /** Brief confirmation or error shown above the navigation. */
-  notify: (message: string, tone?: Toast['tone']) => void
+  notify: (message: string, tone?: Toast['tone'], action?: Toast['action']) => void
   dismissToast: () => void
   view: ViewId
   setView: (v: ViewId) => void
@@ -165,7 +167,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<ViewId>('today')
   const [toast, setToast] = useState<Toast | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
-  const notify = useCallback((message: string, tone: Toast['tone'] = 'default') => setToast({ id: Date.now(), message, tone }), [])
+  const notify = useCallback(
+    (message: string, tone: Toast['tone'] = 'default', action?: Toast['action']) => setToast({ id: Date.now(), message, tone, action }),
+    [],
+  )
 
   // iPhone app: follow the website's version; tell the user once a newer one is downloaded.
   useEffect(() => startLiveUpdates(() => notify('Update downloaded. It applies when you next open dash.')), [notify])

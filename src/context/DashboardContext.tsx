@@ -15,7 +15,7 @@ import { startOfDay } from '@/lib/date'
 import { startLiveUpdates, startMacUpdates } from '@/lib/liveUpdate'
 import { dailySnapshot, takeSnapshot } from '@/sync/backup'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, LookPreference, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
@@ -53,7 +53,13 @@ interface DashboardValue {
   openEditor: (target: EditorTarget) => void
   closeEditor: () => void
   clearAll: () => void
-  theme: { preference: ThemePreference; resolved: 'light' | 'dark'; setPreference: (p: ThemePreference) => void }
+  theme: {
+    preference: ThemePreference
+    resolved: 'light' | 'dark'
+    setPreference: (p: ThemePreference) => void
+    /** The design on this device. */
+    look: { preference: LookPreference; resolved: 'graphite' | 'classic'; setPreference: (p: LookPreference) => void }
+  }
   toast: Toast | null
   /** Brief confirmation or error shown above the navigation. */
   notify: (message: string, tone?: Toast['tone']) => void

@@ -20,7 +20,7 @@ export function TabBar() {
           aria-label="Sections"
           animate={{ height: compact ? 52 : 60 }}
           transition={spring.smooth}
-          className="material flex flex-1 items-center rounded-full p-1"
+          className="material flex flex-1 items-center rounded-[var(--radius-bar)] p-1"
         >
           {views.map(({ id, label, icon: Icon }) => {
             const active = id === view
@@ -74,7 +74,7 @@ export function TabBar() {
           }}
           aria-label="New"
           animate={{ width: compact ? 52 : 60, height: compact ? 52 : 60 }}
-          className="material flex shrink-0 items-center justify-center rounded-full text-accent"
+          className="material flex shrink-0 items-center justify-center rounded-[var(--radius-bar)] text-accent"
         >
           <Plus aria-hidden className="size-6" strokeWidth={2.4} />
         </motion.button>

@@ -10,11 +10,17 @@ import { DEFAULT_COMMUTE, DEFAULT_TRAINS, parseTrainTimes } from '@/lib/commute'
 import { BUILD, BUILT_AT } from '@/lib/liveUpdate'
 import { isMacApp } from '@/lib/macApp'
 import { isNative } from '@/lib/native'
-import type { ThemePreference } from '@/types'
+import type { LookPreference, ThemePreference } from '@/types'
 import { DataSection } from './DataSection'
 import { Field, FormGroup, Select, TextArea, TextInput, Toggle } from './fields'
 
 const isCalendarUrl = (u: string) => /^(https?|webcal):\/\/\S+/i.test(u.trim())
+
+const looks: Array<{ value: LookPreference; label: string }> = [
+  { value: 'auto', label: 'Automatic' },
+  { value: 'graphite', label: 'Graphite' },
+  { value: 'classic', label: 'Classic' },
+]
 
 const themes: Array<{ value: ThemePreference; label: string }> = [
   { value: 'system', label: 'Automatic' },
@@ -130,8 +136,15 @@ export function SettingsForm({ onDone, section }: { onDone: () => void; section?
 
   return (
     <div className="flex flex-col gap-8">
-      <FormGroup title="Appearance">
-        <Segmented label="Theme" options={themes} value={theme.preference} onChange={theme.setPreference} block />
+      <FormGroup title="Appearance" footer="Design is set per device. Automatic uses Graphite on computers and Classic on phones.">
+        <div className="flex flex-col gap-1.5">
+          <span className="px-1 text-subhead font-medium text-muted">Theme</span>
+          <Segmented label="Theme" options={themes} value={theme.preference} onChange={theme.setPreference} block />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="px-1 text-subhead font-medium text-muted">Design</span>
+          <Segmented label="Design" options={looks} value={theme.look.preference} onChange={theme.look.setPreference} block />
+        </div>
       </FormGroup>
 
       <form onSubmit={save}>

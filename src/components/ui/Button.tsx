@@ -17,7 +17,7 @@ const sizes: Record<Size, string> = {
   md: 'h-10 px-4 text-body',
 }
 
-/** Capsule button. Press feedback starts on pointer-down. */
+/** Capsule button (squarer in the Graphite design). Press feedback starts on pointer-down. */
 export function Button({
   variant = 'secondary',
   size = 'md',
@@ -29,7 +29,7 @@ export function Button({
       type="button"
       whileTap={press}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-[background-color,filter] disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-button)] whitespace-nowrap transition-[background-color,filter] disabled:pointer-events-none disabled:opacity-40',
         variants[variant],
         sizes[size],
         className,

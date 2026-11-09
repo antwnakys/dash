@@ -18,12 +18,13 @@
         var t = JSON.parse(localStorage.getItem('dash.theme.v1'))
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
       } catch (e) {}
-      // The design (Settings → Appearance), per device: Graphite on computers unless chosen otherwise.
+      // The design (Settings → Appearance), per device: Obsidian unless Graphite or Classic was chosen.
       try {
         var l = JSON.parse(localStorage.getItem('dash.look.v1'))
-        if (l === 'graphite' || (l !== 'classic' && matchMedia('(hover: hover) and (pointer: fine)').matches))
-          document.documentElement.dataset.look = 'graphite'
-      } catch (e) {}
+        if (l !== 'classic') document.documentElement.dataset.look = l === 'graphite' ? 'graphite' : 'obsidian'
+      } catch (e) {
+        document.documentElement.dataset.look = 'obsidian'
+      }
     </script>
     <title>dash</title>
   </head>

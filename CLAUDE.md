@@ -106,6 +106,13 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   five sections and Settings; and "Add task" from the typed line via quick add (first for a typed task; last when one
   or two words match something). Arrow keys + Enter. Shortcuts (AppShell, not while typing or with a sheet open): N New,
   T add a task (Today's or Tasks' quick-add box, `[data-page] [data-quick-add]`), 1–5 sections, `/` palette.
+- **Dashboard** (Obsidian Today, `views/TodayView.tsx` → `Dashboard`): header (date · time, greeting, summary, Quick add
+  → ⌘K, Customise → Settings → Today page), relevant cards, **Daily goals** strip (`components/dashboard/DailyGoals.tsx`:
+  focus tasks + done today as tickable chips, x/y completed), widget row (`components/dashboard/Widgets.tsx`: Study time
+  (focus minutes today/week, play/pause), Task completion (ring), Focus this week (bars, best day in champagne),
+  Deadlines; order and visibility in Settings: `profile.widgetOrder`, `todayHidden`), **Daily timeline**
+  (`components/dashboard/DayStrip.tsx`: 08–20h+ horizontal, classes/events/exams/focus sessions as blocks, deadlines as ◆
+  markers, now-line, scrolls sideways on phones), then Focus today + Up next | Academic progress + calendar. Only real data.
 - **Today page** (`views/TodayView.tsx`): relevant cards on top, then **Focus today** (`components/today/TodayFocus.tsx`,
   `focusTasks` in `lib/taskViews.ts`: overdue, due today, high priority; up to 7; its quick add defaults to today) and Up
   next; on the right **This week** (`components/today/WeekCard.tsx`: done this week, due by Sunday, next exam, a Mon–Sun
@@ -235,6 +242,15 @@ phones; the user wanted the new look on the Mac only for now. Graphite = token o
 information, ink-on-paper primary buttons (`--accent-fill` is ink), hairline borders instead of shadows, squarer
 shapes (`--radius-card/control/button/chrome/bar`), uppercase section labels, no ambient light (`.ambient`), sidebar as
 a flat column against the window edge (`.sidebar`). Components use the shape variables, so both designs share code.
+**Obsidian** (Nov 10, the default on every device; `LookPreference` 'auto' = obsidian): the user's reference = black
+glass (dark) and white/concrete/graphite (light), following the system appearance. Tokens in `index.css`
+(`:root[data-look='obsidian']` + dark twins): #090A0C page, graphite panels with `--panel` sheen + fine edge + top
+highlight (`--shadow-card`), muted blue `--accent`, champagne `--metal` used sparingly (best focus day, study glow),
+silver/white primary buttons in dark (`--accent-fill`), pills, 18px cards; `.metric` = light, tight display numbers.
+Wide screens use **TopBar** (`components/layout/TopBar.tsx`: sections with an underline, Search ⌘K, Focus timer, +,
+Settings, initial) instead of the sidebar; content up to 86rem. Graphite and Classic stay as manual choices; Classic
+also restores the original Today page (`views/ClassicToday.tsx`). Rollback: branch **DASH_ORIGINAL_BACKUP** (= main at
+91fc3f6, before the Obsidian work) must never be changed or deleted.
 Dates and times use the device locale through `Intl` (the user is in Greece: 24-hour, Monday-first weeks).
 
 ## History
@@ -261,6 +277,8 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 9, 2026 (night)**: ⌘K command palette + shortcuts; Today as a command centre (Focus today, This week, sections).
 - **Nov 9, 2026 (night)**: calendar Day / Week / Month, drag to move with Undo.
 - **Nov 9, 2026 (night)**: course colours, notes, resources and workload; Focus mode with synced study time; weekly review.
+- **Nov 10, 2026**: Obsidian redesign from the user's reference image (black glass / concrete light), top bar, dashboard
+  with daily goals, widgets and a daily timeline. Backup branch DASH_ORIGINAL_BACKUP created first.
 
 ## Next up
 

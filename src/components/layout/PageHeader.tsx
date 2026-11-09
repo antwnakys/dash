@@ -47,7 +47,9 @@ export function PageHeader({ title, shortTitle, eyebrow, accessory, aside, summa
           <div className="min-w-0 truncate text-subhead font-medium text-muted">{eyebrow}</div>
           <div className="-mr-1.5 flex shrink-0 items-center gap-0.5">
             {accessory}
-            <SyncBadge />
+            <span className="page-sync contents">
+              <SyncBadge />
+            </span>
             <IconButton icon={Search} label="Search" onClick={() => setPalette(true)} className="lg:hidden" />
             <IconButton icon={Settings} label="Settings" onClick={() => openEditor({ type: 'settings' })} className="lg:hidden" />
           </div>

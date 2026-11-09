@@ -1,22 +1,35 @@
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Agenda } from '@/components/calendar/Agenda'
 import { MiniCalendar } from '@/components/calendar/MiniCalendar'
 import { AppExpiryCard } from '@/components/commute/AppExpiryCard'
 import { LeaveCard, OnlineCard } from '@/components/commute/LeaveCard'
-import { ExamResultPrompt } from '@/components/exams/ExamResultPrompt'
-import { NextExamCard } from '@/components/exams/NextExamCard'
 import { MetroCardCard } from '@/components/commute/MetroCardCard'
 import { RemindersPrompt } from '@/components/commute/RemindersPrompt'
-import { CourseList } from '@/components/courses/CourseList'
+import { DailyGoals } from '@/components/dashboard/DailyGoals'
+import { DayStrip } from '@/components/dashboard/DayStrip'
+import { AcademicWidget, CompletionWidget, DeadlinesWidget, StudyTimeWidget, WeekFocusWidget } from '@/components/dashboard/Widgets'
+import { ExamResultPrompt } from '@/components/exams/ExamResultPrompt'
+import { NextExamCard } from '@/components/exams/NextExamCard'
 import { WeatherChip } from '@/components/header/WeatherChip'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { TodayFocus } from '@/components/today/TodayFocus'
-import { WeekCard } from '@/components/today/WeekCard'
+import { Button } from '@/components/ui/Button'
 import { Reveal, RevealItem } from '@/components/ui/Reveal'
-import { RollingTime } from '@/components/ui/RollingTime'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { countdown, fmt, greeting, isSameDay } from '@/lib/date'
-import type { TodaySection } from '@/types'
+import type { DashWidget, TodaySection } from '@/types'
+import { ClassicToday } from './ClassicToday'
+import { DEFAULT_WIDGETS } from '@/lib/dashboard'
+
+
+
+const widgets: Record<DashWidget, (props: { now: Date }) => React.ReactNode> = {
+  study: StudyTimeWidget,
+  completion: CompletionWidget,
+  weekfocus: WeekFocusWidget,
+  deadlines: DeadlinesWidget,
+}
 
 /** One calm sentence about the day, built from what's actually scheduled. */
 function useSummary(now: Date) {
@@ -24,7 +37,6 @@ function useSummary(now: Date) {
   const leftToday = agenda.filter((i) => isSameDay(i.date, now) && (i.allDay || i.date >= now)).length
   const open = tasks.tasks.filter((t) => !t.done).length
   const deadline = agenda.find((i) => (i.kind === 'assignment' || i.kind === 'exam' || i.kind === 'quiz' || i.kind === 'task') && i.date > now)
-
   const first = leftToday === 0 ? 'Nothing else on today' : `${leftToday} more ${leftToday === 1 ? 'thing' : 'things'} today`
   const second = open === 0 ? 'no open tasks' : `${open} open ${open === 1 ? 'task' : 'tasks'}`
   return (
@@ -40,26 +52,29 @@ function useSummary(now: Date) {
   )
 }
 
-function Clock({ now }: { now: Date }) {
-  return (
-    <time dateTime={now.toISOString()} className="block text-[2.75rem] leading-none font-extralight tracking-[-0.03em] text-muted tabular-nums">
-      <RollingTime text={fmt.time.format(now)} />
-    </time>
-  )
+/** Obsidian's command centre; the Classic design keeps the original Today page. */
+export function TodayView() {
+  const { theme } = useDashboard()
+  return theme.look.resolved === 'classic' ? <ClassicToday /> : <Dashboard />
 }
 
-export function TodayView() {
-  const { profile } = useDashboard()
+function Dashboard() {
+  const { profile, setPalette, openEditor } = useDashboard()
   const now = useNow(1000)
   const summary = useSummary(now)
-  // Settings → Today page hides sections; everything shows by default.
   const show = (s: TodaySection) => !profile.todayHidden?.includes(s)
+  const order = [...(profile.widgetOrder ?? []), ...DEFAULT_WIDGETS].filter((w, i, a) => a.indexOf(w) === i && DEFAULT_WIDGETS.includes(w))
+  const shown = order.filter(show)
 
   return (
     <Reveal id="today">
       <PageHeader
         shortTitle="Today"
-        eyebrow={fmt.longDate.format(now)}
+        eyebrow={
+          <>
+            {fmt.longDate.format(now)} · <span className="tabular-nums">{fmt.time.format(now)}</span>
+          </>
+        }
         accessory={<WeatherChip />}
         title={
           <>
@@ -67,49 +82,74 @@ export function TodayView() {
             {profile.name && `, ${profile.name}`}
           </>
         }
-        aside={<Clock now={now} />}
+        aside={
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setPalette(true)}>
+              <Plus aria-hidden className="size-4" strokeWidth={2.4} />
+              Quick add
+            </Button>
+            <Button size="sm" variant="primary" onClick={() => openEditor({ type: 'settings', section: 'today' })}>
+              <SlidersHorizontal aria-hidden className="size-4" strokeWidth={2.2} />
+              Customise
+            </Button>
+          </div>
+        }
         summary={summary}
       />
 
-      {/* One column in priority order until 1280px, then two. */}
-      <div className="flex flex-col gap-8 xl:grid xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:items-start xl:gap-x-8 xl:gap-y-0">
-        <div className="contents xl:flex xl:flex-col xl:gap-8">
-          <RevealItem className="order-0 flex flex-col gap-3 empty:hidden">
-            <AppExpiryCard />
-            <RemindersPrompt />
-            <MetroCardCard />
-            <OnlineCard />
-            <LeaveCard />
-            <ExamResultPrompt />
-            <NextExamCard />
+      <div className="flex flex-col gap-4">
+        <RevealItem className="grid gap-3 empty:hidden md:grid-cols-2 [&>*:only-child]:md:col-span-2">
+          <AppExpiryCard />
+          <RemindersPrompt />
+          <MetroCardCard />
+          <OnlineCard />
+          <LeaveCard />
+          <ExamResultPrompt />
+          <NextExamCard />
+        </RevealItem>
+        {show('goals') && (
+          <RevealItem>
+            <DailyGoals now={now} />
           </RevealItem>
-          {show('focus') && (
-            <RevealItem className="order-1">
-              <TodayFocus now={now} />
-            </RevealItem>
-          )}
-          {show('upnext') && (
-            <RevealItem className="order-2">
-              <Agenda limit={6} />
-            </RevealItem>
-          )}
-        </div>
-        <div className="contents xl:flex xl:flex-col xl:gap-8">
-          {show('week') && (
-            <RevealItem className="order-3 xl:order-none">
-              <WeekCard now={now} />
-            </RevealItem>
-          )}
-          {show('calendar') && (
-            <RevealItem className="order-5 xl:order-none">
-              <MiniCalendar />
-            </RevealItem>
-          )}
-          {show('courses') && (
-            <RevealItem className="order-4 xl:order-none">
-              <CourseList />
-            </RevealItem>
-          )}
+        )}
+        {shown.length > 0 && (
+          <RevealItem className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {shown.map((w) => {
+              const W = widgets[w]
+              return <W key={w} now={now} />
+            })}
+          </RevealItem>
+        )}
+        {show('timeline') && (
+          <RevealItem>
+            <DayStrip now={now} />
+          </RevealItem>
+        )}
+        <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-8">
+            {show('focus') && (
+              <RevealItem>
+                <TodayFocus now={now} />
+              </RevealItem>
+            )}
+            {show('upnext') && (
+              <RevealItem>
+                <Agenda limit={6} />
+              </RevealItem>
+            )}
+          </div>
+          <div className="flex min-w-0 flex-col gap-8">
+            {show('academic') && (
+              <RevealItem className="empty:hidden">
+                <AcademicWidget now={now} />
+              </RevealItem>
+            )}
+            {show('calendar') && (
+              <RevealItem>
+                <MiniCalendar />
+              </RevealItem>
+            )}
+          </div>
         </div>
       </div>
     </Reveal>

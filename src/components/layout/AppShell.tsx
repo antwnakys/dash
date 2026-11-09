@@ -10,6 +10,8 @@ import { views } from '@/views'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { FocusMode, FocusPill } from '@/components/focus/FocusMode'
 import { AmbientBackground } from './AmbientBackground'
+import { TopBar } from './TopBar'
+import { cn } from '@/lib/cn'
 import { Intro } from './Intro'
 import { PullToRefresh } from './PullToRefresh'
 import { Sidebar } from './Sidebar'
@@ -37,7 +39,9 @@ const pageVariants = {
 }
 
 export function AppShell() {
-  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette, focusOpen, setFocusOpen } = useDashboard()
+  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette, focusOpen, setFocusOpen, theme } = useDashboard()
+  // Obsidian: a top bar on wide screens; Graphite and Classic keep the sidebar.
+  const topbar = theme.look.resolved === 'obsidian'
   const reduce = useReducedMotion()
   const phone = usePhone()
   // Scale around the middle of what's on screen, not the top of the page.
@@ -135,15 +139,15 @@ export function AppShell() {
         <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg/70 backdrop-blur-xl" />
       )}
       <PullToRefresh onRefresh={refresh} />
-      <Sidebar />
+      {topbar ? <TopBar /> : <Sidebar />}
       {/* On phones an open sheet pushes the page back, like iOS. */}
       <motion.main
         animate={phone && editor && !reduce ? { scale: 0.93, borderRadius: 28, y: 8 } : { scale: 1, borderRadius: 0, y: 0 }}
         transition={spring.smooth}
         style={{ transformOrigin: `50% ${originY || window.scrollY + window.innerHeight / 2}px` }}
-        className="overflow-clip lg:pl-[15.5rem]"
+        className={topbar ? 'overflow-clip' : 'overflow-clip lg:pl-[15.5rem]'}
       >
-        <div className="relative mx-auto w-full max-w-[70rem] px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-36 sm:px-6 lg:px-10 lg:pt-11 lg:pb-16">
+        <div className={cn('relative mx-auto w-full px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-36 sm:px-6 lg:px-10 lg:pb-16', topbar ? 'max-w-[86rem] lg:pt-8' : 'max-w-[70rem] lg:pt-11')}>
           {/* The new page slides in while the old one slides away: no blank moment in between.
               (No initial={false} here: it would also switch off every entrance inside the first page.) */}
           <AnimatePresence mode="popLayout" custom={nav.dir}>

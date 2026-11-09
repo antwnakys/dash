@@ -196,6 +196,8 @@ export interface Profile {
   reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean; appExpiry?: boolean }
   /** Sections hidden from the Today page (Settings → Today page). */
   todayHidden?: TodaySection[]
+  /** Order of the dashboard widgets (Settings → Today page). */
+  widgetOrder?: DashWidget[]
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */
@@ -212,10 +214,23 @@ export type EditorTarget =
   | { type: 'task'; id?: string }
   | { type: 'new' }
   | { type: 'review' }
-  | { type: 'settings'; section?: 'calendar' | 'commute' }
+  | { type: 'settings'; section?: 'calendar' | 'commute' | 'today' }
 
-export type TodaySection = 'focus' | 'upnext' | 'week' | 'calendar' | 'courses'
+export type TodaySection =
+  | 'focus'
+  | 'upnext'
+  | 'week'
+  | 'calendar'
+  | 'courses'
+  // Obsidian dashboard
+  | 'goals'
+  | 'timeline'
+  | 'academic'
+  | DashWidget
+
+/** Widgets in the Obsidian dashboard's top row, in the order Settings sets. */
+export type DashWidget = 'study' | 'completion' | 'weekfocus' | 'deadlines'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 /** The design: `auto` = Graphite on computers, Classic on phones. */
-export type LookPreference = 'auto' | 'graphite' | 'classic'
+export type LookPreference = 'auto' | 'obsidian' | 'graphite' | 'classic'

@@ -27,6 +27,51 @@ export interface Task {
   repeat?: TaskRepeat
   /** When it was ticked off (ISO). */
   completedAt?: string
+  /** The project it belongs to (Projects). */
+  projectId?: string
+  /** Free tags, lower case, without # ("reading", "lab"). */
+  tags?: string[]
+}
+
+export interface Milestone {
+  id: string
+  title: string
+  done: boolean
+  /** "YYYY-MM-DD" */
+  date?: string
+}
+
+/** A personal project: tasks point to it with `projectId`, so nothing is entered twice. */
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  /** "YYYY-MM-DD" */
+  deadline?: string
+  notes?: string
+  milestones?: Milestone[]
+  color?: CourseColor
+  /** Finished projects move to the bottom, greyed out. */
+  done?: boolean
+  createdAt: string
+}
+
+/**
+ * A goal for a day, a week or the term. Progress is counted from real data where it can be (`tasks` done in the period,
+ * optionally only one category; `focus` minutes), or ticked up by hand (`manual`, per period).
+ */
+export interface Goal {
+  id: string
+  title: string
+  period: 'day' | 'week' | 'term'
+  area: 'academic' | 'personal'
+  metric: 'manual' | 'tasks' | 'focus'
+  target: number
+  /** For `tasks`: only this category. */
+  category?: TaskCategory
+  /** For `manual`: count per period key ("2026-11-09", "2026-W46", "term"). */
+  counts?: Record<string, number>
+  createdAt: string
 }
 
 export interface CourseLink {
@@ -214,6 +259,8 @@ export type EditorTarget =
   | { type: 'task'; id?: string }
   | { type: 'new' }
   | { type: 'review' }
+  | { type: 'project'; id?: string }
+  | { type: 'goal'; id?: string }
   | { type: 'settings'; section?: 'calendar' | 'commute' | 'today' }
 
 export type TodaySection =

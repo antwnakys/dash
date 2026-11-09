@@ -25,6 +25,7 @@ const sorts: Array<{ value: TaskSort; label: string }> = [
 ]
 
 const empty: Record<TaskView, string> = {
+  inbox: 'Inbox is clear. New tasks without a date, project or priority land here.',
   open: 'No open tasks. Type one above.',
   today: 'Nothing due today. Tasks due today, overdue ones and high-priority ones show here.',
   upcoming: 'Nothing scheduled. Give a task a date, e.g. “Essay draft friday”.',
@@ -48,6 +49,7 @@ export function TaskList({ title = 'Tasks', full = false }: { title?: string; fu
   const counts = viewCounts(tasks.tasks, now)
   const reorderable = (!full || (view === 'open' && sort === 'manual')) && !query
   const views: Array<{ value: TaskView; label: string }> = [
+    { value: 'inbox', label: `Inbox${counts.inbox ? ` ${counts.inbox}` : ''}` },
     { value: 'open', label: `Open${counts.open ? ` ${counts.open}` : ''}` },
     { value: 'today', label: `Today${counts.today ? ` ${counts.today}` : ''}` },
     { value: 'upcoming', label: 'Upcoming' },
@@ -74,7 +76,7 @@ export function TaskList({ title = 'Tasks', full = false }: { title?: string; fu
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search tasks, notes and steps"
+                placeholder="Search tasks, notes, steps or #tags"
                 aria-label="Search tasks"
                 data-task-search
                 className="min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-faint focus:outline-none sm:text-[0.9375rem]"

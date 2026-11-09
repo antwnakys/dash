@@ -4,7 +4,7 @@ import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
 import { useDashboard } from '@/context/DashboardContext'
 import { onMenuBar } from '@/lib/macApp'
-import { blur, ease, spring } from '@/lib/motion'
+import { ease, spring } from '@/lib/motion'
 import { isNative } from '@/lib/native'
 import { views } from '@/views'
 import { CommandPalette } from '@/components/command/CommandPalette'
@@ -32,10 +32,11 @@ function usePhone() {
   return phone
 }
 
+// Calm and quick: the new page fades in with a hint of direction; no blur (it costs frames on phones).
 const pageVariants = {
-  enter: (dir: number) => ({ x: dir * 36, opacity: 0, ...blur(4) }),
-  center: { x: 0, opacity: 1, ...blur(0) },
-  exit: (dir: number) => ({ x: dir * -36, opacity: 0, ...blur(4), transition: { x: spring.smooth, opacity: { duration: 0.09 } } }),
+  enter: (dir: number) => ({ x: dir * 14, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir * -10, opacity: 0, transition: { duration: 0.1, ease: ease.out } }),
 }
 
 export function AppShell() {
@@ -159,7 +160,7 @@ export function AppShell() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ x: spring.smooth, opacity: { duration: 0.14, ease: ease.out }, filter: { duration: 0.18 } }}
+              transition={{ x: { type: 'spring', stiffness: 520, damping: 46, mass: 0.6 }, opacity: { duration: 0.16, ease: ease.out } }}
             >
               <View />
             </motion.div>

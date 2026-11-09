@@ -16,7 +16,7 @@ import { startOfDay } from '@/lib/date'
 import { startLiveUpdates, startMacUpdates } from '@/lib/liveUpdate'
 import { dailySnapshot, takeSnapshot } from '@/sync/backup'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, FocusSession, LookPreference, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, FocusSession, Goal, LookPreference, Project, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
@@ -39,6 +39,8 @@ interface DashboardValue {
   examResults: Collection<ExamResult>
   /** Finished focus sessions (synced) and the timer (this device). */
   focusSessions: Collection<FocusSession>
+  projects: Collection<Project>
+  goals: Collection<Goal>
   focus: FocusTimer
   focusOpen: boolean
   setFocusOpen: (open: boolean) => void
@@ -166,6 +168,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const study = useCollection<StudySession>('dash.study.v1')
   const examResults = useCollection<ExamResult>('dash.examResults.v1')
   const focusSessions = useCollection<FocusSession>('dash.focus.v1')
+  const projects = useCollection<Project>('dash.projects.v1')
+  const goals = useCollection<Goal>('dash.goals.v1')
   const tasks = useTasks()
   const location = useHereLocation(profile.autoLocation !== false)
   const weather = useWeather(location.here ?? profile.place)
@@ -225,6 +229,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     study,
     examResults,
     focusSessions,
+    projects,
+    goals,
     focus,
     focusOpen,
     setFocusOpen,

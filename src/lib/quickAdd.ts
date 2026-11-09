@@ -16,7 +16,7 @@
 import { addDays, startOfDay } from './date'
 import type { Task, TaskCategory, TaskPriority, TaskRepeat } from '@/types'
 
-export type QuickPartKind = 'due' | 'priority' | 'category' | 'repeat'
+export type QuickPartKind = 'due' | 'priority' | 'category' | 'repeat' | 'tags'
 
 export interface QuickPart {
   kind: QuickPartKind
@@ -31,6 +31,8 @@ export interface QuickTask {
   priority?: TaskPriority
   category?: TaskCategory
   repeat?: TaskRepeat
+  /** Other #words ("#reading #lab"), lower case. */
+  tags?: string[]
   parts: QuickPart[]
 }
 
@@ -79,6 +81,7 @@ interface Match {
 type Rule = { re: RegExp; kind: QuickPartKind; apply: (m: RegExpExecArray, out: Draft, now: Date) => boolean }
 
 interface Draft {
+  tags?: string[]
   day?: Date
   /** The day came from a weekday name, so "monday" said on a Monday evening means next week once the time has passed. */
   weekday?: boolean
@@ -251,6 +254,20 @@ export function parseQuickAdd(input: string, now = new Date(), ignore: QuickPart
     }
   }
 
+  // Any other #word is a tag.
+  if (!ignore.includes('tags')) {
+    const re = /(?:^|\s)#([\p{L}\p{N}_-]{2,30})/gu
+    let m: RegExpExecArray | null
+    while ((m = re.exec(input))) {
+      const lead = m[0].length - m[0].trimStart().length
+      const match = { start: m.index + lead, end: m.index + m[0].length }
+      if (overlaps(match)) continue
+      taken.push(match)
+      draft.tags = [...(draft.tags ?? []), m[1].toLocaleLowerCase()]
+      parts.push({ kind: 'tags', text: input.slice(match.start, match.end) })
+    }
+  }
+
   // The title is what's left, tidied: no doubled spaces or dangling "at"/"on"/"by".
   let title = input
   for (const t of [...taken].sort((a, b) => b.start - a.start)) title = title.slice(0, t.start) + ' ' + title.slice(t.end)
@@ -259,7 +276,7 @@ export function parseQuickAdd(input: string, now = new Date(), ignore: QuickPart
     .replace(/\s{2,}/g, ' ')
     .trim()
 
-  const out: QuickTask = { title: title || input.trim(), parts, priority: draft.priority, category: draft.category }
+  const out: QuickTask = { title: title || input.trim(), parts, priority: draft.priority, category: draft.category, tags: draft.tags }
   if (draft.day || draft.time) {
     let day = draft.day ?? startOfDay(now)
     // A time alone that has already passed today means tomorrow.
@@ -315,4 +332,5 @@ export const quickFields = (q: QuickTask): Partial<Task> => ({
   dueAllDay: q.dueAllDay,
   priority: q.priority,
   repeat: q.repeat,
+  tags: q.tags,
 })

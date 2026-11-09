@@ -30,9 +30,10 @@ const priorityName = { 1: 'High', 2: 'Medium', 3: 'Low' } as const
 
 export function TaskItem({ task, showCategory, due, reorderable = true, onToggle, onRemove }: TaskItemProps) {
   const steps = task.subtasks?.length ? `${task.subtasks.filter((s) => s.done).length}/${task.subtasks.length}` : undefined
-  const meta = (showCategory || (due && !task.done) || steps || task.repeat || task.notes) && !task.done
+  const meta = (showCategory || (due && !task.done) || steps || task.repeat || task.notes || task.tags?.length || task.projectId) && !task.done
   const controls = useDragControls()
-  const { openEditor } = useDashboard()
+  const { openEditor, projects } = useDashboard()
+  const project = task.projectId ? projects.items.find((p) => p.id === task.projectId) : undefined
 
   return (
     <Reorder.Item
@@ -100,7 +101,10 @@ export function TaskItem({ task, showCategory, due, reorderable = true, onToggle
                 </span>
               )}
               {task.notes && <StickyNote aria-label="Has notes" className="size-3.5 shrink-0" strokeWidth={2.2} />}
-              {showCategory && <span className="truncate">{categoryLabel[task.category]}</span>}
+              {project ? <span className="truncate">{project.name}</span> : showCategory && <span className="truncate">{categoryLabel[task.category]}</span>}
+              {task.tags?.slice(0, 3).map((t) => (
+                <span key={t} className="shrink-0 text-accent">#{t}</span>
+              ))}
             </span>
           )}
         </button>

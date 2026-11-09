@@ -1,4 +1,4 @@
-import { CalendarClock, Flag, Plus, Repeat, Tag, X } from 'lucide-react'
+import { CalendarClock, Flag, Hash, Plus, Repeat, Tag, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useNow } from '@/hooks/useNow'
@@ -8,7 +8,7 @@ import { parseQuickAdd, priorityLabel, quickFields, repeatLabel, type QuickPartK
 import type { Task, TaskCategory } from '@/types'
 import { categories, categoryLabel } from './categories'
 
-const icons: Record<QuickPartKind, typeof Flag> = { due: CalendarClock, priority: Flag, category: Tag, repeat: Repeat }
+const icons: Record<QuickPartKind, typeof Flag> = { due: CalendarClock, priority: Flag, category: Tag, repeat: Repeat, tags: Hash }
 
 /** What the typed line was read as, one chip per kind; × puts that phrase back into the title. */
 function chips(q: QuickTask): Array<{ kind: QuickPartKind; label: string }> {
@@ -17,6 +17,7 @@ function chips(q: QuickTask): Array<{ kind: QuickPartKind; label: string }> {
   if (q.repeat) out.push({ kind: 'repeat', label: repeatLabel[q.repeat] })
   if (q.priority) out.push({ kind: 'priority', label: `${priorityLabel[q.priority]} priority` })
   if (q.category) out.push({ kind: 'category', label: categoryLabel[q.category] })
+  if (q.tags?.length) out.push({ kind: 'tags', label: q.tags.map((t) => `#${t}`).join(' ') })
   return out
 }
 

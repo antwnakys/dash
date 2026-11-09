@@ -24,7 +24,7 @@ const priorities: Array<{ value: '0' | '3' | '2' | '1'; label: string }> = [
 
 /** New task, or edit one: due date and time, repeat, priority, steps and notes. */
 export function TaskForm({ id, onDone }: { id?: string; onDone: () => void }) {
-  const { tasks, notify } = useDashboard()
+  const { tasks, notify, projects } = useDashboard()
   const existing = tasks.tasks.find((t) => t.id === id)
   const existingDue = existing?.due ? new Date(existing.due) : undefined
 
@@ -39,6 +39,8 @@ export function TaskForm({ id, onDone }: { id?: string; onDone: () => void }) {
   const [steps, setSteps] = useState<Subtask[]>(existing?.subtasks ?? [])
   const [newStep, setNewStep] = useState('')
   const [notes, setNotes] = useState(existing?.notes ?? '')
+  const [projectId, setProjectId] = useState(existing?.projectId ?? '')
+  const [tagText, setTagText] = useState((existing?.tags ?? []).map((t) => `#${t}`).join(' '))
 
   const addStep = () => {
     const t = newStep.trim()
@@ -60,6 +62,11 @@ export function TaskForm({ id, onDone }: { id?: string; onDone: () => void }) {
       priority: priority === '0' ? undefined : (Number(priority) as TaskPriority),
       subtasks: pending.length ? pending : undefined,
       notes: notes.trim() || undefined,
+      projectId: projectId || undefined,
+      tags: (() => {
+        const list = [...new Set(tagText.split(/[\s,]+/).map((t) => t.replace(/^#/, '').toLocaleLowerCase()).filter(Boolean))]
+        return list.length ? list : undefined
+      })(),
     }
     if (existing) {
       tasks.update(existing.id, { title: title.trim(), category, ...fields })
@@ -173,6 +180,23 @@ export function TaskForm({ id, onDone }: { id?: string; onDone: () => void }) {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Project">
+          <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+            <option value="">None</option>
+            {projects.items
+              .filter((p) => !p.done || p.id === projectId)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+          </Select>
+        </Field>
+        <Field label="Tags">
+          <TextInput value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="#reading #lab" autoCapitalize="off" autoCorrect="off" />
+        </Field>
+      </div>
       <Field label="Notes">
         <TextArea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Details, links, anything to remember" />
       </Field>

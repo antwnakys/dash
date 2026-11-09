@@ -10,7 +10,7 @@ import { usePendingByCourse } from './usePendingByCourse'
 
 /** Compact course rows for the Today screen. */
 export function CourseList() {
-  const { courses, openEditor, setView, loadSample } = useDashboard()
+  const { courses, openEditor, setView } = useDashboard()
   const now = useNow(60_000)
   const pending = usePendingByCourse(now)
 
@@ -30,9 +30,6 @@ export function CourseList() {
           <EmptyState message="Add your courses to follow progress and deadlines in one place.">
             <Button variant="primary" size="sm" onClick={() => openEditor({ type: 'course' })}>
               Add course
-            </Button>
-            <Button size="sm" onClick={loadSample}>
-              Try sample data
             </Button>
           </EmptyState>
         ) : (

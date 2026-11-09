@@ -41,7 +41,7 @@ export function Timetable() {
       <Card>
         {total === 0 ? (
           <p className="px-4 py-6 text-center text-subhead text-muted">
-            No classes this week. Add class times to a course, or connect the calendar with your classes at Sorou 74.
+            No classes this week. Add class times to a course, or connect the calendar with your classes and add your campus address in Settings.
           </p>
         ) : (
           <ol className="separated">

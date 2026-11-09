@@ -1,6 +1,6 @@
 /**
  * One line of advice for the trip to campus: rain, storms, cold or heat while you're out.
- * Looks at home (Argyroupoli) around leaving and coming back, and at Marousi while you're on campus.
+ * Looks at home around leaving and coming back, and at campus while you're there (places from Settings).
  */
 import type { HourlyPoint } from '@/data/weather'
 
@@ -38,6 +38,7 @@ export function tripHint(
   home: HourlyPoint[],
   campus: HourlyPoint[],
   times: { leaveAt: Date; arriveAt: Date; doneAt: Date; backAt: Date },
+  names: { home: string; campus: string } = { home: 'home', campus: 'campus' },
 ): TripHint | undefined {
   const pick = (list: HourlyPoint[], from: Date, to: Date, where: string) => {
     const a = hourKey(from)
@@ -45,9 +46,9 @@ export function tripHint(
     return list.filter((h) => h.time >= a && h.time <= b).map((h) => ({ ...h, where }))
   }
   const hours = [
-    ...pick(home, times.leaveAt, times.arriveAt, 'Argyroupoli'),
-    ...pick(campus, times.arriveAt, times.doneAt, 'Marousi'),
-    ...pick(home, times.doneAt, times.backAt, 'Argyroupoli'),
+    ...pick(home, times.leaveAt, times.arriveAt, names.home),
+    ...pick(campus, times.arriveAt, times.doneAt, names.campus),
+    ...pick(home, times.doneAt, times.backAt, names.home),
   ].sort((x, y) => x.time.localeCompare(y.time))
   if (!hours.length) return undefined
 

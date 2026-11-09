@@ -104,7 +104,7 @@ export interface CalendarEvent {
   kind: 'event' | 'reminder' | 'exam'
 }
 
-/** `class`: a lesson on campus (Sorou 74, Marousi), marked as a course. */
+/** `class`: a lesson at the campus address saved in Settings, marked as a course. */
 export type AgendaKind = 'assignment' | 'exam' | 'quiz' | 'event' | 'reminder' | 'class' | 'task'
 
 /** Assignments and events merged into one chronological stream. */
@@ -150,7 +150,11 @@ export interface Profile {
   autoLocation?: boolean
   /** Door-to-door minutes from home to campus; unset means the default in lib/commute.ts. */
   commuteMinutes?: number
-  /** Suburban departures from Doukissis Plakentias toward Pentelis ("17:11"); unset means the defaults in lib/commute.ts. */
+  /** Where classes happen. Calendar events here count as classes; `place` is the area for the trip weather. */
+  campus?: { address: string; place?: Place }
+  /** Home area, for the trip weather. */
+  home?: Place
+  /** The train you take to campus ("17:11"); unset means the defaults in lib/commute.ts. */
   suburbanTrains?: string[]
   /** Phone reminders (iPhone app). Missing flags count as on. */
   reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean; appExpiry?: boolean }

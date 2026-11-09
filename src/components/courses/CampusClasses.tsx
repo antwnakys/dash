@@ -1,25 +1,25 @@
-import { GraduationCap, Plus } from 'lucide-react'
+import { GraduationCap, MapPin, Plus } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { RevealItem } from '@/components/ui/Reveal'
 import { Card, Section } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
-import { CAMPUS, isClass, matchCourse, normalize } from '@/lib/campus'
+import { campusLabel, isClass, matchCourse, normalize } from '@/lib/campus'
 import { formatMeetings, meetingsFromEvents } from '@/lib/schedule'
 import type { CalendarEvent, Course } from '@/types'
 
 type Draft = Omit<Course, 'id'>
 
 /**
- * Classes in the calendar at campus (Sorou 74, Marousi) that aren't courses yet,
+ * Classes in the calendar at the campus address from Settings that aren't courses yet,
  * each ready to add with its weekly times worked out from the calendar.
  */
 function useCampusClasses(): Draft[] {
-  const { calendar, events, courses } = useDashboard()
+  const { calendar, events, courses, profile } = useDashboard()
   return useMemo(() => {
     const byTitle = new Map<string, CalendarEvent[]>()
     for (const e of [...calendar.events, ...events.items]) {
-      if (!isClass(e) || matchCourse(e.title, courses.items)) continue
+      if (!isClass(e, profile.campus) || matchCourse(e.title, courses.items)) continue
       const key = normalize(e.title)
       byTitle.set(key, [...(byTitle.get(key) ?? []), e])
     }
@@ -37,12 +37,32 @@ function useCampusClasses(): Draft[] {
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))
-  }, [calendar.events, events.items, courses.items])
+  }, [calendar.events, events.items, courses.items, profile.campus])
 }
 
 export function CampusClasses() {
-  const { courses, notify } = useDashboard()
+  const { courses, notify, profile, calendar, events, openEditor } = useDashboard()
   const found = useCampusClasses()
+  if (!profile.campus?.address) {
+    if (!calendar.events.length && !events.items.some((e) => e.location)) return null
+    // Without the address, classes in the calendar can't be told apart from other events.
+    return (
+      <RevealItem className="mb-8">
+        <button
+          onClick={() => openEditor({ type: 'settings', section: 'commute' })}
+          className="surface pressable flex w-full items-center gap-3.5 px-4 py-3.5 text-left hover:bg-fill/60"
+        >
+          <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
+            <MapPin className="size-5" strokeWidth={2} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-headline text-ink">Add your campus address</span>
+            <span className="block text-subhead text-muted">So dash can spot your classes in the calendar and tell you when to leave.</span>
+          </span>
+        </button>
+      </RevealItem>
+    )
+  }
   if (!found.length) return null
 
   const add = (list: Draft[]) => {
@@ -81,7 +101,7 @@ export function CampusClasses() {
           ))}
         </ul>
       </Card>
-      <p className="px-1 text-caption text-faint">Classes at {CAMPUS} that aren’t in your courses yet.</p>
+      <p className="px-1 text-caption text-faint">Classes at {campusLabel(profile.campus)} that aren’t in your courses yet.</p>
     </Section>
     </RevealItem>
   )

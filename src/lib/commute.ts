@@ -3,23 +3,17 @@ import { addDays, startOfDay } from './date'
 import type { AgendaItem, Course } from '@/types'
 
 /**
- * Home (Argyroupoli) to campus (Sorou 74, Marousi): walk 10–12 min, metro Line 2 to Syntagma,
- * Line 3 to Doukissis Plakentias, suburban one stop to Pentelis, walk ~8 min. About 80 minutes,
- * most of the spread being the wait for the suburban train.
+ * Home to campus by public transport, with one train leg near the end. The places themselves live in the
+ * profile (Settings → Getting to campus), never in the code: this repository is public.
  */
 export const DEFAULT_COMMUTE = 80
-/** Both ends of the trip, for the weather hint. */
-export const HOME_PLACE = { name: 'Argyroupoli', latitude: 37.906, longitude: 23.752 }
-export const CAMPUS_PLACE = { name: 'Marousi', latitude: 38.045, longitude: 23.809 }
 
-export const COMMUTE_ROUTE = 'Walk to Argyroupoli · metro to Doukissis Plakentias · suburban to Pentelis · walk'
-
-/** The suburban trains the user takes from Doukissis Plakentias to Pentelis (Hellenic Train, Nov 2026). */
+/** Departures of the train the user takes (Nov 2026); editable in Settings. */
 export const DEFAULT_TRAINS = ['17:11', '17:32', '17:50']
-/** Home to the suburban platform at Doukissis Plakentias: walk 11, red line to Syntagma, change, blue line, walk to the platform. */
+/** Home to the train's platform. */
 export const TO_TRAIN = 60
-const TRAIN_RIDE = 1 // Doukissis Plakentias → Pentelis
-const FROM_STATION = 8 // Pentelis → Sorou 74 on foot
+const TRAIN_RIDE = 1 // the train leg
+const FROM_STATION = 8 // station → campus on foot
 const SPARE = 5 // at campus before class
 
 /** "17:11, 17:32 17.50" → ["17:11", "17:32", "17:50"]. */
@@ -32,7 +26,7 @@ export function parseTrainTimes(text: string): string[] {
 }
 
 /**
- * When to leave for a class at `classAt`: aim for the latest listed suburban train that still gets you there
+ * When to leave for a class at `classAt`: aim for the latest listed train that still gets you there
  * with a few minutes to spare (no waiting around on the platform or at campus). If none of the trains fits,
  * fall back to the door-to-door estimate.
  */
@@ -54,7 +48,7 @@ export interface Departure {
   title: string
   classAt: Date
   leaveAt: Date
-  /** The suburban train to catch, when one of the known trains fits. */
+  /** The train to catch, when one of the known trains fits. */
   train?: Date
   tomorrow: boolean
 }

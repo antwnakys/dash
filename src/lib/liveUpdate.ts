@@ -8,6 +8,7 @@
  * If a new bundle fails to start, the updater rolls back to the previous one on its own.
  */
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
+import { isMacApp } from './macApp'
 import { isNative } from './native'
 
 const SITE = 'https://antwnakys.github.io/dash/'
@@ -59,4 +60,40 @@ export function startLiveUpdates(onReady: () => void): () => void {
   run()
   document.addEventListener('visibilitychange', run)
   return () => document.removeEventListener('visibilitychange', run)
+}
+
+const MAC_EVERY = 60_000
+const TRIED = 'dash.update.tried'
+let macCheck = 0
+
+/**
+ * The Mac app shows the live website and keeps running in the menu bar, so it could stay on an old version for
+ * days. Each time its window comes to the front, it asks the website which version is current and, when that's
+ * newer, reloads straight away (unless a form is open). `?v=` skips the copy of the page the Mac kept.
+ */
+export function startMacUpdates(busy: () => boolean): () => void {
+  if (!isMacApp) return () => {}
+  const run = async () => {
+    if (document.visibilityState !== 'visible' || Date.now() - macCheck < MAC_EVERY || busy()) return
+    macCheck = Date.now()
+    try {
+      const res = await fetch(`${SITE}version.json?t=${Date.now()}`, { cache: 'no-store' })
+      if (!res.ok) return
+      const remote = (await res.json()) as Partial<RemoteVersion>
+      if (!remote.version || remote.version === BUILD || busy()) return
+      // Once per version per session, so a website that's still mid-deploy can't cause a reload loop.
+      if (sessionStorage.getItem(TRIED) === remote.version) return
+      sessionStorage.setItem(TRIED, remote.version)
+      location.replace(`${SITE}?v=${encodeURIComponent(remote.version)}`)
+    } catch {
+      // Offline: try again next time.
+    }
+  }
+  void run()
+  document.addEventListener('visibilitychange', run)
+  window.addEventListener('focus', run)
+  return () => {
+    document.removeEventListener('visibilitychange', run)
+    window.removeEventListener('focus', run)
+  }
 }

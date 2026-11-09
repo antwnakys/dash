@@ -45,12 +45,20 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/context/DashboardContext.tsx`: app state; `buildAgenda` merges deadlines, own events and synced calendar events
 - `src/views/`: Today, Courses, Tasks, Calendar screens
 - `src/components/editor/`: bottom-sheet forms (CourseForm + ScheduleEditor, DeadlineForm, EventForm, TaskForm, SettingsForm); `fields.tsx` has inputs, `PickerPill` (native iOS date/time picker behind a pill)
-- `src/lib/campus.ts`: campus = **Sorou 74, Marousi**; `atCampus`, `isClass`, `EXAM` regex, `matchCourse`
+- **This repository is public. Never put personal details in code or notes**: no addresses, home area, stations,
+  meeting links, emails or calendar contents. They live in the synced profile (Settings), which only the user's devices
+  and their own Google Drive hold. (Moved out on Nov 9; older commits in the history still contain some.)
+- `src/lib/campus.ts`: the campus is `profile.campus` = {address, place} (Settings → Getting to campus). `atCampus(location,
+  campus)` matches the saved address in any spelling: Greek is written in Latin letters (`placeKey`), then the street words +
+  house number must appear (or street + area when there's no number). `isClass(e, campus)`, `campusLabel`, `isExamTitle`,
+  `matchCourse`, `frequentLocations` (the calendar's most used places, offered as one-tap suggestions in Settings).
+  With no address saved, calendar events aren't classes; Courses shows an "Add your campus address" card.
 - `src/lib/commute.ts` + `components/commute/LeaveCard.tsx`: "Leave by 08:10" card on Today for the first class of the day
-  (calendar classes at campus + courses' weekly times; tomorrow's from 17:00). Home is Argyroupoli; route Line 2 → Line 3 to
-  Doukissis Plakentias → suburban to Pentelis; default 80 min door to door, `profile.commuteMinutes` in Settings → Getting to campus.
-  Weather hint on the card (`lib/tripWeather.ts`, `hooks/useTripForecast.ts`): hourly Open-Meteo for home (Argyroupoli) around
-  leaving/returning and Marousi while on campus (until the day's last class ends); storm > rain (≥50% or ≥0.3 mm) > cold (≤10°)
+  (calendar classes at campus + courses' weekly times; tomorrow's from 17:00). Default 80 min door to door,
+  `profile.commuteMinutes` in Settings → Getting to campus, plus the train times (below).
+  Weather hint on the card (`lib/tripWeather.ts`, `hooks/useTripForecast.ts`): hourly Open-Meteo for `profile.home` around
+  leaving/returning and `profile.campus.place` while on campus (until the day's last class ends; nothing until both are
+  set; the campus area comes from OpenStreetMap Nominatim, `searchAddress`); storm > rain (≥50% or ≥0.3 mm) > cold (≤10°)
   > hot (≥33°). Fetched only while a trip is coming up, cached 30 min. (Open-Meteo is blocked from Claude's cloud sandbox,
   so test it with a mocked route.)
 - `src/lib/classes.ts`: `classesOn(day)` = calendar classes at campus + courses' weekly times (deduped); used by the leave card,
@@ -145,9 +153,19 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   Not on Mac yet: iCal-link calendars (CORS; Google calendars work), location (falls back to the city).
   Icon: `assets/mac-icon-1024.png` (white icon in Apple's rounded square, `npm run icons:mac`).
 - `src/sync/` + `src/hooks/useCloudSync.ts`: cross-device sync through one file `dash-data.json` in the Google Drive **appDataFolder** (scope `drive.appdata`); per-record last-write-wins with `updatedAt`, tombstones for deletes
+- Backups (`src/sync/backup.ts`, Settings → Data = `components/editor/DataSection.tsx`): **Export backup** (share sheet
+  on iPhone/Safari, a download in browsers, the clipboard in the Mac app) writes `dash-backup-YYYY-MM-DD.json` with every
+  synced collection + profile (never Google tokens or the calendar copy). **Restore** (file, copied text, or one of the
+  copies on this device) only adds: items missing here come back with a fresh `updatedAt` (so they beat tombstones and
+  sync out); nothing is deleted or downgraded. Copies on this device (`dash.snapshots.v1`, last 7): one a day on open,
+  plus before Delete all data and before a restore. Delete all data syncs to every device, so it snapshots first and says
+  so. Sample data was removed (it replaced real data on every device).
+- Mac self-update (`startMacUpdates` in `lib/liveUpdate.ts`): when the Mac window comes to the front (at most once a
+  minute, not while a sheet is open) it reads `version.json`; a newer build → `location.replace(SITE + '?v=<sha>')`
+  (the query skips the HTML the Mac cached), once per version per session.
 
-localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`,
-`dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1` (device only).
+localStorage keys: `dash.courses.v1`, `dash.assignments.v1`, `dash.events.v1`, `dash.tasks.v1`, `dash.study.v1`, `dash.examResults.v1`,
+`dash.profile.v1`, `dash.deleted.v1` (synced); `dash.calendar.v1`, `dash.google.v1`, `dash.snapshots.v1` (device only).
 New fields on synced records must be optional so older app versions and existing data keep working.
 
 Claude cannot read the user's own data: it lives on their devices and in the Drive app-data folder,
@@ -177,13 +195,15 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   status-bar fade and compact weather on iPhone.
 - **Nov 2, 2026 (PR #1)**: in-app tasks done:
   1. Course times picked with iOS-style day buttons and native time/date pickers (first/last class), several times per course, next class on cards.
-  2. Everything at Sorou 74, Marousi is marked as a course: green Course badge and calendar dot, links to the matching course,
+  2. Everything at campus is marked as a course: green Course badge and calendar dot, links to the matching course,
      and Courses → "From your calendar" offers to add those classes. Calendar events now keep end times.
 
 - **Nov 9, 2026**: animations and the first-screen entrance fix copied over from unidash (antwnakys/dash_public); web only,
   so the iPhone app gets it by live update and the Mac app by reopening (no TestFlight build or new .dmg needed).
 - **Nov 9, 2026 (later)**: exam results copied from unidash: score + passed/failed after an exam, a history, and finished
   exams leave the upcoming list. Web only again (live update).
+- **Nov 9, 2026 (night)**: safety pass: personal details out of the public code (campus address + home are settings now),
+  backups and restore, daily copies on each device, sample data removed, the Mac app updates itself on focus.
 
 ## Next up
 
@@ -199,22 +219,19 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   which free Apple ID (personal team) signing doesn't allow; revisit if the user gets a paid developer account.
   `ios.yml` now also publishes `dash-xcode.zip` (Xcode project + plugin sources, no Node needed) on the `ios-latest` release:
   on the Mac, download it and replace `~/dash-xcode`, then build and Run.
-- **Academic Skills**: Google Calendar recurring event "ACADEMIC SKILLS/ONLINE", every second Friday 17:00–19:00 until
-  Dec 18 2026 (location "Sorou 74", note "spiti" = from home). The college Outlook can't be connected (Microsoft 365 needs
-  college admin approval; the user declined forwarding emails to Gmail). On Nov 3 the user pasted the Teams link
-  `https://teams.microsoft.com/meet/3698245118325463?p=298byDUz7YvfJieEVn` and Claude appended it ("Teams: …") to the
-  series description. If a Friday email brings a different link, the user pastes it and Claude updates the series again.
-  If the college approves Microsoft 365, set up a Friday scheduled task to do this automatically.
-- **Suburban trains (Nov 3)**: the user takes the 17:11, 17:32 or 17:50 from Doukissis Plakentias to Pentelis (1 min ride),
-  from a Hellenic Train screenshot. `planTrip` (lib/commute.ts) picks the latest listed train that arrives with an 8 min walk
-  + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → suburban platform). Otherwise
+- **An online class's meeting link** lives in its Google Calendar event (description "Teams: …"); when the user pastes a
+  new link, Claude updates the event. The college Outlook can't be connected (Microsoft 365 needs college admin approval).
+  Never copy the link into this repository.
+- **Trains (Nov 3)**: the user takes one of a few listed departures near the end of the trip (1 min ride),
+  from a screenshot of the operator's site. `planTrip` (lib/commute.ts) picks the latest listed train that arrives with an 8 min walk
+  + 5 min spare before class (and no more than an hour early); leave = train − 60 min (home → platform). Otherwise
   the door-to-door estimate. Train times are editable in Settings → Getting to campus (`profile.suburbanTrains`).
-  hellenictrain.gr is blocked from the sandbox, so new times come from the user.
+  The operator's site is blocked from the sandbox, so new times come from the user.
 - **Mac app (Nov 4, 2026)**: built as planned (Tauri, live site, browser sign-in, `mac-latest` release). Unsigned, so the first
   open needs `xattr -cr /Applications/dash.app` in Terminal or System Settings → Privacy & Security → Open Anyway (in the release
   notes). Menu bar + reminders added the same day (user's pick). Nice later: iCal links via Tauri HTTP.
-- **TestFlight (working Nov 8, 2026).** Paid Apple Developer team **H739SB5FKP** ("NEKTARIOS SIGALAS", Individual;
-  account holder fixbids.gr@gmail.com, a family member's membership the user uses). The free team still holds
+- **TestFlight (working Nov 8, 2026).** Paid Apple Developer team **H739SB5FKP** (Individual; a family
+  member's membership the user uses). The free team still holds
   `com.antwnakys.dash`, so the iPhone app is now **`com.antwnakys.dash.app`** (`project.pbxproj`, `capacitor.config.ts`;
   the Mac app keeps `com.antwnakys.dash`). App Store Connect app "dash – Antonis" (Apple ID 6832121608, SKU `dash`).
   Google sign-in kept the existing iOS OAuth client (bundle ID isn't enforced) and works in the TestFlight build.
@@ -222,8 +239,11 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   `ASC_KEY_P8`); a copy of the .p8 lives on the user's Mac in `~/.appstoreconnect/private_keys/`. The workflow uploads
   on native changes to main, on the 1st of each month and by hand (`gh workflow run testflight.yml`); first run took 5 min,
   cloud signed. From the Mac: `TEAM_ID=H739SB5FKP ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_KEY_PATH=… scripts/testflight.sh`.
-  Internal group "Me" (automatic distribution) with tester antonsig08@gmail.com, an App Store Connect user with the
-  Developer role limited to dash. The user installed it on the iPhone with Automatic Updates on.
+  Internal group "Me" (automatic distribution) with the user as tester (an App Store Connect user with the
+  Developer role limited to dash). The user installed it on the iPhone with Automatic Updates on.
   Now possible with the paid team: the home-screen widget (App Groups), revisit if the user asks.
-- Possible follow-ups: an Export data button in Settings (so Claude can read tasks the user pastes),
-  making the campus address editable in Settings.
+- **Nov 9, 2026 (audit)**: the user asked for a full overhaul of their personal dash (master prompt): new graphite design,
+  much stronger tasks (quick add with dates, priority, subtasks, repeat, search), Today as a command centre, ⌘K and
+  shortcuts on Mac, calendar week/day views, course notes/resources, focus timer, weekly review. Agreed: keep Google
+  Drive sync (no Supabase/Firebase: no new company holding data), keep the repo public but with no personal details
+  (option 1), work in small PRs, safety first. Done first: personal details → settings, backups (below), Mac self-update.

@@ -3,17 +3,17 @@ import { useMemo } from 'react'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { useTripForecast } from '@/hooks/useTripForecast'
-import { CAMPUS } from '@/lib/campus'
+import { campusLabel } from '@/lib/campus'
 import { cn } from '@/lib/cn'
 import { JoinButton } from '@/components/ui/JoinButton'
 import { classesOn } from '@/lib/classes'
-import { COMMUTE_ROUTE, DEFAULT_COMMUTE, nextDeparture, TO_TRAIN } from '@/lib/commute'
+import { DEFAULT_COMMUTE, nextDeparture, TO_TRAIN } from '@/lib/commute'
 import { fmt, startOfDay } from '@/lib/date'
 import { tripHint, type TripHint } from '@/lib/tripWeather'
 
 const hintIcon = { rain: Umbrella, storm: CloudLightning, cold: Snowflake, hot: ThermometerSun } as const
 
-/** "Rain likely from 14:00 in Marousi. Take an umbrella." */
+/** "Rain likely from 14:00 near campus. Take an umbrella." */
 function WeatherHint({ hint }: { hint: TripHint }) {
   const Icon = hintIcon[hint.kind]
   return (
@@ -64,15 +64,20 @@ export function LeaveCard() {
   const minutes = profile.commuteMinutes ?? DEFAULT_COMMUTE
   const trains = profile.suburbanTrains
   const trip = useMemo(() => nextDeparture(agenda, courses.items, now, minutes, trains), [agenda, courses.items, now, minutes, trains])
-  const forecast = useTripForecast(Boolean(trip))
+  const forecast = useTripForecast(Boolean(trip), profile.home, profile.campus?.place)
   const hint = useMemo(() => {
     if (!trip || !forecast) return undefined
     // On campus until the last class of that day ends, then the trip home.
     const onCampus = classesOn(startOfDay(trip.classAt), agenda, courses.items).filter((c) => !c.online)
     const doneAt = new Date(Math.max(...onCampus.map((c) => (c.end ?? new Date(c.start.getTime() + 90 * 60_000)).getTime()), trip.classAt.getTime()))
     const backAt = new Date(doneAt.getTime() + minutes * 60_000)
-    return tripHint(forecast.home, forecast.campus, { leaveAt: trip.leaveAt, arriveAt: trip.classAt, doneAt, backAt })
-  }, [trip, forecast, agenda, courses.items, minutes])
+    return tripHint(
+      forecast.home,
+      forecast.campus,
+      { leaveAt: trip.leaveAt, arriveAt: trip.classAt, doneAt, backAt },
+      { home: profile.home?.name ?? 'home', campus: profile.campus?.place?.name ?? 'campus' },
+    )
+  }, [trip, forecast, agenda, courses.items, minutes, profile.home, profile.campus])
   if (!trip) return null
 
   const left = Math.ceil((trip.leaveAt.getTime() - now.getTime()) / 60_000)
@@ -110,8 +115,8 @@ export function LeaveCard() {
         {hint && <WeatherHint hint={hint} />}
         <span className="mt-0.5 block truncate text-caption text-faint">
           {trip.train
-            ? `Metro to Doukissis Plakentias (about ${inWords(TO_TRAIN)}) · suburban to Pentelis · ${CAMPUS.split(',')[0]}`
-            : `About ${inWords(minutes)} · ${COMMUTE_ROUTE}`}
+            ? `About ${inWords(TO_TRAIN)} to the train · then on to ${campusLabel(profile.campus)}`
+            : `About ${inWords(minutes)} door to door${profile.campus?.address ? ` · ${campusLabel(profile.campus)}` : ''}`}
         </span>
       </span>
     </button>

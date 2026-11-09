@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { Settings } from 'lucide-react'
+import { Search, Settings } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { IconButton } from '@/components/ui/IconButton'
@@ -22,7 +22,7 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, shortTitle, eyebrow, accessory, aside, summary }: PageHeaderProps) {
-  const { openEditor } = useDashboard()
+  const { openEditor, setPalette } = useDashboard()
   const { scrollY } = useScroll()
   // iOS-style large title: as it scrolls away, a compact bar fades in on phones.
   const barOpacity = useTransform(scrollY, [56, 96], [0, 1])
@@ -48,6 +48,7 @@ export function PageHeader({ title, shortTitle, eyebrow, accessory, aside, summa
           <div className="-mr-1.5 flex shrink-0 items-center gap-0.5">
             {accessory}
             <SyncBadge />
+            <IconButton icon={Search} label="Search" onClick={() => setPalette(true)} className="lg:hidden" />
             <IconButton icon={Settings} label="Settings" onClick={() => openEditor({ type: 'settings' })} className="lg:hidden" />
           </div>
         </RevealItem>

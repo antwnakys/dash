@@ -176,6 +176,8 @@ export interface Profile {
   suburbanTrains?: string[]
   /** Phone reminders (iPhone app). Missing flags count as on. */
   reminders?: { leave?: boolean; deadlines?: boolean; metroCard?: boolean; appExpiry?: boolean }
+  /** Sections hidden from the Today page (Settings → Today page). */
+  todayHidden?: TodaySection[]
   /** Google Calendar secret iCal addresses (or any iCal feed) to sync. */
   calendarUrls?: string[]
   /** When the profile last changed, for sync. */
@@ -192,6 +194,8 @@ export type EditorTarget =
   | { type: 'task'; id?: string }
   | { type: 'new' }
   | { type: 'settings'; section?: 'calendar' | 'commute' }
+
+export type TodaySection = 'focus' | 'upnext' | 'week' | 'calendar' | 'courses'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 /** The design: `auto` = Graphite on computers, Classic on phones. */

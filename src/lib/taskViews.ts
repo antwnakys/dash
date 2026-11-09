@@ -43,3 +43,11 @@ export function viewCounts(all: Task[], now: Date): Record<TaskView, number> {
     done: all.length - open.length,
   }
 }
+
+/** Today page's short list: overdue, due today, then high priority; soonest and most important first. */
+export function focusTasks(all: Task[], now: Date): Task[] {
+  const rank = (t: Task) => (t.due && new Date(t.due) < now && !t.dueAllDay ? 0 : t.due && dueToday(t, now) ? 1 : 2)
+  return all
+    .filter((t) => !t.done && (dueToday(t, now) || t.priority === 1))
+    .sort((a, b) => rank(a) - rank(b) || (a.due ?? '~').localeCompare(b.due ?? '~') || prio(a) - prio(b))
+}

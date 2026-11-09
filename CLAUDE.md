@@ -100,6 +100,17 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   steps, category filter, sort My order / Due / Priority (`lib/taskViews.ts`); drag to reorder only in Open + My order.
   Deleting shows a toast with **Undo** (`notify(msg, tone, action)`; `tasks.restore`). `hooks/useTaskActions.ts`.
   The leftover category label "Gaming & projects" is now "Projects".
+- **Command palette** (`components/command/CommandPalette.tsx`, `palette`/`setPalette` in context): ⌘K / Ctrl+K or `/`,
+  the sidebar's Search box, or the 🔍 button in the page header on phones. Searches tasks (titles, notes, steps),
+  courses and agenda items (deadlines, exams, classes, events); Create (task, exam, deadline, event, course); Go to the
+  five sections and Settings; and "Add task" from the typed line via quick add (first for a typed task; last when one
+  or two words match something). Arrow keys + Enter. Shortcuts (AppShell, not while typing or with a sheet open): N New,
+  T add a task (Today's or Tasks' quick-add box, `[data-page] [data-quick-add]`), 1–5 sections, `/` palette.
+- **Today page** (`views/TodayView.tsx`): relevant cards on top, then **Focus today** (`components/today/TodayFocus.tsx`,
+  `focusTasks` in `lib/taskViews.ts`: overdue, due today, high priority; up to 7; its quick add defaults to today) and Up
+  next; on the right **This week** (`components/today/WeekCard.tsx`: done this week, due by Sunday, next exam, a Mon–Sun
+  load strip of deadlines/exams/dated tasks), the month calendar and courses. Sections can be hidden in Settings → Today
+  page (`profile.todayHidden`, synced).
 - Task due dates (`Task.due`/`dueAllDay`, `lib/taskDue.ts`): set in the task sheet (tap a task to edit; Due date toggle with
   day + optional time pills). Overdue open tasks are listed first in red; due tasks join the agenda as kind `task` (Up next,
   calendar dots, "Next due", reminders like deadlines).
@@ -225,6 +236,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   backups and restore, daily copies on each device, sample data removed, the Mac app updates itself on focus.
 - **Nov 9, 2026 (night)**: Graphite design (Mac/computers only by default; Classic stays on the iPhone).
 - **Nov 9, 2026 (night)**: tasks overhaul: quick add with dates, priority, steps, notes, repeats, views, search, Undo.
+- **Nov 9, 2026 (night)**: ⌘K command palette + shortcuts; Today as a command centre (Focus today, This week, sections).
 
 ## Next up
 

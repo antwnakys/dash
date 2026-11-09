@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Plus, Settings } from 'lucide-react'
+import { Plus, Search, Settings } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { Button } from '@/components/ui/Button'
 import { useDashboard } from '@/context/DashboardContext'
@@ -12,7 +12,7 @@ const item =
 
 /** Floating glass sidebar for screens 1024px and wider. */
 export function Sidebar() {
-  const { view, setView, openEditor } = useDashboard()
+  const { view, setView, openEditor, setPalette } = useDashboard()
 
   return (
     <nav
@@ -24,10 +24,18 @@ export function Sidebar() {
         <span className="text-headline tracking-tight text-ink">dash</span>
       </div>
 
-      <Button variant="primary" onClick={() => openEditor({ type: 'new' })} className="mb-4 w-full" title="New (N)">
+      <Button variant="primary" onClick={() => openEditor({ type: 'new' })} className="mb-2 w-full" title="New (N)">
         <Plus aria-hidden className="size-4" strokeWidth={2.4} />
         New
       </Button>
+      <button
+        onClick={() => setPalette(true)}
+        className="mb-4 flex h-9 w-full items-center gap-2.5 rounded-[var(--radius-control)] bg-fill px-2.5 text-subhead text-muted transition-colors hover:bg-fill-strong hover:text-ink"
+      >
+        <Search aria-hidden className="size-4" strokeWidth={2} />
+        <span className="flex-1 text-left">Search</span>
+        <kbd className="rounded-[0.35rem] bg-surface px-1.5 py-0.5 text-caption">⌘K</kbd>
+      </button>
 
       <ul className="flex flex-col gap-0.5">
         {views.map(({ id, label, icon: Icon }, i) => {

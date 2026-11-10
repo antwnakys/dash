@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, Plus, StickyNote, UserX } from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, NotebookText, Plus, StickyNote, UserX } from 'lucide-react'
 import { absenceLevel, lastClassDay } from '@/lib/absences'
 import { matchCourse } from '@/lib/campus'
 import { courseColors } from '@/lib/courseColor'
@@ -29,7 +29,8 @@ function whenLabel(d: Date, now: Date) {
 }
 
 export function CourseCard({ course, pending, now }: CourseCardProps) {
-  const { openEditor, agenda, assignments, tasks, courses, setView, notify } = useDashboard()
+  const { openEditor, agenda, assignments, tasks, courses, setView, notify, classNotes } = useDashboard()
+  const noteCount = classNotes.items.filter((n) => n.courseId === course.id).length
   const grades = average(assignments.items.filter((a) => a.courseId === course.id))
   const { item: nextItem, date: next } = nextClass(course, agenda, now)
   // Join button: the next online class's own link first, else the meeting link saved on the course (always shown,
@@ -124,6 +125,13 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
           Missed a class
         </button>
       </div>
+      <button
+        onClick={() => openEditor({ type: 'classNotes', courseId: course.id })}
+        className="flex items-center gap-2 border-t border-line px-5 py-2.5 text-left text-subhead text-muted transition-colors hover:bg-fill hover:text-ink"
+      >
+        <NotebookText aria-hidden className="size-4" strokeWidth={2} />
+        {noteCount ? `Class notes (${noteCount})` : 'Class notes: add notes, photos or files'}
+      </button>
       {related > 0 && (
         <button
           onClick={() => setView('tasks')}

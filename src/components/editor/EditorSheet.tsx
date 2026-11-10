@@ -14,6 +14,8 @@ import { SettingsForm } from './SettingsForm'
 import { Sheet } from './Sheet'
 import { TaskForm } from './TaskForm'
 import { WeeklyReview } from '@/components/today/WeeklyReview'
+import { ClassNoteForm } from '@/components/notes/ClassNoteForm'
+import { ClassNotesList } from '@/components/notes/ClassNotesList'
 
 const titles = {
   course: ['New course', 'Edit course'],
@@ -22,6 +24,8 @@ const titles = {
   exam: ['New exam', 'Edit exam'],
   project: ['New project', 'Edit project'],
   goal: ['New goal', 'Edit goal'],
+  classNote: ['New note', 'Edit note'],
+  classNotes: ['Class notes', 'Class notes'],
 } as const
 
 const newKinds = [
@@ -85,6 +89,8 @@ export function EditorSheet() {
           {type === 'exam' && <ExamForm id={idOf(target)} onDone={closeEditor} />}
           {target.type === 'examResult' && <ExamResultForm target={target} onDone={closeEditor} />}
           {type === 'review' && <WeeklyReview onDone={closeEditor} />}
+          {target.type === 'classNotes' && <ClassNotesList courseId={target.courseId} />}
+          {target.type === 'classNote' && <ClassNoteForm courseId={target.courseId} id={target.id} />}
           {type === 'project' && <ProjectForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'goal' && <GoalForm id={idOf(target)} onDone={closeEditor} />}
           {type === 'settings' && (

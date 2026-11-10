@@ -10,7 +10,7 @@ import { useDashboard } from '@/context/DashboardContext'
 import type { ExamWithPlan } from '@/hooks/useExams'
 import { cn } from '@/lib/cn'
 import { dayDiff, fmt, isSameDay } from '@/lib/date'
-import { planStudy, resultTarget, type SessionView } from '@/lib/exams'
+import { parseTopics, planStudy, resultTarget, type SessionView } from '@/lib/exams'
 
 /** "Today", "Tomorrow", "6 days". */
 function untilLabel(date: Date, now: Date): string {
@@ -67,11 +67,7 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
     })
 
   const makePlan = () => {
-    const list = topics
-      .split(/[\n,;]+/)
-      .map((t) => t.trim())
-      .filter(Boolean)
-    const plan = planStudy(exam, agenda, now, list)
+    const plan = planStudy(exam, agenda, now, parseTopics(topics))
     if (!plan.length) return notify('No free time left before this exam to plan sessions.', 'error')
     study.set((items) => [...items.filter((i) => !(i.examId === exam.id && !i.fromCalendar)), ...plan])
     notify(`${plan.length} study ${plan.length === 1 ? 'session' : 'sessions'} planned`)
@@ -173,13 +169,13 @@ export function ExamCard({ exam, now, open: startOpen }: { exam: ExamWithPlan; n
             ) : (
               <div className="flex flex-col gap-3 px-5 py-4">
                 <p className="text-subhead text-muted">
-                  No study sessions yet. dash can plan up to six on your free time before the exam, keeping work, classes and your trips clear.
+                  No study sessions yet. dash plans them on your free time like spaced revision: further apart at first, closer near the exam, each topic learnt and then reviewed, and a practice test last. Work, classes and your trips stay clear.
                 </p>
                 <textarea
                   value={topics}
                   onChange={(e) => setTopics(e.target.value)}
                   rows={2}
-                  placeholder="Topics, one per line or separated by commas (optional)"
+                  placeholder="Topics, one per line or separated by commas. Add ! to a hard one (e.g. Regression!)"
                   className="w-full resize-none rounded-[var(--radius-control)] bg-fill px-3.5 py-2.5 text-base text-ink placeholder:text-faint outline-none focus:bg-surface sm:text-[0.9375rem]"
                 />
                 <div className="flex flex-wrap gap-2">

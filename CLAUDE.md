@@ -75,8 +75,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   doesn't; applies to synced and own events) plus Exam-type deadlines. Study sessions: calendar events in the 60 days before
   whose title contains the exam's subject (e.g. "🚨 ΣΗΜΑΤΑ – Απαγορευτικές" for "🚨🚨 ΕΞΕΤΑΣΗ ΣΗΜΑΤΑ", topic = text after the
   dash), ticks stored in the synced `dash.study.v1` collection (`fromCalendar`); otherwise "Make a study plan" (`planStudy`):
-  up to 6 × 90 min at 18:00/19:30/16:30/11:00 on free days, campus classes block 100 min of travel before them, topics shared
-  out, last one a practice test. Today shows `NextExamCard` within 14 days.
+  spaced revision (Nov 10): up to 14 sessions (one a day, 18:00/19:30/16:30/11:00 on free slots; campus classes block 100 min of
+  travel), spread at x^0.7 so they get closer near the exam; every topic "Learn" (90 min), then "Review" (60 min; topics ending
+  in `!`/`*` are hard and get "Review again"), interleaved; last a full practice test; too few days → topics paired up
+  (`parseTopics`, `studySteps`). Today shows `NextExamCard` within 14 days.
   + → Exam (`editor/ExamForm.tsx`) adds an own event with `kind: 'exam'` (title, day, optional time and place) and opens
   the Exams tab; "Edit exam" on the card (own exams → ExamForm, course deadlines → DeadlineForm); "Add exam" in the header.
   Exam links: any non-meeting web link in an event's notes/location (`findOtherLink` in meeting.ts → `CalendarEvent.url`) or

@@ -142,6 +142,7 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   from `classesOn` + other agenda items). **Moving**: drag an own deadline, event, exam or task to another day in Week
   (HTML5 drag, computers) → `hooks/useMoveItem.ts` keeps the time of day, toast with Undo; Google Calendar events
   can't move (toast says so). `editTarget`/`isMovable` in `lib/agenda.ts`.
+- **Courses order**: cards sorted by next class, soonest first (`byNextClass` in `lib/schedule.ts`; no times = last).
 - **Courses (Nov 9)**: optional `color` (`lib/courseColor.ts`: graphite, blue, green, amber, red, violet), `notes`, and
   extra resources as links of kind `other` (name + URL; a missing https:// is added). Card: colour dot, "N overdue" /
   "N due soon" (≤3 days) tag, notes preview, "N open tasks for this course" (tasks whose title names it, `matchCourse`).

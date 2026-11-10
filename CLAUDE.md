@@ -150,6 +150,10 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   UID); a course keeps `calendarSeries` + `calendarTitle`. Renaming the event renames the course unless it was renamed in
   dash (name ≠ calendarTitle); majority of upcoming titles wins; first link only adopts emoji/case/accent differences.
   Classes find their course by series first (`courseOf`), then by name.
+- **Absences** (`lib/absences.ts`): optional `Course.absences` ("YYYY-MM-DD", synced) and `absenceLimit`. Course card row
+  "Absences 2 / 3 · 1 left" (accent at one left, red at the limit) + **Missed a class** (logs the latest started class
+  from the calendar or weekly times, up to a week back, else today; no double count; toast with Undo). Course sheet →
+  Absences: allowed number, list with remove, add a day.
 - **Courses order**: cards sorted by next class, soonest first (`byNextClass` in `lib/schedule.ts`; no times = last).
 - **Courses (Nov 9)**: optional `color` (`lib/courseColor.ts`: graphite, blue, green, amber, red, violet), `notes`, and
   extra resources as links of kind `other` (name + URL; a missing https:// is added). Card: colour dot, "N overdue" /

@@ -4,11 +4,12 @@ import { ConfirmButton } from '@/components/ui/ConfirmButton'
 import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { average, formatGrade, onScale, SCALE } from '@/lib/grades'
-import { formatMeetings, newMeeting, parseSchedule } from '@/lib/schedule'
+import { formatDate, formatMeetings, newMeeting, parseSchedule, ymd } from '@/lib/schedule'
+import { fmt } from '@/lib/date'
 import { Plus, X } from 'lucide-react'
 import { courseColorNames, courseColors } from '@/lib/courseColor'
 import type { Assignment, Course, CourseColor, CourseLink, CourseMeeting } from '@/types'
-import { Field, TextArea, TextInput } from './fields'
+import { Field, PickerPill, TextArea, TextInput } from './fields'
 import { ScheduleEditor } from './ScheduleEditor'
 
 /** Saved times, or ones read from an older free-text schedule, or one empty time to fill in. */
@@ -72,6 +73,9 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
   const [meetings, setMeetings] = useState(() => initialMeetings(existing))
   const [term, setTerm] = useState<NonNullable<Course['term']>>(existing?.term ?? {})
   const [progress, setProgress] = useState(Math.round((existing?.progress ?? 0) * 100))
+  const [absences, setAbsences] = useState<string[]>(existing?.absences ?? [])
+  const [absenceLimit, setAbsenceLimit] = useState(existing?.absenceLimit ? String(existing.absenceLimit) : '')
+  const [newAbsence, setNewAbsence] = useState(() => ymd(new Date()))
   const [portal, setPortal] = useState(linkUrl(existing, 'portal'))
   const [materials, setMaterials] = useState(linkUrl(existing, 'materials'))
   const [meeting, setMeeting] = useState(linkUrl(existing, 'meeting'))
@@ -106,6 +110,8 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       links,
       color,
       notes: notes.trim() || undefined,
+      absences: absences.length ? absences : undefined,
+      absenceLimit: Number(absenceLimit) > 0 ? Math.round(Number(absenceLimit)) : undefined,
     }
     if (existing) courses.update(existing.id, data)
     else courses.add(data)
@@ -163,6 +169,48 @@ export function CourseForm({ id, onDone }: { id?: string; onDone: () => void }) 
       <div className="flex flex-col gap-1.5">
         <span className="px-1 text-subhead font-medium text-muted">Class times</span>
         <ScheduleEditor meetings={meetings} onMeetings={setMeetings} term={term} onTerm={setTerm} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="px-1 text-subhead font-medium text-muted">Absences</span>
+        <div className="separated overflow-hidden rounded-[var(--radius-control)] bg-fill/60">
+          <label className="flex min-h-12 items-center justify-between gap-3 px-4 py-1.5">
+            <span className="text-body text-ink">Allowed absences</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={99}
+              value={absenceLimit}
+              onChange={(e) => setAbsenceLimit(e.target.value)}
+              placeholder="No limit"
+              className="w-24 bg-transparent text-right text-base text-ink tabular-nums outline-none placeholder:text-faint sm:text-[0.9375rem]"
+            />
+          </label>
+          {absences.map((d) => (
+            <div key={d} className="flex min-h-11 items-center justify-between gap-3 py-1 pr-1.5 pl-4">
+              <span className="text-body text-ink">{fmt.longDate.format(new Date(`${d}T12:00`))}</span>
+              <button
+                type="button"
+                onClick={() => setAbsences((l) => l.filter((x) => x !== d))}
+                aria-label="Remove this absence"
+                className="flex size-8 items-center justify-center rounded-full text-faint hover:bg-fill hover:text-ink"
+              >
+                <X aria-hidden className="size-4" />
+              </button>
+            </div>
+          ))}
+          <div className="flex min-h-12 items-center justify-between gap-3 px-4 py-1.5">
+            <PickerPill type="date" label="Day missed" value={newAbsence} display={formatDate} onChange={(v) => v && setNewAbsence(v)} />
+            <Button
+              size="sm"
+              variant="plain"
+              onClick={() => setAbsences((l) => (l.includes(newAbsence) ? l : [...l, newAbsence].sort()))}
+            >
+              <Plus aria-hidden className="size-3.5" strokeWidth={2.4} />
+              Add absence
+            </Button>
+          </div>
+        </div>
       </div>
       <Field label={`Syllabus progress: ${progress}%`}>
         <input

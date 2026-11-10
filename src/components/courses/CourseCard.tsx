@@ -1,4 +1,5 @@
-import { ArrowUpRight, CheckCircle2, Plus, StickyNote } from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, Plus, StickyNote, UserX } from 'lucide-react'
+import { absenceLevel, lastClassDay } from '@/lib/absences'
 import { matchCourse } from '@/lib/campus'
 import { courseColors } from '@/lib/courseColor'
 import { Countdown } from '@/components/ui/Countdown'
@@ -28,7 +29,7 @@ function whenLabel(d: Date, now: Date) {
 }
 
 export function CourseCard({ course, pending, now }: CourseCardProps) {
-  const { openEditor, agenda, assignments, tasks, courses, setView } = useDashboard()
+  const { openEditor, agenda, assignments, tasks, courses, setView, notify } = useDashboard()
   const grades = average(assignments.items.filter((a) => a.courseId === course.id))
   const { item: nextItem, date: next } = nextClass(course, agenda, now)
   // Join button: the next online class's own link first, else the meeting link saved on the course (always shown,
@@ -43,6 +44,28 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
   const attention = overdue > 0 ? `${overdue} overdue` : soon > 0 ? `${soon} due soon` : undefined
   // Open tasks that name this course ("Macro reading", "ECO210 notes").
   const related = tasks.tasks.filter((t) => !t.done && matchCourse(t.title, courses.items)?.id === course.id).length
+  const absences = course.absences ?? []
+  const level = absenceLevel(course)
+  const showAbsences = Boolean(course.absenceLimit) || absences.length > 0
+
+  // "Missed a class": logs the latest class that has started (or today), with Undo.
+  const missed = () => {
+    const day = lastClassDay(course, agenda, now)
+    if (absences.includes(day)) {
+      notify(`Already counted: ${fmt.shortDate.format(new Date(`${day}T12:00`))}`)
+      return
+    }
+    const list = [...absences, day].sort()
+    courses.update(course.id, { absences: list })
+    const left = course.absenceLimit ? course.absenceLimit - list.length : undefined
+    const msg =
+      left === undefined
+        ? `Absence counted (${list.length})`
+        : left > 0
+          ? `Absence counted. ${left} left in ${course.name}`
+          : `Absence counted. You've reached the limit for ${course.name}`
+    notify(msg, left !== undefined && left <= 0 ? 'error' : 'default', { label: 'Undo', run: () => courses.update(course.id, { absences }) })
+  }
 
   return (
     <article className="surface flex w-full flex-col transition-[transform,box-shadow] duration-300 ease-[var(--ease-out-soft)] [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:shadow-[var(--shadow-float)]">
@@ -90,6 +113,17 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
           <JoinButton url={joinUrl} />
         </div>
       )}
+      <div className="flex items-center gap-2 border-t border-line px-5 py-2">
+        <UserX aria-hidden className={`size-4 shrink-0 ${level === 'over' ? 'text-danger' : level === 'close' ? 'text-accent' : 'text-muted'}`} strokeWidth={2} />
+        <span className={`flex-1 text-subhead ${level === 'over' ? 'font-semibold text-danger' : level === 'close' ? 'font-medium text-accent' : 'text-muted'}`}>
+          {showAbsences
+            ? `Absences ${absences.length}${course.absenceLimit ? ` / ${course.absenceLimit}` : ''}${level === 'over' ? ' · limit reached' : level === 'close' ? ' · 1 left' : ''}`
+            : 'No absences'}
+        </span>
+        <button onClick={missed} className="h-8 shrink-0 rounded-[var(--radius-button)] px-3 text-subhead font-medium text-accent transition-colors hover:bg-fill">
+          Missed a class
+        </button>
+      </div>
       {related > 0 && (
         <button
           onClick={() => setView('tasks')}

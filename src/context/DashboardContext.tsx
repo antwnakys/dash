@@ -7,6 +7,7 @@ import { useAppExpiry } from '@/hooks/useAppExpiry'
 import { useHereLocation } from '@/hooks/useHereLocation'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useReminders, type RemindersState } from '@/hooks/useReminders'
+import { useClassFileUploads } from '@/hooks/useClassFileUploads'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
 import { useWeather, type WeatherState } from '@/hooks/useWeather'
@@ -17,7 +18,7 @@ import { startOfDay } from '@/lib/date'
 import { startLiveUpdates, startMacUpdates } from '@/lib/liveUpdate'
 import { dailySnapshot, takeSnapshot } from '@/sync/backup'
 import type { ViewId } from '@/views'
-import type { AgendaItem, Assignment, CalendarEvent, Course, EditorTarget, ExamResult, FocusSession, Goal, LookPreference, Project, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
+import type { AgendaItem, Assignment, CalendarEvent, ClassNote, Course, EditorTarget, ExamResult, FocusSession, Goal, LookPreference, Project, Place, Profile, StudySession, Task, ThemePreference } from '@/types'
 import { categoryLabel } from '@/components/tasks/categories'
 
 export interface Toast {
@@ -40,6 +41,8 @@ interface DashboardValue {
   examResults: Collection<ExamResult>
   /** Finished focus sessions (synced) and the timer (this device). */
   focusSessions: Collection<FocusSession>
+  /** Notes and files per lecture (synced; file bytes per device + Google Drive, `lib/classFiles.ts`). */
+  classNotes: Collection<ClassNote>
   projects: Collection<Project>
   goals: Collection<Goal>
   focus: FocusTimer
@@ -169,6 +172,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const study = useCollection<StudySession>('dash.study.v1')
   const examResults = useCollection<ExamResult>('dash.examResults.v1')
   const focusSessions = useCollection<FocusSession>('dash.focus.v1')
+  const classNotes = useCollection<ClassNote>('dash.classNotes.v1')
   const projects = useCollection<Project>('dash.projects.v1')
   const goals = useCollection<Goal>('dash.goals.v1')
   const tasks = useTasks()
@@ -209,6 +213,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     for (const { id, patch } of courseCalendarPatches(courses.items, calendar.events, profile.campus)) courses.update(id, patch)
   }, [courses, calendar.events, profile.campus])
 
+  // Class-note files added offline or before connecting go up to Drive once signed in.
+  useClassFileUploads(classNotes, Boolean(calendar.google.account))
+
   const agenda = useMemo(
     () => buildAgenda(courses.items, assignments.items, events.items, calendar.events, tasks.tasks, profile.campus),
     [courses.items, assignments.items, events.items, calendar.events, tasks.tasks, profile.campus],
@@ -235,6 +242,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     study,
     examResults,
     focusSessions,
+    classNotes,
     projects,
     goals,
     focus,

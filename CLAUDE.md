@@ -156,6 +156,13 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   "Absences 2 / 3 · 1 left" (accent at one left, red at the limit) + **Missed a class** (logs the latest started class
   from the calendar or weekly times, up to a week back, else today; no double count; toast with Undo). Course sheet →
   Absences: allowed number, list with remove, add a day.
+- **Class notes** (`components/notes/`, `lib/classFiles.ts`, synced `dash.classNotes.v1` = `ClassNote` {courseId, date,
+  text, files}): course card → Class notes (editor `classNotes`: list by date) → note (editor `classNote`: class day =
+  latest class, text, photos/files). File bytes aren't in the sync file: each is a data URL in IndexedDB (`dash-files`) and,
+  when signed in, a text file `dash-file-<id>` in the Drive **appDataFolder** (`driveId` on the entry; text because iOS
+  routes fetch through native HTTP). Other devices download on first open. Photos shrink to 2000 px JPEG; 8 MB cap.
+  `hooks/useClassFileUploads.ts` uploads pending files once signed in. Photos open in an in-app viewer, other files via
+  the share sheet / download. ⌘K searches note text and file names.
 - **Courses order**: cards sorted by next class, soonest first (`byNextClass` in `lib/schedule.ts`; no times = last).
 - **Courses (Nov 9)**: optional `color` (`lib/courseColor.ts`: graphite, blue, green, amber, red, violet), `notes`, and
   extra resources as links of kind `other` (name + URL; a missing https:// is added). Card: colour dot, "N overdue" /

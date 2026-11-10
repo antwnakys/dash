@@ -131,7 +131,8 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
   data and iCal DESCRIPTION/URL into `CalendarEvent.link`; "online" in the title (or a link) sets `online`. Online classes stay
   `kind: 'class'` but get no Leave card or leave reminder; Today shows `OnlineCard` ("Academic Skills online at 17:00", Join on
-  Teams) from 3 h before; Join buttons on Up next, timetable and the course card. Courses can also store a `meeting` link.
+  Teams) from 3 h before; Join buttons on Up next, timetable and the course card. Courses can also store a `meeting` link. A saved link always gives the course card its Join button (even with no
+  calendar), and it isn't repeated in the card's small links.
 - `src/lib/schedule.ts`: course meeting helpers (format, parse old text, next class, infer from calendar events)
 - `src/data/google.ts`: Google sign-in (`@capgo/capacitor-social-login`) and Calendar API; client IDs in `src/config.ts`
 - **Calendar tab** (`views/CalendarView.tsx`): Day / Week / Month (choice kept per device in `dash.calendarMode.v1`,

@@ -110,6 +110,10 @@ export interface Course {
   color?: CourseColor
   /** Free notes: exam format, what the teacher said, office hours… */
   notes?: string
+  /** The calendar event series this course follows (`lib/courseLink.ts`); its name follows theirs. */
+  calendarSeries?: string[]
+  /** The calendar name the course last took: renaming the course in dash makes it differ, and then stays. */
+  calendarTitle?: string
 }
 
 export interface Assignment {
@@ -183,6 +187,8 @@ export interface CalendarEvent {
   online?: boolean
   /** `exam`: an exam added in dash from + → Exam. */
   kind: 'event' | 'reminder' | 'exam'
+  /** Same for every class of a repeating event, and kept when the event is renamed (synced calendars only). */
+  series?: string
 }
 
 /** `class`: a lesson at the campus address saved in Settings, marked as a course. */

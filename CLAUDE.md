@@ -143,6 +143,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   from `classesOn` + other agenda items). **Moving**: drag an own deadline, event, exam or task to another day in Week
   (HTML5 drag, computers) → `hooks/useMoveItem.ts` keeps the time of day, toast with Undo; Google Calendar events
   can't move (toast says so). `editTarget`/`isMovable` in `lib/agenda.ts`.
+  **Semester** mode (`components/calendar/SemesterView.tsx`): one row per week until the term ends (latest course
+  `term.end`, else 16 weeks, max 30): exams + deadlines as chips, busy weeks (≥3) in red, days off (holiday calendars,
+  all-day events named like a break) in green; tapping a week opens it in Week.
 - **Courses follow the calendar** (`lib/courseLink.ts`): synced events carry `series` (Google `recurringEventId`, iCal
   UID); a course keeps `calendarSeries` + `calendarTitle`. Renaming the event renames the course unless it was renamed in
   dash (name ≠ calendarTitle); majority of upcoming titles wins; first link only adopts emoji/case/accent differences.

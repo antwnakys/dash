@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react'
 import { CampusClasses } from '@/components/courses/CampusClasses'
 import { CourseWorkload } from '@/components/courses/CourseWorkload'
 import { CourseCard } from '@/components/courses/CourseCard'
+import { byNextClass } from '@/lib/schedule'
 import { Timetable } from '@/components/courses/Timetable'
 import { usePendingByCourse } from '@/components/courses/usePendingByCourse'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -14,10 +15,12 @@ import { useNow } from '@/hooks/useNow'
 import { average, formatGrade, SCALE } from '@/lib/grades'
 
 export function CoursesView() {
-  const { courses, assignments, openEditor } = useDashboard()
+  const { courses, assignments, agenda, openEditor } = useDashboard()
   const grades = average(assignments.items)
   const now = useNow(60_000)
   const pending = usePendingByCourse(now)
+  // The course with the next class comes first.
+  const ordered = byNextClass(courses.items, agenda, now)
   const open = [...pending.values()].reduce((n, l) => n + l.length, 0)
   const avg = courses.items.length ? Math.round((courses.items.reduce((s, c) => s + c.progress, 0) / courses.items.length) * 100) : 0
 
@@ -62,7 +65,7 @@ export function CoursesView() {
         </RevealItem>
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {courses.items.map((c) => (
+          {ordered.map((c) => (
             <RevealItem key={c.id} className="flex">
               <CourseCard course={c} pending={pending.get(c.id) ?? []} now={now} />
             </RevealItem>

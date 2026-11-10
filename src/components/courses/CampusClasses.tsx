@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { RevealItem } from '@/components/ui/Reveal'
 import { Card, Section } from '@/components/ui/Section'
 import { useDashboard } from '@/context/DashboardContext'
-import { campusLabel, isClass, matchCourse, normalize } from '@/lib/campus'
+import { campusLabel, isClass, normalize } from '@/lib/campus'
+import { courseOf } from '@/lib/courseLink'
 import { formatMeetings, meetingsFromEvents } from '@/lib/schedule'
 import type { CalendarEvent, Course } from '@/types'
 
@@ -19,7 +20,7 @@ function useCampusClasses(): Draft[] {
   return useMemo(() => {
     const byTitle = new Map<string, CalendarEvent[]>()
     for (const e of [...calendar.events, ...events.items]) {
-      if (!isClass(e, profile.campus) || matchCourse(e.title, courses.items)) continue
+      if (!isClass(e, profile.campus) || courseOf(e, courses.items)) continue
       const key = normalize(e.title)
       byTitle.set(key, [...(byTitle.get(key) ?? []), e])
     }
@@ -34,6 +35,9 @@ function useCampusClasses(): Draft[] {
           schedule: formatMeetings(meetings),
           meetings,
           links: [],
+          // Follow these events from now on: renaming them in the calendar renames the course.
+          calendarSeries: [...new Set(list.map((e) => e.series).filter((x): x is string => Boolean(x)))].slice(-30),
+          calendarTitle: list[0].title,
         }
       })
       .sort((a, b) => a.name.localeCompare(b.name))

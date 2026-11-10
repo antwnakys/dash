@@ -136,6 +136,8 @@ interface CalendarListEntry {
 
 interface GoogleEvent {
   id: string
+  /** The repeating event an instance belongs to; stays the same when the event is renamed. */
+  recurringEventId?: string
   status?: string
   summary?: string
   location?: string
@@ -191,6 +193,7 @@ export async function fetchGoogleEvents(): Promise<CalendarEvent[]> {
             url: findOtherLink(e.description, e.location),
             online: looksOnline(link, e.summary, e.description) || undefined,
             kind: 'event',
+            series: `g-${cal.id}-${e.recurringEventId ?? e.id}`,
           })
         }
         pageToken = data.nextPageToken

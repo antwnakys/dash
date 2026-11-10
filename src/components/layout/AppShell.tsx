@@ -4,6 +4,7 @@ import { EditorSheet } from '@/components/editor/EditorSheet'
 import { ToastHost } from '@/components/ui/Toast'
 import { useDashboard } from '@/context/DashboardContext'
 import { onMenuBar } from '@/lib/macApp'
+import { listenForAddLinks } from '@/lib/addLink'
 import { ease, spring } from '@/lib/motion'
 import { isNative } from '@/lib/native'
 import { views } from '@/views'
@@ -40,7 +41,7 @@ const pageVariants = {
 }
 
 export function AppShell() {
-  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette, focusOpen, setFocusOpen, theme } = useDashboard()
+  const { view, setView, editor, openEditor, closeEditor, dismissToast, calendar, cloud, palette, setPalette, setPaletteSeed, focusOpen, setFocusOpen, theme } = useDashboard()
   // Obsidian: a top bar on wide screens; Graphite and Classic keep the sidebar.
   const topbar = theme.look.resolved === 'obsidian'
   const reduce = useReducedMotion()
@@ -74,10 +75,25 @@ export function AppShell() {
     () =>
       onMenuBar((choice) => {
         if (choice === 'new') return openEditor({ type: 'new' })
+        if (choice === 'quick-add') {
+          closeRef.current()
+          return setPalette(true)
+        }
         closeRef.current()
         setView(choice)
       }),
-    [openEditor, setView],
+    [openEditor, setView, setPalette],
+  )
+
+  // Text shared to dash from outside (iPhone Share menu Shortcut, ?add= links): the ⌘K box opens with it.
+  useEffect(
+    () =>
+      listenForAddLinks((text) => {
+        closeRef.current()
+        setPaletteSeed(text)
+        setPalette(true)
+      }),
+    [setPalette, setPaletteSeed],
   )
 
   // Keyboard: ⌘K (or Ctrl+K) the command palette, / search, N New, T add a task, F focus, 1–5 switch sections.

@@ -163,6 +163,11 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   routes fetch through native HTTP). Other devices download on first open. Photos shrink to 2000 px JPEG; 8 MB cap.
   `hooks/useClassFileUploads.ts` uploads pending files once signed in. Photos open in an in-app viewer, other files via
   the share sheet / download. ⌘K searches note text and file names.
+- **Quick add from anywhere** (`lib/addLink.ts`, Nov 10): text → the ⌘K box filled in (`paletteSeed` in context), so
+  quick add reads dates and Enter adds. Sources: iPhone `dash://add?text=…` (URL scheme `dash` in Info.plist,
+  `@capacitor/app` appUrlOpen + launch URL; an iOS Shortcut "Add to dash" with Show in Share Sheet opens it), website /
+  Mac `?add=…` (removed from the address after reading), Mac global shortcut **⌃⌥Space** (`tauri-plugin-global-shortcut`
+  in main.rs → `dash://menu` "quick-add"; also menu bar → Quick add task…). Native pieces need the TestFlight build / new .dmg.
 - **Courses order**: cards sorted by next class, soonest first (`byNextClass` in `lib/schedule.ts`; no times = last).
 - **Courses (Nov 9)**: optional `color` (`lib/courseColor.ts`: graphite, blue, green, amber, red, violet), `notes`, and
   extra resources as links of kind `other` (name + URL; a missing https:// is added). Card: colour dot, "N overdue" /

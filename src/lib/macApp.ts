@@ -67,7 +67,7 @@ export async function nextDeepLink(matches: (url: string) => boolean, timeoutMs:
   })
 }
 
-export type MenuBarChoice = 'new' | 'today' | 'courses' | 'exams' | 'tasks' | 'calendar'
+export type MenuBarChoice = 'new' | 'quick-add' | 'today' | 'courses' | 'exams' | 'tasks' | 'calendar'
 
 /** Calls `onChoice` when something is picked in dash's menu bar menu (the app has already shown the window). */
 export function onMenuBar(onChoice: (choice: MenuBarChoice) => void): () => void {

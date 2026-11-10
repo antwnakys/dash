@@ -28,6 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.349920744170-qjt1nfonl3hvqvdfnr9j8qkgp23k3jo5</string>
+				<string>dash</string>
 			</array>
 		</dict>
 	</array>

@@ -3,6 +3,7 @@
 //! menu bar so reminders still arrive; it also starts at login (menu bar → Open at Login).
 //! Google sign-in opens in the default browser and comes back through the Google URL scheme in
 //! tauri.conf.json (see src/data/googleMac.ts); this file only brings the window to the front then.
+//! Control+Option+Space anywhere on the Mac opens dash's quick-add box (src/lib/addLink.ts).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::sync::Mutex;
@@ -14,6 +15,7 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_deep_link::DeepLinkExt;
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_notification::NotificationExt;
 
 /// A reminder planned by the website (src/lib/reminderPlan.ts); `at` is in ms since 1970.
@@ -38,6 +40,11 @@ const SECTIONS: [(&str, &str); 5] = [
     ("tasks", "Tasks"),
     ("calendar", "Calendar"),
 ];
+
+/// Control+Option+Space, like other apps' quick entry: show dash and open the add box.
+fn quick_add_shortcut() -> Shortcut {
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space)
+}
 
 fn now_ms() -> i64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
@@ -69,6 +76,7 @@ fn notify(app: AppHandle, title: String, body: String) {
 
 fn tray(app: &AppHandle) -> tauri::Result<()> {
     let new = MenuItem::with_id(app, "new", "New…", true, None::<&str>)?;
+    let quick = MenuItem::with_id(app, "quick-add", "Quick add task…  ⌃⌥Space", true, None::<&str>)?;
     let sections = SECTIONS
         .iter()
         .map(|(id, label)| MenuItem::with_id(app, *id, *label, true, None::<&str>))
@@ -79,6 +87,7 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
 
     let menu = Menu::new(app)?;
     menu.append(&new)?;
+    menu.append(&quick)?;
     menu.append(&PredefinedMenuItem::separator(app)?)?;
     for item in &sections {
         menu.append(item)?;
@@ -135,6 +144,16 @@ fn main() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    if event.state() == ShortcutState::Pressed && *shortcut == quick_add_shortcut() {
+                        show_window(app);
+                        let _ = app.emit("dash://menu", "quick-add");
+                    }
+                })
+                .build(),
+        )
         .manage(Reminders::default())
         .invoke_handler(tauri::generate_handler![set_reminders, notify])
         .setup(|app| {
@@ -146,6 +165,8 @@ fn main() {
                 let _ = std::fs::write(&marker, b"1");
             }
             tray(app.handle())?;
+            // Another app may already use the shortcut; dash still works without it (menu bar → Quick add).
+            let _ = app.global_shortcut().register(quick_add_shortcut());
             reminder_clock(app.handle().clone());
 
             let handle = app.handle().clone();

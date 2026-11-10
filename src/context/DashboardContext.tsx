@@ -81,6 +81,9 @@ interface DashboardValue {
   view: ViewId
   /** The ⌘K command palette. */
   palette: boolean
+  /** Text to start the ⌘K box with (quick add from outside dash), taken once when it opens. */
+  paletteSeed: string
+  setPaletteSeed: (text: string) => void
   setPalette: (open: boolean) => void
   setView: (v: ViewId) => void
 }
@@ -185,6 +188,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const theme = useTheme()
   const [view, setView] = useState<ViewId>('today')
   const [palette, setPalette] = useState(false)
+  const [paletteSeed, setPaletteSeed] = useState('')
   const [focusOpen, setFocusOpen] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
@@ -268,6 +272,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     dismissToast,
     view,
     palette,
+    paletteSeed,
+    setPaletteSeed,
     setPalette,
     setView,
   }

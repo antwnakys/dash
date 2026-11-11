@@ -10,7 +10,7 @@ One React codebase ships three ways:
 
 - **Website**: https://antwnakys.github.io/dash/ (GitHub Pages; every push to `main` deploys via `.github/workflows/deploy.yml`)
 - **Home-screen web app** (PWA manifest in `public/`)
-- **iOS app**: Capacitor 8 project in `ios/` (bundle id `com.antwnakys.dash.app`, paid team `H739SB5FKP`, iOS 15+).
+- **iOS app**: Capacitor 8 project in `ios/` (bundle id `com.antwnakys.dash.app`, paid team `H739SB5FKP`, iOS 16+ since the widgets).
   Installed from **TestFlight** (`.github/workflows/testflight.yml`, `docs/TESTFLIGHT.md`); builds last 90 days, no 7-day expiry.
   `.github/workflows/ios.yml` builds an unsigned `dash.ipa` on every push to `main` and publishes it on the `ios-latest` release.
 - **Mac app**: Tauri 2 project in `src-tauri/` (bundle id `com.antwnakys.dash`). `.github/workflows/mac.yml` builds a universal,
@@ -129,6 +129,15 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   profiles last 7 days). Reminders at 20:00 the evening before and 3 h before; Today card in the last 2 days with
   "Copy Mac message" (the reinstall prompt); Settings → About shows "App signed until …". Toggle `reminders.appExpiry`.
   TestFlight builds have no `embedded.mobileprovision`, so all of this stays silent there (only Xcode installs expire).
+- **Widgets** (Nov 11, from unidash; iPhone): "Up next" in small and medium on the Home Screen, rectangular and inline
+  on the Lock Screen. `src/lib/widget.ts` `buildWidgetData` (next 7 days of classes from `classesOn` + other agenda
+  items, each day's leave-by from `planTrip` with the saved trains) → `updateWidget` → native `WidgetData` plugin
+  (`SceneDelegate.swift`) stores the JSON in the App Group `group.com.antwnakys.dash.app` (Info.plist key `AppGroup`,
+  `App/App.entitlements`) and reloads timelines. `hooks/useWidget.ts` pushes 1.5 s after data changes, every 30 min and
+  when the app is hidden. Extension target `Widget` (`ios/App/Widget/AppWidget.swift`, same file as unidash's; bundle
+  id `com.antwnakys.dash.app.widget`) picks what to show at each moment itself: leave-by from 16 h before the first
+  class until it starts, else the next item; medium adds the next 3. `scripts/testflight.sh` uses a signed archive when
+  an entitlements file has App Groups (so Xcode registers them with Apple).
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
@@ -326,6 +335,8 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
 - **Nov 10, 2026**: Projects and Goals sections, task tags + Inbox, phone More menu, .ics export, calmer page transitions.
 - **Nov 10, 2026**: deleting courses didn't work in the Mac app (`confirm()` is ignored there); replaced every confirm with
   a press-twice button, Undo for courses and exams.
+
+- **Nov 11, 2026**: iPhone widgets (Home Screen + Lock Screen "Up next"), built in unidash first.
 
 ## Next up
 

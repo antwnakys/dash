@@ -138,8 +138,9 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   id `com.antwnakys.dash.app.widget`) picks what to show at each moment itself: leave-by from 16 h before the first
   class until it starts, else the next item; medium adds the next 3. Apple IDs set up by hand on Nov 11 (CI can't
   register them): App Group `group.com.antwnakys.dash.app`, App ID `com.antwnakys.dash.app.widget`, App Groups ticked
-  and linked on both IDs. `scripts/testflight.sh` keeps the unsigned archive + cloud-signed export and, with App Groups,
-  first exports the .ipa and checks with `codesign` that the app and the widget both carry the group (else no upload).
+  and linked on both IDs. `scripts/testflight.sh`: with App Groups the archive is ad-hoc signed
+  (`CODE_SIGN_IDENTITY=-`, entitlements in the binary; an unsigned archive lost the group in the cloud-signed export),
+  then the .ipa is exported and `codesign` must show the group in the app and the widget before the upload.
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference

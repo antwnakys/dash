@@ -1,8 +1,10 @@
 import { Plus } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useDashboard } from '@/context/DashboardContext'
 import { editTarget } from '@/lib/agenda'
 import { dayEntries, type CalEntry } from '@/lib/calendarDay'
 import { cn } from '@/lib/cn'
+import { courseColors } from '@/lib/courseColor'
 import { fmt, isSameDay } from '@/lib/date'
 
 const tone: Record<CalEntry['kind'] | 'focus', string> = {
@@ -57,6 +59,23 @@ export function DayStrip({ now }: { now: Date }) {
     if (lane < 2) laneEnd[lane] = Math.max(laneEnd[lane], b.end.getTime())
     return { ...b, lane }
   })
+  // Classes in their course's colour (the default green otherwise).
+  const classTint = (b: Block) => {
+    const color = b.kind === 'class' && b.entry?.courseId ? courses.items.find((c) => c.id === b.entry?.courseId)?.color : undefined
+    if (!color) return {}
+    const c = courseColors[color]
+    return { backgroundColor: `color-mix(in srgb, ${c} 16%, transparent)`, '--tw-ring-color': `color-mix(in srgb, ${c} 45%, transparent)` } as React.CSSProperties
+  }
+  // On a narrow screen the strip scrolls sideways: start it just before now instead of at 08:00.
+  const scroller = useRef<HTMLDivElement>(null)
+  const nowShare = ((now.getHours() - startH) * 60 + now.getMinutes()) / span
+  useEffect(() => {
+    const el = scroller.current
+    if (!el || el.scrollWidth <= el.clientWidth) return
+    el.scrollLeft = Math.max(0, nowShare * el.scrollWidth - el.clientWidth * 0.2)
+    // Only when the strip first appears; after that the person scrolls it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const hours = Array.from({ length: endH - startH + 1 }, (_, i) => startH + i)
   const open = (b: Block) => {
     const t = b.entry?.item ? editTarget(b.entry.item) : b.entry?.courseId ? ({ type: 'course', id: b.entry.courseId } as const) : null
@@ -77,7 +96,7 @@ export function DayStrip({ now }: { now: Date }) {
           <span className="sm:hidden">Add</span>
         </button>
       </header>
-      <div className="scrollbar-none overflow-x-auto">
+      <div ref={scroller} className="scrollbar-none overflow-x-auto">
         <div className="relative mx-4 mt-2 mb-3 min-w-[44rem]" style={{ height: 136 }}>
           {hours.map((h) => (
             <div key={h} className="absolute top-0 bottom-0 border-l border-line" style={{ left: x(new Date(now.getFullYear(), now.getMonth(), now.getDate(), h)) }}>
@@ -99,6 +118,7 @@ export function DayStrip({ now }: { now: Date }) {
                 width: b.due ? 'auto' : w(b.start, b.end),
                 maxWidth: b.due ? '12rem' : undefined,
                 top: b.lane === 2 ? 104 : 24 + b.lane * 40,
+                ...classTint(b),
               }}
             >
               {b.due ? `◆ ${fmt.time.format(b.start)} ${b.title}` : b.title}

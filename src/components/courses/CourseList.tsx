@@ -12,7 +12,7 @@ import { usePendingByCourse } from './usePendingByCourse'
 export function CourseList() {
   const { courses, openEditor, setView } = useDashboard()
   const now = useNow(60_000)
-  const pending = usePendingByCourse(now)
+  const pending = usePendingByCourse()
 
   return (
     <Section

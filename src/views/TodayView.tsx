@@ -84,11 +84,12 @@ function Dashboard() {
         }
         aside={
           <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setPalette(true)}>
+            {/* Quick add is used every day; Customise now and then, so it's the quieter one. */}
+            <Button size="sm" variant="primary" onClick={() => setPalette(true)}>
               <Plus aria-hidden className="size-4" strokeWidth={2.4} />
               Quick add
             </Button>
-            <Button size="sm" variant="primary" onClick={() => openEditor({ type: 'settings', section: 'today' })}>
+            <Button size="sm" onClick={() => openEditor({ type: 'settings', section: 'today' })}>
               <SlidersHorizontal aria-hidden className="size-4" strokeWidth={2.2} />
               Customise
             </Button>
@@ -113,7 +114,8 @@ function Dashboard() {
           </RevealItem>
         )}
         {shown.length > 0 && (
-          <RevealItem className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          // On phones the wide boxes (week bars, deadlines) take a whole row; dense packing fills any gap.
+          <RevealItem className="grid grid-flow-row-dense grid-cols-2 gap-3 xl:grid-cols-4">
             {shown.map((w) => {
               const W = widgets[w]
               return <W key={w} now={now} />
@@ -141,7 +143,7 @@ function Dashboard() {
           <div className="flex min-w-0 flex-col gap-8">
             {show('academic') && (
               <RevealItem className="empty:hidden">
-                <AcademicWidget now={now} />
+                <AcademicWidget />
               </RevealItem>
             )}
             {show('calendar') && (

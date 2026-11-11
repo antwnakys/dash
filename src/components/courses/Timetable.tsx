@@ -8,7 +8,8 @@ import { useDashboard } from '@/context/DashboardContext'
 import { useNow } from '@/hooks/useNow'
 import { classesOn } from '@/lib/classes'
 import { cn } from '@/lib/cn'
-import { addDays, fmt, isSameDay, weekOf } from '@/lib/date'
+import { courseTint } from '@/lib/courseColor'
+import { addDays, fmt, isSameDay, startOfDay, weekOf } from '@/lib/date'
 
 const dayRange = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' })
 
@@ -46,7 +47,8 @@ export function Timetable() {
         ) : (
           <ol className="separated">
             {week
-              .filter((d) => d.classes.length || (d.day.getDay() >= 1 && d.day.getDay() <= 5))
+              // Weekdays without classes say so, except days of this week that are already over.
+              .filter((d) => d.classes.length || (d.day.getDay() >= 1 && d.day.getDay() <= 5 && !(offset === 0 && d.day < startOfDay(now))))
               .map(({ day, classes }) => {
                 const today = isSameDay(day, now)
                 return (
@@ -66,6 +68,7 @@ export function Timetable() {
                               <button
                                 disabled={!c.courseId}
                                 onClick={() => c.courseId && openEditor({ type: 'course', id: c.courseId })}
+                                style={courseTint(courses.items, c.courseId, 8)}
                                 className={cn(
                                   'flex min-w-0 flex-1 items-start gap-3 rounded-[0.6rem] border-l-[3px] border-course bg-course/8 px-3 py-2 text-left transition-colors enabled:hover:bg-course/14',
                                   past && 'opacity-55',

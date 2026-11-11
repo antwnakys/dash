@@ -7,6 +7,7 @@ import { useAppExpiry } from '@/hooks/useAppExpiry'
 import { useHereLocation } from '@/hooks/useHereLocation'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useReminders, type RemindersState } from '@/hooks/useReminders'
+import { useWidget } from '@/hooks/useWidget'
 import { useClassFileUploads } from '@/hooks/useClassFileUploads'
 import { useTasks, type TasksApi } from '@/hooks/useTasks'
 import { useTheme } from '@/hooks/useTheme'
@@ -227,6 +228,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const appExpires = useAppExpiry()
   const reminders = useReminders(agenda, courses.items, profile, appExpires)
+  useWidget(agenda, courses.items, profile)
 
   // Deleting everything syncs to every device, so a copy is kept on this one first (Settings → Data → Restore).
   const clearAll = useCallback(() => {

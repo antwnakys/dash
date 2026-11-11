@@ -41,13 +41,15 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
   const when = [course.schedule, course.instructor && `with ${course.instructor}`].filter(Boolean).join(' ')
   // Needs attention: work overdue, or due within three days.
   const overdue = assignments.items.filter((a) => a.courseId === course.id && !a.submitted && new Date(a.due) <= now).length
-  const soon = pending.filter((a) => dayDiff(now, new Date(a.due)) <= ATTENTION_DAYS).length
+  const soon = pending.filter((a) => new Date(a.due) > now && dayDiff(now, new Date(a.due)) <= ATTENTION_DAYS).length
   const attention = overdue > 0 ? `${overdue} overdue` : soon > 0 ? `${soon} due soon` : undefined
   // Open tasks that name this course ("Macro reading", "ECO210 notes").
   const related = tasks.tasks.filter((t) => !t.done && matchCourse(t.title, courses.items)?.id === course.id).length
   const absences = course.absences ?? []
   const level = absenceLevel(course)
   const showAbsences = Boolean(course.absenceLimit) || absences.length > 0
+  // "Missed a class" only makes sense for a course that has classes (weekly times or calendar classes).
+  const hasClasses = Boolean(course.meetings?.some((m) => m.days.length)) || agenda.some((i) => i.kind === 'class' && i.courseId === course.id)
 
   // "Missed a class": logs the latest class that has started (or today), with Undo.
   const missed = () => {
@@ -114,6 +116,7 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
           <JoinButton url={joinUrl} />
         </div>
       )}
+      {(hasClasses || showAbsences) && (
       <div className="flex items-center gap-2 border-t border-line px-5 py-2">
         <UserX aria-hidden className={`size-4 shrink-0 ${level === 'over' ? 'text-danger' : level === 'close' ? 'text-accent' : 'text-muted'}`} strokeWidth={2} />
         <span className={`flex-1 text-subhead ${level === 'over' ? 'font-semibold text-danger' : level === 'close' ? 'font-medium text-accent' : 'text-muted'}`}>
@@ -121,10 +124,13 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
             ? `Absences ${absences.length}${course.absenceLimit ? ` / ${course.absenceLimit}` : ''}${level === 'over' ? ' · limit reached' : level === 'close' ? ' · 1 left' : ''}`
             : 'No absences'}
         </span>
-        <button onClick={missed} className="h-8 shrink-0 rounded-[var(--radius-button)] px-3 text-subhead font-medium text-accent transition-colors hover:bg-fill">
-          Missed a class
-        </button>
+        {hasClasses && (
+          <button onClick={missed} className="h-8 shrink-0 rounded-[var(--radius-button)] px-3 text-subhead font-medium text-accent transition-colors hover:bg-fill">
+            Missed a class
+          </button>
+        )}
       </div>
+      )}
       <button
         onClick={() => openEditor({ type: 'classNotes', courseId: course.id })}
         className="flex items-center gap-2 border-t border-line px-5 py-2.5 text-left text-subhead text-muted transition-colors hover:bg-fill hover:text-ink"
@@ -146,17 +152,31 @@ export function CourseCard({ course, pending, now }: CourseCardProps) {
           <p className="px-5 py-3 text-subhead text-muted">Nothing due</p>
         ) : (
           <ul className="separated">
-            {pending.slice(0, 3).map((a) => (
-              <li key={a.id}>
-                <button
-                  onClick={() => openEditor({ type: 'deadline', id: a.id })}
-                  className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-fill"
-                >
-                  <span className="min-w-0 flex-1 truncate text-body text-ink">{a.title}</span>
-                  <Countdown date={new Date(a.due)} now={now} />
-                </button>
-              </li>
-            ))}
+            {pending.slice(0, 3).map((a) => {
+              const late = new Date(a.due) <= now
+              return (
+                <li key={a.id} className="flex items-center">
+                  <button
+                    onClick={() => openEditor({ type: 'deadline', id: a.id })}
+                    className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pr-3 pl-5 text-left transition-colors hover:bg-fill"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-body text-ink">{a.title}</span>
+                    <Countdown date={new Date(a.due)} now={now} />
+                  </button>
+                  {late && (
+                    <button
+                      onClick={() => {
+                        assignments.update(a.id, { submitted: true })
+                        notify(`“${a.title}” marked as handed in`, 'default', { label: 'Undo', run: () => assignments.update(a.id, { submitted: false }) })
+                      }}
+                      className="mr-3 shrink-0 rounded-full bg-fill px-3 py-1.5 text-subhead font-medium text-ink transition-colors hover:bg-fill-strong"
+                    >
+                      Handed in
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

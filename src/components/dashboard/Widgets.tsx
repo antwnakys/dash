@@ -13,7 +13,7 @@ import { fmtLeft } from '@/hooks/useFocusTimer'
 export function Widget({ title, meta, action, glow, children, className, onClick }: { title: string; meta?: ReactNode; action?: ReactNode; glow?: 'metal' | 'blue'; children: ReactNode; className?: string; onClick?: () => void }) {
   const Tag = onClick ? 'button' : 'div'
   return (
-    <Tag onClick={onClick} className={cn('surface relative flex min-h-44 flex-col overflow-hidden p-4 text-left', onClick && 'pressable', className)}>
+    <Tag onClick={onClick} className={cn('surface relative flex min-h-36 flex-col overflow-hidden p-4 text-left sm:min-h-44', onClick && 'pressable', className)}>
       {glow && (
         <span
           aria-hidden
@@ -75,13 +75,14 @@ export function CompletionWidget({ now }: { now: Date }) {
   const R = 30
   const C = 2 * Math.PI * R
   return (
-    <Widget title="Task completion" meta="today" onClick={() => setView('tasks')}>
+    // Counts the same list as Focus today and Daily goals (due today, overdue, high priority), not every open task.
+    <Widget title="Task completion" meta="Focus today" onClick={() => setView('tasks')}>
       <div className="flex items-end justify-between gap-3">
         <div>
           <div className="metric text-[2rem] leading-none text-ink sm:text-[2.5rem]">{total ? `${pct}%` : '—'}</div>
-          <div className="mt-1.5 text-subhead text-muted">{total ? `${done} done · ${open} to go` : 'Nothing planned for today'}</div>
+          <div className="mt-1.5 text-subhead text-muted">{total ? `${done} of ${total} done` : 'Nothing planned for today'}</div>
         </div>
-        <svg viewBox="0 0 72 72" className="size-12 shrink-0 -rotate-90 sm:size-16" aria-hidden>
+        <svg viewBox="0 0 72 72" className="size-12 shrink-0 -rotate-90 max-[430px]:hidden sm:size-16" aria-hidden>
           <circle cx="36" cy="36" r={R} fill="none" stroke="var(--fill-strong)" strokeWidth="5" />
           <circle cx="36" cy="36" r={R} fill="none" stroke="var(--ink)" strokeWidth="5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} className="transition-[stroke-dashoffset] duration-700" />
         </svg>
@@ -97,7 +98,7 @@ export function WeekFocusWidget({ now }: { now: Date }) {
   const max = Math.max(30, ...minutes)
   const best = minutes.indexOf(Math.max(...minutes))
   return (
-    <Widget title="Focus this week" meta={hoursLabel(total)} glow="blue" onClick={() => setFocusOpen(true)}>
+    <Widget title="Focus this week" meta={hoursLabel(total)} glow="blue" onClick={() => setFocusOpen(true)} className="max-sm:col-span-2">
       <div className="flex h-24 items-end gap-1.5">
         {days.map((d, i) => {
           const today = isSameDay(d, now)
@@ -121,10 +122,12 @@ export function WeekFocusWidget({ now }: { now: Date }) {
 /** The next deadlines and exams with their countdowns. */
 export function DeadlinesWidget({ now }: { now: Date }) {
   const { agenda, openEditor, setView } = useDashboard()
-  const next = agenda.filter((i) => (i.kind === 'assignment' || i.kind === 'exam' || i.kind === 'quiz') && i.date >= now).slice(0, 3)
-  const overdue = agenda.filter((i) => (i.kind === 'assignment' || i.kind === 'quiz') && i.date < now).length
+  // Overdue work first (it used to be only a count nobody could open), then what's coming up.
+  const late = agenda.filter((i) => (i.kind === 'assignment' || i.kind === 'quiz') && i.date < now)
+  const overdue = late.length
+  const next = [...late, ...agenda.filter((i) => (i.kind === 'assignment' || i.kind === 'exam' || i.kind === 'quiz') && i.date >= now)].slice(0, 3)
   return (
-    <Widget title="Deadlines" meta={overdue ? <span className="text-danger">{overdue} overdue</span> : undefined}>
+    <Widget title="Deadlines" meta={overdue ? <span className="text-danger">{overdue} overdue</span> : undefined} className="max-sm:col-span-2">
       {next.length === 0 ? (
         <p className="text-subhead text-muted">Nothing due. Enjoy it.</p>
       ) : (
@@ -133,7 +136,7 @@ export function DeadlinesWidget({ now }: { now: Date }) {
             <li key={i.id}>
               <button onClick={() => (i.source === 'assignment' ? openEditor({ type: 'deadline', id: i.id }) : setView('exams'))} className="flex w-full items-baseline gap-2 text-left">
                 <span className={cn('min-w-0 flex-1 truncate text-body', i.kind === 'exam' ? 'font-medium text-ink' : 'text-ink')}>{i.title}</span>
-                <span className={cn('shrink-0 text-caption tabular-nums', i.kind === 'exam' ? 'text-accent' : 'text-muted')}>{countdown(i.date, now)}</span>
+                <span className={cn('shrink-0 text-caption tabular-nums', i.date < now ? 'font-medium text-danger' : i.kind === 'exam' ? 'text-accent' : 'text-muted')}>{countdown(i.date, now)}</span>
               </button>
             </li>
           ))}
@@ -144,9 +147,9 @@ export function DeadlinesWidget({ now }: { now: Date }) {
 }
 
 /** Syllabus progress per course and how much is still open. */
-export function AcademicWidget({ now }: { now: Date }) {
+export function AcademicWidget() {
   const { courses, openEditor } = useDashboard()
-  const pending = usePendingByCourse(now)
+  const pending = usePendingByCourse()
   if (!courses.items.length) return null
   return (
     <Widget title="Academic progress" meta={`${courses.items.length} courses`} className="min-h-0">

@@ -34,6 +34,8 @@ export function AddTask({
   onAdd: (title: string, category: TaskCategory, extra: Partial<Task>) => void
   autoFocus?: boolean
 }) {
+  // The worked example doesn't fit a phone's box (it was cut off mid-word); phones just say "Add a task".
+  const [narrow] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches)
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TaskCategory | null>(null)
   const [ignore, setIgnore] = useState<QuickPartKind[]>([])
@@ -60,7 +62,7 @@ export function AddTask({
             setText(e.target.value)
             if (!e.target.value) setIgnore([])
           }}
-          placeholder="Add a task, e.g. Essay draft friday at 18:00"
+          placeholder={narrow ? 'Add a task' : 'Add a task, e.g. Essay draft friday at 18:00'}
           aria-label="New task"
           aria-describedby="quick-add-reading"
           enterKeyHint="done"

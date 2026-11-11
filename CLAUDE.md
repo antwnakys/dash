@@ -141,6 +141,15 @@ in Playwright with an iPhone viewport (`vite preview`, seed `localStorage` keys 
   and linked on both IDs. `scripts/testflight.sh`: with App Groups the archive is ad-hoc signed
   (`CODE_SIGN_IDENTITY=-`, entitlements in the binary; an unsigned archive lost the group in the cloud-signed export),
   then the .ipa is exported and `codesign` must show the group in the app and the widget before the upload.
+- **Review fixes** (Nov 11, fault hunt with unidash): overdue deadlines stay listed on the course card (first, red,
+  **Handed in** + Undo; `usePendingByCourse` keeps unsubmitted past work, `Countdown` red when late) and lead the
+  Deadlines widget; `examSubject(title, fallback)` keeps "Midterm"/"Final" for names made only of exam words (no more
+  "Midterm exam exam"); classes take the course colour in the calendar, timetable and Daily timeline (`courseTint` in
+  `lib/courseColor.ts`); the timetable hides this week's empty past days; "Missed a class" only on courses with classes;
+  phone Today: Focus this week + Deadlines span the row (dense grid), the completion ring hides under 430 px, widgets
+  are shorter, the Daily timeline scrolls to now; Task completion says it counts the Focus today list ("1 of 3 done");
+  Quick add is the primary button, Customise the quiet one; task meta lines wrap; phones show "Add a task"; the widget
+  snapshot covers 14 days.
 - `src/lib/grades.ts`: `Assignment.grade/outOf` (default out of 10); averages on course cards, Courses summary, and the
   "Work and grades" list in the course editor; grades are entered in the deadline editor.
 - `src/lib/meeting.ts`: online lessons. Teams/Zoom/Meet links are read from Google event description/location/conference
@@ -340,6 +349,7 @@ Dates and times use the device locale through `Intl` (the user is in Greece: 24-
   a press-twice button, Undo for courses and exams.
 
 - **Nov 11, 2026**: iPhone widgets (Home Screen + Lock Screen "Up next"), built in unidash first.
+- **Nov 11, 2026**: review of both apps (13 findings) and fixes: overdue work, exam names, course colours, phone Today.
 
 ## Next up
 

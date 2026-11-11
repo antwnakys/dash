@@ -44,8 +44,9 @@ export interface WidgetData {
   }
 }
 
-const DAYS = 7
-const MAX_ITEMS = 40
+// Two weeks, so the widget still has things to show when the app hasn't been opened for a while.
+const DAYS = 14
+const MAX_ITEMS = 60
 
 // Widgets can't read the page's CSS, so the colours are spelled out (they read in light and dark).
 const ACCENT = '#0a84ff'

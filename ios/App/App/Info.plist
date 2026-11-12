@@ -40,6 +40,8 @@
 	<string>349920744170-qjt1nfonl3hvqvdfnr9j8qkgp23k3jo5.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>dash only uses your location while the app is open, to show the local weather. It never tracks you in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>dash uses your location to show the local weather.</string>
 	<key>UIApplicationSceneManifest</key>
